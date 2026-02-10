@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "168999871119",
+    "project_id": "coding-tracker-app-d0224",
+    "storage_bucket": "coding-tracker-app-d0224.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:168999871119:android:958fb24040ad1b001c06fa",
+        "android_client_info": {
+          "package_name": "com.example.coding_tracker_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAM0Vco6PLF3FDJ1UdS28bq7gp7eO8crX4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
