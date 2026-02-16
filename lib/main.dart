@@ -11,15 +11,12 @@ Future<void> main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: const MyApp(),
     ),
   );
-}
 }
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
