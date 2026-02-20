@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../screens/auth_wrapper.dart';
 import '../providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async{
@@ -12,9 +13,12 @@ Future<void> main() async{
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: const MyApp(),
+    MultiProvider(providers: 
+    [
+      ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ChangeNotifierProvider(create: (_) => ProfileProvider()),
+    ],
+     child: const MyApp(),
     ),
   );
 }
