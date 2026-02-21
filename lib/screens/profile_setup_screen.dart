@@ -10,7 +10,6 @@ class ProfileSetupScreen extends StatefulWidget {
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
-
   final leetcodeCtrl = TextEditingController();
   final codechefCtrl = TextEditingController();
   final codeforcesCtrl = TextEditingController();
@@ -29,16 +28,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final profileProvider = context.read<ProfileProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).colorScheme.background,
 
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
+        foregroundColor: Theme.of(context).colorScheme.onBackground,
         title: const Text(
           "Setup Coding Profile",
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -52,97 +50,88 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             padding: const EdgeInsets.all(20),
             child: Form(
               key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                
-                    const SizedBox(height: 20),
-                
-                    const Text(
-                      "Add Your Coding Handles 🚀",
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Add Your Coding Handles 🚀",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    "These usernames will help us track your progress.",
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  _buildInputField(
+                    controller: leetcodeCtrl,
+                    label: "LeetCode Username",
+                    icon: Icons.code,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _buildInputField(
+                    controller: codechefCtrl,
+                    label: "CodeChef Username",
+                    icon: Icons.restaurant_menu,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _buildInputField(
+                    controller: codeforcesCtrl,
+                    label: "CodeForces Username",
+                    icon: Icons.emoji_events,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _buildInputField(
+                    controller: githubCtrl,
+                    label: "GitHub Username",
+                    icon: Icons.account_tree,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size(double.infinity, 52),
+                      elevation: 4,
+                    ),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        profileProvider.saveProfile(
+                          leetcode: leetcodeCtrl.text.trim(),
+                          codechef: codechefCtrl.text.trim(),
+                          codeforces: codeforcesCtrl.text.trim(),
+                          github: githubCtrl.text.trim(),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      "Save & Continue",
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                
-                    const SizedBox(height: 8),
-                
-                    const Text(
-                      "These usernames will help us track your progress.",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                
-                    const SizedBox(height: 30),
-                
-                    _buildInputField(
-                      controller: leetcodeCtrl,
-                      label: "LeetCode Username",
-                      icon: Icons.code,
-                    ),
-                
-                    const SizedBox(height: 20),
-                
-                    _buildInputField(
-                      controller: codechefCtrl,
-                      label: "CodeChef Username",
-                      icon: Icons.restaurant_menu,
-                    ),
-                
-                    const SizedBox(height: 20),
-                
-                    _buildInputField(
-                      controller: codeforcesCtrl,
-                      label: "CodeForces Username",
-                      icon: Icons.emoji_events,
-                    ),
-                
-                    const SizedBox(height: 20),
-                
-                    _buildInputField(
-                      controller: githubCtrl,
-                      label: "GitHub Username",
-                      icon: Icons.account_tree,
-                    ),
-                
-                    const SizedBox(height: 40),
-                
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.deepPurple,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        minimumSize: const Size(double.infinity, 55),
-                      ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                
-                          profileProvider.saveProfile(
-                            leetcode: leetcodeCtrl.text.trim(),
-                            codechef: codechefCtrl.text.trim(),
-                            codeforces: codeforcesCtrl.text.trim(),
-                            github: githubCtrl.text.trim(),
-                          );
-                        }
-                      },
-                      child: const Text(
-                        "Save & Continue",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
@@ -151,7 +140,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -159,8 +147,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   }) {
     return TextFormField(
       controller: controller,
-      validator: (value) =>
-          value == null || value.isEmpty ? "Required" : null,
+      validator: (value) => value == null || value.isEmpty ? "Required" : null,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -176,10 +163,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Colors.deepPurple,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
         ),
       ),
     );

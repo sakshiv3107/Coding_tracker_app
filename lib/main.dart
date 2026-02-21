@@ -30,10 +30,63 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CodeSphere',
+
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        fontFamily: 'Lato',
+
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 149, 99, 237),
+          primary: Colors.deepPurple,
+          brightness: Brightness.light,
+        ),
+
+        appBarTheme: const AppBarTheme(
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+          ),
+        ),
+
+        inputDecorationTheme: const InputDecorationTheme(
+          hintStyle: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          prefixIconColor: Color.fromRGBO(119, 119, 119, 1),
+        ),
+
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+          titleMedium: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+          bodySmall: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
       ),
-      home: const AuthWrapper(),
+
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Lato',
+
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 1, 161, 254),
+          brightness: Brightness.dark,
+        ),
+      ),
+
+      themeMode: ThemeMode.system,
+
+      
+      home: AuthWrapper(),
     );
   }
 }

@@ -23,27 +23,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final auth = context.watch<AuthProvider>();
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Container(
-               margin: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(
-                  height: height * 0.23,
-                  child: Image.asset(
-                    "assets/images/login_image.png",
-                    fit: BoxFit.contain,
+                    height: height * 0.23,
+                    child: Image.asset(
+                      "assets/images/login_image.png",
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                ),
                   Center(
                     child: Text(
                       'Welcome Back!',
@@ -70,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   SizedBox(height: height * 0.02),
-              
+
                   // PASSWORD FIELD
                   const SizedBox(height: 8),
                   TextField(
@@ -79,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       hintText: 'Enter your password',
                       prefixIcon: const Icon(Icons.lock_outlined),
-              
+
                       suffixIcon: IconButton(
                         icon: Icon(
                           obscurePassword
@@ -94,67 +101,70 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.white,
-              
+
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: height * 0.02),
-              
+
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
                       onTap: () {},
                       child: Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.blue),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: height * 0.03),
                   SizedBox(
                     width: double.infinity,
-              
-                    child: ElevatedButton(
+
+                    child: ElevatedButton.icon(
                       onPressed: () async {
                         if (emailController.text.isEmpty ||
                             passwordController.text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all fields')),
+                            const SnackBar(
+                              content: Text('Please fill all fields'),
+                            ),
                           );
                           return;
                         } else {
-                          auth.login(emailController.text, passwordController.text);
+                          auth.login(
+                            emailController.text,
+                            passwordController.text,
+                          );
                         }
                       },
-              
+
+                      icon: const Icon(Icons.login),
+                      label: const Text(
+                        'Login',                       
+                        ),
+
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromRGBO(59, 160, 254, 1),
-              
-                        padding: EdgeInsets.symmetric(vertical: 14),
-              
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-              
-                      child: Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        elevation: 4,
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: height * 0.03),
-              
+
                   Row(
                     children: [
                       const Expanded(
@@ -182,38 +192,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   SizedBox(height: height * 0.03),
-              
+
                   SizedBox(
                     width: double.infinity,
-              
-                    child: OutlinedButton(
-                      onPressed: ()  {},
-              
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.email,
-                            color:Colors.blue,
-                            ),
-              
-                          const SizedBox(width: 12),
-              
-                          const Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color:Colors.blue,
-                            ),
-                          ),
-                        ],
+
+                    child: OutlinedButton.icon(
+                      onPressed: () {},
+
+                      icon: Icon(
+                        Icons.email,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      label: Text(
+                        'Continue with Google',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: height * 0.03),
-              
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
