@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import '../screens/auth_wrapper.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/stats_provider.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async{
@@ -17,6 +18,7 @@ Future<void> main() async{
     [
       ChangeNotifierProvider(create: (_) => AuthProvider()),
       ChangeNotifierProvider(create: (_) => ProfileProvider()),
+      ChangeNotifierProvider(create: (_) => StatsProvider()),
     ],
      child: const MyApp(),
     ),

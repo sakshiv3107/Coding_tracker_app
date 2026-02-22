@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/stats_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,6 +11,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
+    final stats = context.watch<StatsProvider>();
     final userName = auth.user?["name"] ?? "User";
     final theme = Theme.of(context);
 
@@ -33,7 +35,6 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            // placeholder for refresh logic
             await Future.delayed(const Duration(milliseconds: 300));
           },
           child: SingleChildScrollView(
@@ -93,6 +94,7 @@ class HomeScreen extends StatelessWidget {
                       context,
                       'LeetCode',
                       profile.profile?['leetcode'] ?? '',
+
                     ),
                     _platformTile(
                       context,
@@ -124,7 +126,7 @@ class HomeScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    _statCard(context, 'Total Problems', '0', Icons.list_alt),
+                    _statCard(context, 'Total Problems', stats.leetcodeStats?.totalSolved.toString() ?? "-", Icons.list_alt),
                     _statCard(
                       context,
                       'Current Streak',
@@ -140,7 +142,10 @@ class HomeScreen extends StatelessWidget {
 
                 Center(
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      final username = profile.profile?["leetcode"] ?? "";
+                      context.read<StatsProvider>().fetchLeetCodeStats(username);
+                    },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Refresh Stats'),
                     style: ElevatedButton.styleFrom(
