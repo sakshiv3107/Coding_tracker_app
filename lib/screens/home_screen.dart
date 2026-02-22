@@ -138,6 +138,46 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
 
+                const SizedBox(height: 20),
+
+                  const Text(
+                    "LeetCode Difficulty Split",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _difficultyCard(
+                          "Easy",
+                          stats.leetcodeStats?.easy.toString() ?? "-",
+                          Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _difficultyCard(
+                          "Medium",
+                          stats.leetcodeStats?.medium.toString() ?? "-",
+                          Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _difficultyCard(
+                          "Hard",
+                          stats.leetcodeStats?.hard.toString() ?? "-",
+                          Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+
                 const SizedBox(height: 24),
 
                 Center(
@@ -221,4 +261,27 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _difficultyCard(String title, String value, Color color) {
+  return Card(
+    elevation: 3,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(title),
+        ],
+      ),
+    ),
+  );
 }

@@ -8,12 +8,12 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   String? error;
 
-  Future login(String password, String email) async {
+  Future login(String email, String password) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      user = await _service.login(password, email);
+      user = await _service.login(email, password);
       error = null;
     } catch (e) {
       error = e.toString();

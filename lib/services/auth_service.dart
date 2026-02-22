@@ -1,7 +1,7 @@
 class AuthService {
   Map<String, String>? _user;
 
-  Future<Map<String, String>> login(String password, String email) async {
+  Future<Map<String, String>> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 2));
 
     if (email.isEmpty || password.isEmpty) {
