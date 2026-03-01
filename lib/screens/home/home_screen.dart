@@ -1,4 +1,3 @@
-// 
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,10 +9,30 @@ import 'sections/welcome_section.dart';
 import '../../screens/home/sections/platform_section.dart';
 import '../home/sections/stats_section.dart';
 import '../home/sections/difficulty_section.dart';
-// import 'sections/refresh_button.dart';
 
-class HomeScreen extends StatelessWidget {
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profile = context.read<ProfileProvider>();
+      final username = profile.profile?["leetcode"] ?? "";
+
+      if (username.isNotEmpty) {
+        context.read<StatsProvider>().fetchLeetCodeStats(username);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +101,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                          ),
                          ),
+              ),
             ],
           ),
         ),

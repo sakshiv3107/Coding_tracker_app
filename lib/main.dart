@@ -80,7 +80,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Lato',
 
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 1, 161, 254),
+          seedColor: const Color.fromARGB(255, 195, 164, 247),
           brightness: Brightness.dark,
         ),
       ),
