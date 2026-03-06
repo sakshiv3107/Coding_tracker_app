@@ -1,29 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../screens/auth_wrapper.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import 'firebase_options.dart';
 
-Future<void> main() async{
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
-    MultiProvider(providers: 
-    [
-      ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ChangeNotifierProvider(create: (_) => ProfileProvider()),
-      ChangeNotifierProvider(create: (_) => StatsProvider()),
-    ],
-     child: const MyApp(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => StatsProvider()),
+        // Stream provider for real-time auth state
+        StreamProvider<User?>(
+          create: (_) => FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
+        ),
+      ],
+      child: const MyApp(),
     ),
   );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -52,26 +58,14 @@ class MyApp extends StatelessWidget {
         ),
 
         inputDecorationTheme: const InputDecorationTheme(
-          hintStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
+          hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           prefixIconColor: Color.fromRGBO(119, 119, 119, 1),
         ),
 
         textTheme: const TextTheme(
-          titleLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-          titleMedium: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-          bodySmall: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          titleLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          titleMedium: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          bodySmall: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
 
@@ -87,9 +81,7 @@ class MyApp extends StatelessWidget {
 
       themeMode: ThemeMode.system,
 
-      
       home: AuthWrapper(),
     );
   }
 }
-

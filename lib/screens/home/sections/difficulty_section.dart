@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
+import '../../../providers/profile_provider.dart';
 import '../widgets/difficulty_card.dart';
 
 class DifficultySection extends StatelessWidget {
@@ -10,63 +11,84 @@ class DifficultySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
+    final profile = context.read<ProfileProvider>();
+    final leetcodeUsername = profile.profile?["leetcode"] ?? "";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "LeetCode Stats",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 20),
 
         // 1️⃣ Loading State
         if (stats.isLoading)
-          const Center(
-            child: CircularProgressIndicator(),
-          )
-
+          const Center(child: CircularProgressIndicator())
         // 2️⃣ Error State
         else if (stats.error != null)
-          Column(
-            children: [
-              const Text(
-                "Failed to fetch stats ❌",
-                style: TextStyle(color: Colors.red),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  context
-                      .read<StatsProvider>()
-                      .fetchLeetCodeStats("your_username_here");
-                },
-                child: const Text("Retry"),
-              )
-            ],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Failed to fetch stats ❌",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  stats.error ?? "Unknown error occurred",
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: leetcodeUsername.isNotEmpty
+                      ? () {
+                          context.read<StatsProvider>().fetchLeetCodeStats(
+                            leetcodeUsername,
+                          );
+                        }
+                      : null,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Retry"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           )
-
         // 3️⃣ Empty State
         else if (stats.leetcodeStats == null)
-          const Text(
-            "Press Refresh to load stats",
-            style: TextStyle(color: Colors.grey),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              "Press Refresh to load stats",
+              style: TextStyle(color: Colors.grey),
+            ),
           )
-
         // 4️⃣ Success State
         else
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              
-              _buildDifficultySplit(context, isSmallScreen),
-            ],
+            children: [_buildDifficultySplit(context, isSmallScreen)],
           ),
       ],
     );

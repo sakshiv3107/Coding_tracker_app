@@ -28,9 +28,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profileProvider = context.read<ProfileProvider>();
+    final profileProvider = context.watch<ProfileProvider>();
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -86,6 +85,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
+                          // ERROR MESSAGE
+                          if (profileProvider.error != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                profileProvider.error!,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
                           _buildInputField(
                             controller: leetcodeCtrl,
                             label: "LeetCode Username",
@@ -114,46 +130,74 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           // Modern Button
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  theme.colorScheme.primary,
-                              foregroundColor:
-                                  theme.colorScheme.onPrimary,
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              minimumSize:
-                                  const Size(double.infinity, 55),
+                              minimumSize: const Size(double.infinity, 55),
                               elevation: 6,
                             ),
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                profileProvider.saveProfile(
-                                  leetcode:
-                                      leetcodeCtrl.text.trim(),
-                                  codechef:
-                                      codechefCtrl.text.trim(),
-                                  codeforces:
-                                      codeforcesCtrl.text.trim(),
-                                  github:
-                                      githubCtrl.text.trim(),
-                                );
+                            onPressed: profileProvider.isLoading
+                                ? null
+                                : () async {
+                                    if (_formKey.currentState!.validate()) {
+                                      await profileProvider.saveProfile(
+                                        leetcode: leetcodeCtrl.text.trim(),
+                                        codechef: codechefCtrl.text.trim(),
+                                        codeforces: codeforcesCtrl.text.trim(),
+                                        github: githubCtrl.text.trim(),
+                                      );
 
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text("Profile Saved Successfully 🚀"),
+                                      // Check if save was successful
+                                      if (profileProvider.error == null &&
+                                          profileProvider.isProfileCompleted &&
+                                          mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "Profile Saved Successfully 🚀",
+                                            ),
+                                            duration: Duration(seconds: 1),
+                                          ),
+                                        );
+                                        // Navigate to home screen
+                                        // The AuthWrapper will automatically handle this
+                                        // due to profile being marked as completed
+                                      } else if (profileProvider.error !=
+                                              null &&
+                                          mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Error: ${profileProvider.error}",
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            child: profileProvider.isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Save & Continue",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                );
-                              }
-                            },
-                            child: const Text(
-                              "Save & Continue",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                           ),
                         ],
                       ),
@@ -186,18 +230,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         prefixIcon: Icon(icon),
         filled: true,
         fillColor: theme.colorScheme.surfaceContainerHigh,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18,
+          horizontal: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(
-            color: theme.colorScheme.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
         ),
       ),
     );

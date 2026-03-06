@@ -9,7 +9,7 @@ class StatsProvider extends ChangeNotifier {
   bool isLoading = false;
   LeetcodeStats? leetcodeStats;
 
-  Future fetchLeetCodeStats(String username) async {
+  Future<void> fetchLeetCodeStats(String username) async {
     try {
       isLoading = true;
       notifyListeners();
@@ -21,6 +21,25 @@ class StatsProvider extends ChangeNotifier {
     }
 
     isLoading = false;
+    notifyListeners();
+  }
+
+  void setError(String message) {
+    error = message;
+    leetcodeStats = null;
+    isLoading = false;
+    notifyListeners();
+  }
+
+  void clearError() {
+    error = null;
+    notifyListeners();
+  }
+
+  void reset() {
+    error = null;
+    isLoading = false;
+    leetcodeStats = null;
     notifyListeners();
   }
 }
