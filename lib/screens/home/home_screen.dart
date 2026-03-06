@@ -8,6 +8,8 @@ import 'sections/welcome_section.dart';
 import '../../screens/home/sections/platform_section.dart';
 import '../home/sections/stats_section.dart';
 import '../home/sections/difficulty_section.dart';
+import '../home/sections/leetcode_pie_chart.dart';
+import '../home/sections/leetcode_profile_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -78,6 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 24),
 
+              LeetCodeProfileCard(stats: stats),
+
+              const SizedBox(height: 24),
+              
               StatsSection(
                 stats: stats,
                 theme: theme,
@@ -89,6 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
               DifficultySection(stats: stats),
 
               const SizedBox(height: 24),
+
+              LeetCodePieChart(stats: stats),
+
+              const SizedBox(height: 24),
+
 
               Center(
                 child: SizedBox(
