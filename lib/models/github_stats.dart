@@ -23,7 +23,13 @@ class GithubStats {
     required this.contributionCalendar,
   });
 
-  factory GithubStats.fromJson(Map<String, dynamic> json, Map<DateTime, int> calendar, int stars, Map<String, double> languages) {
+  /// REST API constructor
+  factory GithubStats.fromJson(
+    Map<String, dynamic> json,
+    Map<DateTime, int> calendar,
+    int stars,
+    Map<String, double> languages,
+  ) {
     return GithubStats(
       login: json['login'] ?? '',
       avatarUrl: json['avatar_url'] ?? '',
@@ -34,6 +40,27 @@ class GithubStats {
       following: json['following'] ?? 0,
       totalStars: stars,
       topLanguages: languages,
+      contributionCalendar: calendar,
+    );
+  }
+
+  /// GraphQL constructor
+  factory GithubStats.fromGraphQL(
+    Map<String, dynamic> user,
+    Map<DateTime, int> calendar,
+    int totalStars,
+    Map<String, double> topLanguages,
+  ) {
+    return GithubStats(
+      login: user["login"] ?? "",
+      avatarUrl: user["avatarUrl"] ?? "",
+      name: user["name"] ?? user["login"] ?? "",
+      bio: user["bio"],
+      publicRepos: user["repositories"]?["totalCount"] ?? 0,
+      followers: user["followers"]?["totalCount"] ?? 0,
+      following: user["following"]?["totalCount"] ?? 0,
+      totalStars: totalStars,
+      topLanguages: topLanguages,
       contributionCalendar: calendar,
     );
   }
@@ -67,6 +94,19 @@ class GithubRepository {
       language: json['language'],
       updatedAt: DateTime.parse(json['updated_at']),
       htmlUrl: json['html_url'] ?? '',
+    );
+  }
+
+  /// GraphQL version
+  factory GithubRepository.fromGraphQL(Map<String, dynamic> json) {
+    return GithubRepository(
+      name: json["name"] ?? "",
+      description: json["description"],
+      stars: json["stargazerCount"] ?? 0,
+      forks: json["forkCount"] ?? 0,
+      language: json["primaryLanguage"]?["name"],
+      updatedAt: DateTime.parse(json["updatedAt"]),
+      htmlUrl: json["url"] ?? "",
     );
   }
 }
