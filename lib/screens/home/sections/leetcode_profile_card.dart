@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../providers/stats_provider.dart';
-// import '../../../widgets/modern_card.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../theme/app_theme.dart';
 
 class LeetCodeProfileCard extends StatelessWidget {
@@ -12,6 +13,8 @@ class LeetCodeProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = stats.leetcodeStats;
     final theme = Theme.of(context);
+    final auth = context.read<AuthProvider>();
+    final userName = auth.user?["name"] ?? "Standard User";
 
     if (data == null) return const SizedBox();
 
@@ -34,7 +37,8 @@ class LeetCodeProfileCard extends StatelessWidget {
           child: CircleAvatar(
             radius: 40,
             backgroundColor: AppTheme.primaryMintLight,
-            backgroundImage: NetworkImage(data.avatar),
+            backgroundImage: data.avatar.isNotEmpty ? NetworkImage(data.avatar) : null,
+            child: data.avatar.isEmpty ? const Icon(Icons.person, color: AppTheme.primaryMint) : null,
           ),
         ),
         const SizedBox(width: 24),
@@ -43,20 +47,36 @@ class LeetCodeProfileCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Alex Rivera", // This should probably come from Auth, but for mockup accuracy
+                userName,
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              Text(
-                "Mastering technical interviews",
-                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryMintLight,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      data.rating > 2000 ? 'KNIGHT' : 'ELITE',
+                      style: const TextStyle(
+                        color: AppTheme.primaryMint,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _buildMiniStat(Icons.emoji_events_outlined, "2,140"),
+                  _buildMiniStat(Icons.emoji_events_outlined, data.rating.toStringAsFixed(0)),
                   const SizedBox(width: 16),
-                  _buildMiniStat(Icons.public_rounded, "Top 5.2%"),
+                  _buildMiniStat(Icons.public_rounded, "Rank #${data.ranking}"),
                 ],
               ),
             ],

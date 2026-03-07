@@ -6,6 +6,7 @@ import '../screens/auth_wrapper.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
+import '../providers/github_provider.dart';
 import 'firebase_options.dart';
 import '../theme/app_theme.dart';
 
@@ -20,6 +21,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
+        ChangeNotifierProvider(create: (_) => GithubProvider()),
         // Stream provider for real-time auth state
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),

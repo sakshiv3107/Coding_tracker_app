@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/modern_card.dart';
 import '../../../providers/stats_provider.dart';
+import '../../../providers/github_provider.dart';
+import '../../coding_stats_screen.dart';
+import '../../github_stats_screen.dart';
 
 class PlatformCard extends StatelessWidget {
   final String platform;
   final StatsProvider stats;
+  final GithubProvider github;
   final IconData icon;
   final String id;
   final bool isSmallScreen;
@@ -14,6 +18,7 @@ class PlatformCard extends StatelessWidget {
   const PlatformCard({
     super.key,
     required this.stats,
+    required this.github,
     required this.platform,
     required this.icon,
     required this.id,
@@ -28,7 +33,13 @@ class PlatformCard extends StatelessWidget {
     return ModernCard(
       padding: const EdgeInsets.all(20),
       borderRadius: 16,
-      onTap: () {},
+      onTap: () {
+        if (platform == 'LeetCode') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const CodingStatsScreen()));
+        } else if (platform == 'GitHub') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const GitHubStatsScreen()));
+        }
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -87,7 +98,9 @@ class PlatformCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              platform == 'LeetCode' ? stats.leetcodeStats?.rating.toString() ?? '24' : '2,412',
+              platform == 'LeetCode' 
+                ? stats.leetcodeStats?.rating.toStringAsFixed(0) ?? '—' 
+                : github.githubStats?.totalStars.toString() ?? '—',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,

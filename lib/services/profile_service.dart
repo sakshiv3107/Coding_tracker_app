@@ -127,6 +127,36 @@ class ProfileService {
     }
   }
 
+  // Update full profile including name and coding platform usernames
+  Future<void> updateFullProfile({
+    String? name,
+    required String leetcode,
+    required String codechef,
+    required String codeforces,
+    required String github,
+  }) async {
+    if (currentUserId == null) {
+      throw Exception("User not authenticated");
+    }
+
+    try {
+      final updates = {
+        if (name != null) 'name': name,
+        'profile': {
+          'leetcode': leetcode,
+          'codechef': codechef,
+          'codeforces': codeforces,
+          'github': github,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await _db.collection('users').doc(currentUserId).set(updates, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception("Failed to update profile: ${e.toString()}");
+    }
+  }
+
   // Stream for real-time profile updates
   Stream<DocumentSnapshot<Map<String, dynamic>>>? getUserProfileStream() {
     if (currentUserId == null) {

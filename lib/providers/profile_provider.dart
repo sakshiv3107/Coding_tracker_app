@@ -60,6 +60,40 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Update profile in Firestore and local state
+  Future<void> updateFullProfile({
+    String? name,
+    required String leetcode,
+    required String codechef,
+    required String codeforces,
+    required String github,
+  }) async {
+    try {
+      isLoading = true;
+      error = null;
+      notifyListeners();
+
+      await _profileService.updateFullProfile(
+        name: name,
+        leetcode: leetcode,
+        codechef: codechef,
+        codeforces: codeforces,
+        github: github,
+      );
+
+      profile = {
+        "leetcode": leetcode,
+        "codechef": codechef,
+        "codeforces": codeforces,
+        "github": github,
+      };
+    } catch (e) {
+      error = e.toString();
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+
   void clearProfile() {
     profile = null;
     error = null;

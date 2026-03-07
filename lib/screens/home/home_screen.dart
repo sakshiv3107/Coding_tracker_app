@@ -1,3 +1,4 @@
+import 'package:coding_tracker_app/providers/github_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -27,10 +28,16 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profile = context.read<ProfileProvider>();
       final statsProvider = context.read<StatsProvider>();
-      final username = profile.profile?["leetcode"] ?? "";
+      final githubProvider = context.read<GithubProvider>();
+      
+      final leetcodeUser = profile.profile?["leetcode"] ?? "";
+      final githubUser = profile.profile?["github"] ?? "";
 
-      if (username.isNotEmpty) {
-        statsProvider.fetchLeetCodeStats(username);
+      if (leetcodeUser.isNotEmpty) {
+        statsProvider.fetchLeetCodeStats(leetcodeUser);
+      }
+      if (githubUser.isNotEmpty) {
+        githubProvider.fetchGithubData(githubUser);
       }
     });
   }

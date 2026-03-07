@@ -97,4 +97,12 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Update name in local state
+  void updateName(String newName) {
+    if (user != null) {
+      user!['name'] = newName;
+      notifyListeners();
+    }
+  }
 }
