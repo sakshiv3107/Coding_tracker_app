@@ -3,13 +3,11 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/stats_provider.dart';
-
+import '../profile_screen.dart';
+import '../coding_stats_screen.dart';
+import '../github_stats_screen.dart';
 import 'sections/welcome_section.dart';
 import '../../screens/home/sections/platform_section.dart';
-import '../home/sections/stats_section.dart';
-import '../home/sections/difficulty_section.dart';
-import '../home/sections/leetcode_pie_chart.dart';
-import '../home/sections/leetcode_profile_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -29,8 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (username.isNotEmpty) {
         statsProvider.fetchLeetCodeStats(username);
-      } else {
-        statsProvider.setError("LeetCode username not set in profile");
       }
     });
   }
@@ -39,28 +37,85 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
-    final stats = context.watch<StatsProvider>();
     final theme = Theme.of(context);
 
     final userName = auth.user?["name"] ?? "User";
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
+    late Widget currentPage;
+
+    switch (_selectedIndex) {
+      case 0:
+        currentPage = _buildDashboard(
+          userName: userName,
+          theme: theme,
+          profile: profile,
+          isSmallScreen: isSmallScreen,
+        );
+        break;
+      case 1:
+        currentPage = const CodingStatsScreen();
+        break;
+      case 2:
+        currentPage = const GitHubStatsScreen();
+        break;
+      case 3:
+        currentPage = const ProfileScreen();
+        break;
+      default:
+        currentPage = _buildDashboard(
+          userName: userName,
+          theme: theme,
+          profile: profile,
+          isSmallScreen: isSmallScreen,
+        );
+    }
+
+    return Scaffold(
+      body: currentPage,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.code),
+            label: 'Coding',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pets),
+            label: 'GitHub',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboard({
+    required String userName,
+    required ThemeData theme,
+    required ProfileProvider profile,
+    required bool isSmallScreen,
+  }) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CodeSphere'),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              context.read<ProfileProvider>().clearProfile();
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -80,61 +135,198 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 24),
 
-              LeetCodeProfileCard(stats: stats),
+              // Quick Links to Other Sections
+              Text(
+                'Quick Access',
+                style: theme.textTheme.titleMedium,
+              ),
 
-              const SizedBox(height: 24),
-              
-              StatsSection(
-                stats: stats,
-                theme: theme,
-                isSmallScreen: isSmallScreen,
+              const SizedBox(height: 12),
+
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _QuickAccessCard(
+                      icon: Icons.code,
+                      title: 'Coding Stats',
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 1;
+                        });
+                      },
+                      color: Colors.purple,
+                    ),
+                    const SizedBox(width: 12),
+                    _QuickAccessCard(
+                      icon: Icons.pets,
+                      title: 'GitHub',
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 2;
+                        });
+                      },
+                      color: Colors.black87,
+                    ),
+                    const SizedBox(width: 12),
+                    _QuickAccessCard(
+                      icon: Icons.person,
+                      title: 'Profile',
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 3;
+                        });
+                      },
+                      color: Colors.blue,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              Text(
+                'Getting Started',
+                style: theme.textTheme.titleMedium,
+              ),
+
+              const SizedBox(height: 12),
+
+              _InfoCard(
+                icon: Icons.info_outline,
+                title: 'View Your Coding Stats',
+                description: 'Check your LeetCode progress, difficulty breakdown, and achievements',
+                color: Colors.purple,
+              ),
+
+              const SizedBox(height: 12),
+
+              _InfoCard(
+                icon: Icons.pets,
+                title: 'GitHub Integration',
+                description: 'Link your GitHub profile to see your contributions and repositories',
+                color: Colors.black87,
               ),
 
               const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-              DifficultySection(stats: stats),
+class _QuickAccessCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final Color color;
 
-              const SizedBox(height: 24),
+  const _QuickAccessCard({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    required this.color,
+  });
 
-              LeetCodePieChart(stats: stats),
-
-              const SizedBox(height: 24),
-
-
-              Center(
-                child: SizedBox(
-                  width: isSmallScreen ? double.infinity : null,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      final username = profile.profile?["leetcode"] ?? "";
-                      if (username.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Please set your LeetCode username in profile settings",
-                            ),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                        return;
-                      }
-                      context.read<StatsProvider>().fetchLeetCodeStats(
-                        username,
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh Stats'),
-                    style: FilledButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        vertical: isSmallScreen ? 14 : 12,
-                        horizontal: isSmallScreen ? 16 : 24,
-                      ),
-                    ),
-                  ),
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          width: 120,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
