@@ -8,6 +8,8 @@ import '../coding_stats_screen.dart';
 import '../github_stats_screen.dart';
 import 'sections/welcome_section.dart';
 import '../../screens/home/sections/platform_section.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/modern_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,71 +37,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthProvider>();
-    final profile = context.watch<ProfileProvider>();
     final theme = Theme.of(context);
-
+    final profile = context.watch<ProfileProvider>();
+    // final stats = context.watch<StatsProvider>();
+    final auth = context.read<AuthProvider>();
     final userName = auth.user?["name"] ?? "User";
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600;
 
-    late Widget currentPage;
-
-    switch (_selectedIndex) {
-      case 0:
-        currentPage = _buildDashboard(
-          userName: userName,
-          theme: theme,
-          profile: profile,
-          isSmallScreen: isSmallScreen,
-        );
-        break;
-      case 1:
-        currentPage = const CodingStatsScreen();
-        break;
-      case 2:
-        currentPage = const GitHubStatsScreen();
-        break;
-      case 3:
-        currentPage = const ProfileScreen();
-        break;
-      default:
-        currentPage = _buildDashboard(
-          userName: userName,
-          theme: theme,
-          profile: profile,
-          isSmallScreen: isSmallScreen,
-        );
-    }
+    final screens = [
+      _buildDashboard(userName: userName, theme: theme, profile: profile),
+      const CodingStatsScreen(),
+      const GitHubStatsScreen(),
+      const ProfileScreen(),
+    ];
 
     return Scaffold(
-      body: currentPage,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Dashboard',
+      body: screens[_selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (i) => setState(() => _selectedIndex = i),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: AppTheme.primaryMint,
+              unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.4),
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+              type: BottomNavigationBarType.fixed,
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'HOME'),
+                BottomNavigationBarItem(icon: Icon(Icons.code_rounded), label: 'PLATFORMS'),
+                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'STATS'),
+                BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'PROFILE'),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.code),
-            label: 'Coding',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pets),
-            label: 'GitHub',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -108,227 +93,134 @@ class _HomeScreenState extends State<HomeScreen> {
     required String userName,
     required ThemeData theme,
     required ProfileProvider profile,
-    required bool isSmallScreen,
   }) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CodeSphere'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          WelcomeSection(userName: userName, theme: theme, isSmallScreen: true),
+          const SizedBox(height: 32),
+          
+          // Row of stats cards (Solved, Streak, Rank)
+          Row(
             children: [
-              WelcomeSection(
-                userName: userName,
-                theme: theme,
-                isSmallScreen: isSmallScreen,
-              ),
-
-              const SizedBox(height: 24),
-
-              PlatformSection(profile: profile, isSmallScreen: isSmallScreen),
-
-              const SizedBox(height: 24),
-
-              // Quick Links to Other Sections
-              Text(
-                'Quick Access',
-                style: theme.textTheme.titleMedium,
-              ),
-
-              const SizedBox(height: 12),
-
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _QuickAccessCard(
-                      icon: Icons.code,
-                      title: 'Coding Stats',
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = 1;
-                        });
-                      },
-                      color: Colors.purple,
-                    ),
-                    const SizedBox(width: 12),
-                    _QuickAccessCard(
-                      icon: Icons.pets,
-                      title: 'GitHub',
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = 2;
-                        });
-                      },
-                      color: Colors.black87,
-                    ),
-                    const SizedBox(width: 12),
-                    _QuickAccessCard(
-                      icon: Icons.person,
-                      title: 'Profile',
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = 3;
-                        });
-                      },
-                      color: Colors.blue,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              Text(
-                'Getting Started',
-                style: theme.textTheme.titleMedium,
-              ),
-
-              const SizedBox(height: 12),
-
-              _InfoCard(
-                icon: Icons.info_outline,
-                title: 'View Your Coding Stats',
-                description: 'Check your LeetCode progress, difficulty breakdown, and achievements',
-                color: Colors.purple,
-              ),
-
-              const SizedBox(height: 12),
-
-              _InfoCard(
-                icon: Icons.pets,
-                title: 'GitHub Integration',
-                description: 'Link your GitHub profile to see your contributions and repositories',
-                color: Colors.black87,
-              ),
-
-              const SizedBox(height: 24),
+              Expanded(child: _buildMiniStatCard('SOLVED', '1,248', AppTheme.primaryMint)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildMiniStatCard('STREAK', '42d', Colors.orange)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildMiniStatCard('RANK', 'Top 1%', Colors.blue)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAccessCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color color;
-
-  const _QuickAccessCard({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Container(
-          width: 120,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+              Text('Connected Platforms', style: theme.textTheme.titleLarge),
+              TextButton(
+                onPressed: () {},
+                child: const Text('View all', style: TextStyle(color: AppTheme.primaryMint)),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          PlatformSection(profile: profile, isSmallScreen: true),
+          
+          const SizedBox(height: 32),
+          Text('Weekly Progress', style: theme.textTheme.titleLarge),
+          const SizedBox(height: 16),
+          _buildWeeklyProgressChart(theme),
+          const SizedBox(height: 100), // Space for bottom nav
+        ],
       ),
     );
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final Color color;
-
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 24),
+  Widget _buildMiniStatCard(String label, String value, Color color) {
+    return ModernCard(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: Colors.grey.shade500,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyProgressChart(ThemeData theme) {
+    return ModernCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('WEEKLY PROGRESS', style: theme.textTheme.labelMedium?.copyWith(letterSpacing: 1.2)),
+              const Row(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
+                  CircleAvatar(radius: 4, backgroundColor: AppTheme.primaryMint),
+                  SizedBox(width: 8),
+                  CircleAvatar(radius: 4, backgroundColor: Colors.grey),
                 ],
               ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            height: 150,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildBar(0.3, 'MON'),
+                _buildBar(0.6, 'TUE'),
+                _buildBar(0.2, 'WED'),
+                _buildBar(0.8, 'THU'),
+                _buildBar(1.0, 'FRI'),
+                _buildBar(0.4, 'SAT'),
+                _buildBar(0.3, 'SUN'),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildBar(double heightFactor, String label) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          width: 30,
+          height: 100 * heightFactor,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryMint.withOpacity(heightFactor.clamp(0.2, 1.0)),
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
+      ],
     );
   }
 }

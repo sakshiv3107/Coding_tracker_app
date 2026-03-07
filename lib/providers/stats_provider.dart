@@ -10,6 +10,7 @@ class StatsProvider extends ChangeNotifier {
   LeetcodeStats? leetcodeStats;
 
   Future<void> fetchLeetCodeStats(String username) async {
+    if (isLoading) return;
     try {
       isLoading = true;
       notifyListeners();

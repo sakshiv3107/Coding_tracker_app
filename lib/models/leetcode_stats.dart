@@ -6,6 +6,7 @@ class LeetcodeStats {
   final int hard;
   final String avatar;
   final int ranking;
+  final int rating;
 
   LeetcodeStats({
     required this.totalSolved,
@@ -14,5 +15,6 @@ class LeetcodeStats {
     required this.hard,
     required this.avatar,
     required this.ranking,
+    required this.rating,
   });
 }

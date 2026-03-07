@@ -9,39 +9,52 @@ class LeetcodeService {
       throw Exception("Username cannot be empty");
     }
 
-    final profileUrl = Uri.parse(
-      "https://alfa-leetcode-api.onrender.com/$username");
+    final profileUrl =
+        Uri.parse("https://leetcode-api-faisalshohag.vercel.app/$username");
 
-    final solvedUrl = Uri.parse(
-      "https://alfa-leetcode-api.onrender.com/$username/solved");
+    // final solvedUrl =
+    //     Uri.parse("https://alfa-leetcode-api.onrender.com/$username/solved");
 
-    final profileResponse = await http.get(profileUrl).timeout(const Duration(seconds: 15));
-    final solvedResponse = await http.get(solvedUrl).timeout(const Duration(seconds: 15));
+    final profileResponse =
+        await http.get(profileUrl).timeout(const Duration(seconds: 15));
 
-    if (profileResponse.statusCode == 404 || solvedResponse.statusCode == 404) {
+    // final solvedResponse =
+        // await http.get(solvedUrl).timeout(const Duration(seconds: 15));
+
+    if (profileResponse.statusCode == 429) {
+      await Future.delayed(const Duration(seconds: 2));
+      return fetchData(username);
+    }
+
+    if (profileResponse.statusCode == 404 ) {
       throw Exception("LeetCode user '$username' not found");
     }
 
-    if (profileResponse.statusCode != 200 || solvedResponse.statusCode != 200) {
-      throw Exception("API Error: ${profileResponse.statusCode}");
+    if (profileResponse.statusCode != 200) {
+      throw Exception("Profile API Error: ${profileResponse.statusCode}");
     }
 
-    final data = jsonDecode(solvedResponse.body);
-    final profile = jsonDecode(profileResponse.body);
-    print(data);
+    // if (solvedResponse.statusCode != 200) {
+    //   throw Exception("Solved API Error: ${solvedResponse.statusCode}");
+    // }
 
-    int total = data["totalSolved"] ?? data["solvedProblem"] ?? 0;
+    // final data = jsonDecode(solvedResponse.body);
+    final data = jsonDecode(profileResponse.body);
+
+    int total = data["totalSolved"] ?? 0;
     int easy = data["easySolved"] ?? 0;
     int medium = data["mediumSolved"] ?? 0;
     int hard = data["hardSolved"] ?? 0;
+    int rating = int.tryParse(data["contestRating"].toString()) ?? 0;
 
     return LeetcodeStats(
       totalSolved: total,
       easy: easy,
       medium: medium,
       hard: hard,
-      avatar: "https://leetcode.com${profile["avatar"]}",
-      ranking: int.tryParse(profile["ranking"].toString()) ?? 0,
+      avatar: "https://leetcode.com${data["avatar"]}",
+      ranking: int.tryParse(data["ranking"].toString()) ?? 0,
+      rating: rating,
     );
   }
 }

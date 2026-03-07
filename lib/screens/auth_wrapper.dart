@@ -37,16 +37,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show loading screen while profile is being loaded
     if (auth.user != null && profile.isLoading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
+              CircularProgressIndicator(color: Color(0xFF4E8B7C)),
+              SizedBox(height: 24),
               Text(
-                'Loading your profile...',
-                style: Theme.of(context).textTheme.bodyMedium,
+                'Initializing CodeSphere...',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),

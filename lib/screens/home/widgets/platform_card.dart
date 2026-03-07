@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../theme/app_theme.dart';
+import '../../../widgets/modern_card.dart';
+import '../../../providers/stats_provider.dart';
 
 class PlatformCard extends StatelessWidget {
   final String platform;
+  final StatsProvider stats;
   final IconData icon;
   final String id;
   final bool isSmallScreen;
@@ -9,6 +13,7 @@ class PlatformCard extends StatelessWidget {
 
   const PlatformCard({
     super.key,
+    required this.stats,
     required this.platform,
     required this.icon,
     required this.id,
@@ -19,92 +24,84 @@ class PlatformCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isConnected = id.isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
-      ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return ModernCard(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 16,
+      onTap: () {},
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
-                padding: EdgeInsets.all(isSmallScreen ? 10 : 12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isConnected
-                      ? theme.colorScheme.primaryContainer
-                      : theme.colorScheme.outline.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  color: isConnected ? AppTheme.primaryMintLight : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  color: isConnected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outline,
-                  size: isSmallScreen ? 24 : 28,
+                  color: isConnected ? AppTheme.primaryMint : Colors.grey,
+                  size: 24,
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                platform,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: isSmallScreen ? 12 : 14,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      platform.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    Text(
+                      isConnected ? '@$id' : 'Not Connected',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
-              if (isConnected)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: isSmallScreen ? 14 : 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Connected',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600,
-                          fontSize: isSmallScreen ? 10 : 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Text(
-                  'Not connected',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                    fontSize: isSmallScreen ? 10 : 12,
-                  ),
-                ),
             ],
           ),
-        ),
+          if (isConnected) ...[
+            const SizedBox(height: 20),
+            Text(
+              platform == 'LeetCode' ? 'CONTEST RATING' : 'CONTRIBUTIONS',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              platform == 'LeetCode' ? stats.leetcodeStats?.rating.toString() ?? '24' : '2,412',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF457B6C),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            Text(
+              'Click to link account',
+              style: TextStyle(fontSize: 11, color: theme.colorScheme.primary),
+            ),
+          ],
+        ],
       ),
     );
   }
