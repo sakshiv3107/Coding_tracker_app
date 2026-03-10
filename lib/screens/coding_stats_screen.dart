@@ -1,20 +1,25 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
+import '../providers/github_provider.dart';
 import '../models/leetcode_stats.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/submission_heatmap.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../widgets/skeleton_loading.dart';
-import 'package:intl/intl.dart';
-import '../widgets/difficulty_pie_chart.dart';
 import '../widgets/problem_solving_trend_chart.dart';
 import '../widgets/contest_table.dart';
+import '../widgets/streak_card.dart';
+import '../widgets/recent_submission_section.dart';
+import '../widgets/developer_score_card.dart';
+import '../widgets/difficulty_bar_chart.dart';
+import '../widgets/weekly_activity_chart.dart';
+import '../widgets/contest_analytics_section.dart' hide AppTheme;
+import 'package:intl/intl.dart';
 
 class CodingStatsScreen extends StatefulWidget {
   const CodingStatsScreen({super.key});
@@ -27,9 +32,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshStats();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshStats());
   }
 
   void _refreshStats() {
@@ -48,6 +51,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
   Widget build(BuildContext context) {
     final stats = context.watch<StatsProvider>();
     final profile = context.watch<ProfileProvider>();
+    final github = context.watch<GithubProvider>();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -59,6 +63,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
+              // ── Top Bar ──────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                 sliver: SliverToBoxAdapter(
@@ -74,6 +79,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                 ),
               ),
 
+              // ── Error State ──────────────────────────────────────────
               if (stats.error != null)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -84,12 +90,16 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                     ),
                   ),
                 )
+
+              // ── Loading Skeleton ──────────────────────────────────────
               else if (stats.isLoading && stats.leetcodeStats == null)
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       const SkeletonLoading(width: double.infinity, height: 180, borderRadius: 24),
+                      const SizedBox(height: 16),
+                      const SkeletonLoading(width: double.infinity, height: 130, borderRadius: 24),
                       const SizedBox(height: 16),
                       const SkeletonLoading(width: double.infinity, height: 200, borderRadius: 24),
                       const SizedBox(height: 16),
@@ -103,87 +113,13 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                     ]),
                   ),
                 )
+
+              // ── Loaded Content ────────────────────────────────────────
               else if (stats.leetcodeStats != null)
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      FadeSlideTransition(
-                        child: _buildProfileHeader(stats, profile),
-                      ),
-                      const SizedBox(height: 24),
-
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 100),
-                        child: _buildStreakSection(stats.leetcodeStats!),
-                      ),
-                      const SizedBox(height: 24),
-
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 150),
-                        child: _buildMainStats(stats),
-                      ),
-                      const SizedBox(height: 24),
-
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 200),
-                        child: SubmissionHeatmap(
-                          datasets: stats.leetcodeStats!.submissionCalendar,
-                          baseColor: AppTheme.leetCodeYellow,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      if (stats.leetcodeStats!.contestHistory != null && stats.leetcodeStats!.contestHistory!.isNotEmpty) ...[
-                        FadeSlideTransition(
-                          delay: const Duration(milliseconds: 250),
-                          child: Text('Contest Analytics', style: theme.textTheme.titleLarge),
-                        ),
-                        const SizedBox(height: 16),
-                        FadeSlideTransition(
-                          delay: const Duration(milliseconds: 300),
-                          child: _buildContestAnalytics(stats.leetcodeStats!),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
-
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 350),
-                        child: DifficultyBarChart(
-                          easy: stats.leetcodeStats!.easy,
-                          medium: stats.leetcodeStats!.medium,
-                          hard: stats.leetcodeStats!.hard,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 400),
-                        child: ProblemSolvingTrendChart(
-                          submissionCalendar: stats.leetcodeStats!.submissionCalendar,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      if (stats.leetcodeStats!.contestHistory != null && stats.leetcodeStats!.contestHistory!.isNotEmpty) ...[
-                        FadeSlideTransition(
-                          delay: const Duration(milliseconds: 450),
-                          child: ContestTable(history: stats.leetcodeStats!.contestHistory!),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
-
-                      if (stats.leetcodeStats!.recentSubmissions != null && stats.leetcodeStats!.recentSubmissions!.isNotEmpty) ...[
-                        FadeSlideTransition(
-                          delay: const Duration(milliseconds: 400),
-                          child: Text('Recent Solutions', style: theme.textTheme.titleLarge),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildRecentSubmissions(stats.leetcodeStats!.recentSubmissions!),
-                      ],
-
-                      const SizedBox(height: 120),
-                    ]),
+                    delegate: SliverChildListDelegate(_buildContent(stats, profile, github)),
                   ),
                 ),
             ],
@@ -192,6 +128,120 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       ),
     );
   }
+
+  List<Widget> _buildContent(StatsProvider stats, ProfileProvider profile, GithubProvider github) {
+    final lc = stats.leetcodeStats!;
+
+    return [
+      // 1. Profile header
+      FadeSlideTransition(
+        child: _buildProfileHeader(stats, profile),
+      ),
+      const SizedBox(height: 24),
+
+      // 2. Developer Score Card (NEW)
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 80),
+        child: DeveloperScoreCard(
+          leetcodeSolved: lc.totalSolved,
+          leetcodeRating: lc.contestRating ?? 0,
+          githubStars: github.githubStats?.totalStars ?? 0,
+          githubContributions: github.githubStats?.totalContributions ?? 0,
+        ),
+      ),
+      const SizedBox(height: 24),
+
+      // 3. Streak section
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 120),
+        child: StreakCard(
+          currentStreak: lc.streak,
+          maxStreak: lc.longestStreak,
+        ),
+      ),
+      const SizedBox(height: 24),
+
+      // 4. Main stats (total solved, active days, ranking)
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 160),
+        child: _buildMainStats(stats),
+      ),
+      const SizedBox(height: 24),
+
+      // 5. Difficulty breakdown (REPLACED with horizontal bar chart)
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 200),
+        child: DifficultyBarChart(
+          easy: lc.easy,
+          medium: lc.medium,
+          hard: lc.hard,
+        ),
+      ),
+      const SizedBox(height: 24),
+
+    
+      // 6. Submission heatmap
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 280),
+        child: SubmissionHeatmap(
+          datasets: lc.submissionCalendar,
+          baseColor: AppTheme.leetCodeYellow,
+        ),
+      ),
+      const SizedBox(height: 32),
+
+      // 7. Contest analytics — show if ANY contest data is available
+      // contestRating > 0 means the user has participated in at least one contest
+      if ((lc.contestRating != null && lc.contestRating! > 0) ||
+          lc.globalRanking != null ||
+          (lc.contestHistory != null && lc.contestHistory!.isNotEmpty)) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 300),
+          child: Text('Contest Performance', style: Theme.of(context).textTheme.titleLarge),
+        ),
+        const SizedBox(height: 16),
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 320),
+          child: ContestAnalyticsSection(stats: lc),
+        ),
+        const SizedBox(height: 32),
+      ],
+
+      // 8. Contest table (keep existing)
+      if (lc.contestHistory != null && lc.contestHistory!.isNotEmpty) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 400),
+          child: ContestTable(history: lc.contestHistory!),
+        ),
+        const SizedBox(height: 32),
+      ],
+
+      // 9. Problem solving trend
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 360),
+        child: ProblemSolvingTrendChart(
+          submissionCalendar: lc.submissionCalendar,
+        ),
+      ),
+      const SizedBox(height: 32),
+
+      
+
+      // 10. Recent submissions
+      if (lc.recentSubmissions != null && lc.recentSubmissions!.isNotEmpty) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 440),
+          child: RecentSubmissionsSection(
+            submissions: lc.recentSubmissions!,
+            limit: 10,
+          ),
+        ),
+      ],
+
+      const SizedBox(height: 120),
+    ];
+  }
+
 
   Widget _buildStreakSection(LeetcodeStats stats) {
     return Row(
@@ -219,7 +269,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 
-  Widget _buildDetailedStatCard(String title, int value, IconData icon, Color color, {String subtitle = ''}) {
+  Widget _buildDetailedStatCard(String title, int value, IconData icon, Color color,
+      {String subtitle = ''}) {
     return ModernCard(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -229,7 +280,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
             ],
           ),
           const SizedBox(height: 12),
@@ -286,149 +339,56 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 
-  Widget _buildContestAnalytics(LeetcodeStats stats) {
-    final theme = Theme.of(context);
-    final history = stats.contestHistory ?? [];
-    
+  Widget _buildRecentSubmissions(List<RecentSubmission> submissions) {
     return Column(
-      children: [
-        ModernCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.spaceBetween,
-                children: [
-                  _buildContestStat('Rating', stats.contestRating?.toStringAsFixed(0) ?? 'N/A', Colors.blue),
-                  _buildContestStat('Highest', stats.highestRating?.toStringAsFixed(0) ?? 'N/A', Colors.purple),
-                  _buildContestStat('Global Rank', stats.globalRanking?.toString() ?? 'N/A', Colors.amber),
-                  if (stats.topPercentage != null)
-                    _buildContestStat('Top %', '${stats.topPercentage!.toStringAsFixed(1)}%', Colors.green),
-                  if (stats.totalContests != null)
-                    _buildContestStat('Attended', stats.totalContests.toString(), Colors.teal),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 200,
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      getDrawingHorizontalLine: (value) => FlLine(
-                        color: Colors.grey.withOpacity(0.05),
-                        strokeWidth: 1,
-                      ),
-                    ),
-                    titlesData: const FlTitlesData(
-                      show: true,
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: history.asMap().entries.map((e) {
-                          return FlSpot(e.key.toDouble(), e.value.rating);
-                        }).toList(),
-                        isCurved: true,
-                        curveSmoothness: 0.35,
-                        color: AppTheme.leetCodeYellow,
-                        barWidth: 4,
-                        isStrokeCapRound: true,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                            radius: 3,
-                            color: Colors.white,
-                            strokeWidth: 2,
-                            strokeColor: AppTheme.leetCodeYellow,
-                          ),
-                        ),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppTheme.leetCodeYellow.withOpacity(0.2),
-                              AppTheme.leetCodeYellow.withOpacity(0),
-                            ],
-                          ),
-                        ),
+      children: submissions.take(5).map((sub) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ModernCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (sub.status == 'Accepted' ? Colors.green : Colors.red)
+                        .withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    sub.status == 'Accepted' ? Icons.check_rounded : Icons.close_rounded,
+                    color: sub.status == 'Accepted' ? Colors.green : Colors.red,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(sub.title,
+                          style:
+                              const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        DateFormat('MMM dd, yyyy HH:mm').format(sub.timestamp),
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     ],
                   ),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeInOutCubic,
                 ),
-              ),
-            ],
+                Text(
+                  sub.status,
+                  style: TextStyle(
+                    color: sub.status == 'Accepted' ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContestStat(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildRecentSubmissions(List<RecentSubmission> submissions) {
-    return Column(
-      children: submissions.take(5).map((sub) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: ModernCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (sub.status == 'Accepted' ? Colors.green : Colors.red).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  sub.status == 'Accepted' ? Icons.check_rounded : Icons.close_rounded,
-                  color: sub.status == 'Accepted' ? Colors.green : Colors.red,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(sub.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text(
-                      DateFormat('MMM dd, yyyy HH:mm').format(sub.timestamp),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                sub.status,
-                style: TextStyle(
-                  color: sub.status == 'Accepted' ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      )).toList(),
+        );
+      }).toList(),
     );
   }
 
@@ -508,7 +468,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, int value, IconData icon, Color color, {String prefix = '', String suffix = '', bool isSmall = false}) {
+  Widget _buildStatCard(String label, int value, IconData icon, Color color,
+      {String prefix = '', bool isSmall = false}) {
     return ModernCard(
       padding: const EdgeInsets.all(16),
       showShadow: true,
@@ -525,7 +486,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 if (prefix.isNotEmpty)
-                  Text(prefix, style: TextStyle(fontSize: isSmall ? 12 : 14, fontWeight: FontWeight.bold)),
+                  Text(prefix,
+                      style: TextStyle(
+                          fontSize: isSmall ? 12 : 14, fontWeight: FontWeight.bold)),
                 AnimatedStatCounter(
                   value: value,
                   style: TextStyle(
@@ -533,8 +496,6 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (suffix.isNotEmpty)
-                  Text(suffix, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -566,9 +527,12 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         children: [
           const Icon(Icons.cloud_off_rounded, color: Colors.red, size: 48),
           const SizedBox(height: 16),
-          const Text('Connection Error', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const Text('Connection Error',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
-          Text(message, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+          Text(message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,

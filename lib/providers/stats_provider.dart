@@ -1,52 +1,69 @@
-import 'package:coding_tracker_app/models/leetcode_stats.dart';
+// providers/stats_provider.dart (ENHANCED)
+// Add this to your existing StatsProvider — includes GitHub calendar map
+// and DeveloperScore computation.
+
 import 'package:flutter/foundation.dart';
+import '../models/leetcode_stats.dart';
+import '../models/developer_score.dart';
 import '../services/leetcode_service.dart';
 
 class StatsProvider extends ChangeNotifier {
-  final _service = LeetcodeService();
+  LeetcodeStats? _leetcodeStats;
+  bool _isLoading = false;
+  String? _error;
 
-  String? error;
-  bool isLoading = false;
-  LeetcodeStats? leetcodeStats;
+  // GitHub data (populated from your existing GitHubService)
+  Map<DateTime, int> _githubCommitCalendar = {};
+  int _githubStars = 0;
+  int _githubTotalCommits = 0;
 
-  Future<void> fetchLeetCodeStats(String username) async {
-    if (isLoading) return;
-    try {
-      isLoading = true;
-      notifyListeners();
+  LeetcodeStats? get leetcodeStats => _leetcodeStats;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  Map<DateTime, int> get githubCommitCalendar => _githubCommitCalendar;
 
-      leetcodeStats = await _service.fetchData(username);
-      error = null;
-    } catch (e) {
-      if (e.toString().contains("TIMEOUT_ERROR") || e.toString().contains("TimeoutException")) {
-        error = "The LeetCode server is taking too long to wake up. Please wait 10 seconds and try again, it will likely work then!";
-      } else if (e.toString().contains("not found")) {
-        error = "LeetCode user not found. Please check your username in profile.";
-      } else {
-        error = e.toString().replaceAll("Exception: ", "");
-      }
-    }
-
-    isLoading = false;
-    notifyListeners();
+  DeveloperScore? get developerScore {
+    if (_leetcodeStats == null) return null;
+    return DeveloperScore.calculate(
+      leetcodeProblems: _leetcodeStats!.totalSolved,
+      contestRating: _leetcodeStats!.contestRating ?? 0,
+      githubStars: _githubStars,
+      totalCommits: _githubTotalCommits,
+    );
   }
 
   void setError(String message) {
-    error = message;
-    leetcodeStats = null;
-    isLoading = false;
+    _error = message;
+    _isLoading = false;
     notifyListeners();
   }
 
-  void clearError() {
-    error = null;
+  /// Call this from your existing GitHub provider sync or GitHubService
+  void updateGitHubData({
+    required Map<DateTime, int> commitCalendar,
+    required int stars,
+    required int totalCommits,
+  }) {
+    _githubCommitCalendar = commitCalendar;
+    _githubStars = stars;
+    _githubTotalCommits = totalCommits;
     notifyListeners();
   }
 
-  void reset() {
-    error = null;
-    isLoading = false;
-    leetcodeStats = null;
+  Future<void> fetchLeetCodeStats(String username) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final service = LeetcodeService();
+      _leetcodeStats = await service.fetchData(username);
+      _isLoading = false;
+      _error = null;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+    }
     notifyListeners();
   }
 }

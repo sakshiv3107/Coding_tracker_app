@@ -98,8 +98,7 @@ class LeetcodeService {
     ];
 
     Object? lastError;
-    
-    // First pass: try each proxy once with a moderate timeout (25s)
+
     for (final proxy in proxies) {
       try {
         final response = await http.post(
@@ -123,7 +122,6 @@ class LeetcodeService {
       }
     }
 
-    // Second pass: retry with a long timeout (60s) specifically to allow for Render to spin up
     for (final proxy in proxies) {
       try {
         final response = await http.post(
@@ -144,43 +142,33 @@ class LeetcodeService {
       }
     }
 
-    // Critical Fallback: Use individual REST endpoints of the primary proxy 
-    // This fetches data in separate requests to ensure better reliability
+    // REST fallback
     try {
       debugPrint("LeetCode API: Using full REST fallback for $username");
-      
+
+      // Fetch all 5 endpoints in parallel
       final profileFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/userProfile/$username"));
       final calendarFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/calendar"));
       final contestFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/contest"));
-      
-      final results = await Future.wait([profileFuture, calendarFuture, contestFuture]);
-      
+      final contestHistoryFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/contest/history"));
+      final recentFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/submission?limit=15"));
+
+      final results = await Future.wait([profileFuture, calendarFuture, contestFuture, contestHistoryFuture, recentFuture]);
+
       if (results[0].statusCode == 200) {
         final profileData = jsonDecode(results[0].body);
         final calendarBody = results[1].statusCode == 200 ? jsonDecode(results[1].body) : null;
         final contestBody = results[2].statusCode == 200 ? jsonDecode(results[2].body) : null;
-        
-        // Use normalized names from REST responses
-        final stats = LeetcodeStats(
-          totalSolved: profileData["totalSolved"] ?? 0,
-          easy: profileData["easySolved"] ?? 0,
-          medium: profileData["mediumSolved"] ?? 0,
-          hard: profileData["hardSolved"] ?? 0,
-          avatar: profileData["avatar"] ?? "",
-          ranking: profileData["ranking"] ?? 0,
-          rating: (contestBody?["contestRating"] ?? 0.0).toDouble(),
-          submissionCalendar: {}, // Will fill below
-          activeDays: 0,
-          contestRating: (contestBody?["contestRating"] != null && contestBody!["contestRating"] > 0) 
-              ? (contestBody["contestRating"] as num).toDouble() : null,
-          highestRating: (contestBody?["contestHighestRating"] as num?)?.toDouble(),
-          globalRanking: contestBody?["contestGlobalRanking"],
-          topPercentage: contestBody?["contestTopPercentage"] != null 
-              ? (contestBody!["contestTopPercentage"] as num).toDouble() : null,
-          totalContests: contestBody?["contestAttend"],
-        );
+        final contestHistoryBody = results[3].statusCode == 200 ? jsonDecode(results[3].body) : null;
+        final recentBody = results[4].statusCode == 200 ? jsonDecode(results[4].body) : null;
+        debugPrint("LeetCode API: /submission status=${results[4].statusCode}");
 
-        // Parse calendar from REST response
+        debugPrint("LeetCode API: /contest status=${results[2].statusCode}");
+        debugPrint("LeetCode API: /contest/history status=${results[3].statusCode}");
+        if (contestHistoryBody != null) {
+          debugPrint("LeetCode API: /contest/history keys=${contestHistoryBody.keys?.toList()}");
+        }
+
         final Map<DateTime, int> cal = {};
         if (calendarBody != null && calendarBody["submissionCalendar"] != null) {
           final calRaw = calendarBody["submissionCalendar"];
@@ -193,45 +181,145 @@ class LeetcodeService {
             }
           });
         }
-        
-        // Parse contest history from REST response
+
+        // Parse contest history — prefer dedicated /contest/history endpoint,
+        // fall back to history inside /contest summary body
         final List<LeetCodeContestHistory> history = [];
-        if (contestBody != null && contestBody["contestRankingHistory"] != null) {
-          for (var item in contestBody["contestRankingHistory"]) {
-            if (item["attended"] == true) {
-              history.add(LeetCodeContestHistory(
-                contestTitle: item["contest"]["title"],
-                rating: (item["rating"] as num).toDouble(),
-                rank: item["rank"] ?? 0,
-                date: DateTime.fromMillisecondsSinceEpoch((item["contest"]["startTime"] as int) * 1000),
+
+        // /contest/history returns either a List directly or {contestHistory: [...]}
+        List? rawHistory;
+        if (contestHistoryBody is List) {
+          rawHistory = contestHistoryBody;
+        } else if (contestHistoryBody is Map) {
+          rawHistory = contestHistoryBody["contestHistory"] ??
+              contestHistoryBody["contestRankingHistory"] ??
+              contestHistoryBody["userContestRankingHistory"] ??
+              contestHistoryBody["data"];
+        }
+
+        // Fallback to /contest body if /contest/history gave nothing
+        rawHistory ??= contestBody?["contestRankingHistory"] ??
+            contestBody?["userContestRankingHistory"];
+
+        debugPrint("LeetCode API: raw contest history entries: ${rawHistory?.length ?? 0}");
+
+        if (rawHistory != null && rawHistory is List) {
+          for (var item in rawHistory) {
+            try {
+              final rating = item["rating"] ?? item["contestRating"];
+              final contest = item["contest"] ?? item;
+              final startTime = contest["startTime"] ??
+                  contest["start_time"] ??
+                  item["startTime"];
+              debugPrint("  entry: rating=$rating startTime=$startTime title=${contest['title'] ?? item['contestTitle']}");
+              if (rating != null && (rating as num) > 0 && startTime != null) {
+                history.add(LeetCodeContestHistory(
+                  contestTitle: contest["title"] ?? item["contestTitle"] ?? 'Contest',
+                  rating: (rating).toDouble(),
+                  rank: item["rank"] ?? item["ranking"] ?? item["contestRank"] ?? 0,
+                  date: DateTime.fromMillisecondsSinceEpoch(
+                      (startTime as int) * 1000),
+                ));
+              }
+            } catch (e) {
+              debugPrint("LeetCode API: Skipping contest entry: $e");
+            }
+          }
+        }
+        debugPrint("LeetCode API: REST fallback parsed ${history.length} contest entries");
+
+        final contestRating = (contestBody?["contestRating"] != null &&
+                contestBody!["contestRating"] > 0)
+            ? (contestBody["contestRating"] as num).toDouble()
+            : null;
+
+        double? highestRating;
+        if (history.isNotEmpty) {
+          highestRating = history.map((e) => e.rating).reduce((a, b) => a > b ? a : b);
+        } else {
+          highestRating = (contestBody?["contestHighestRating"] as num?)?.toDouble();
+        }
+
+        // ── Streak from calendar ─────────────────────────────────────────
+        int currentStreak = 0;
+        int longestStreak = 0;
+        if (cal.isNotEmpty) {
+          final sorted = cal.keys.toList()..sort();
+          int temp = 1;
+          for (int i = 1; i < sorted.length; i++) {
+            if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
+              temp++;
+              if (temp > longestStreak) longestStreak = temp;
+            } else {
+              longestStreak = longestStreak > temp ? longestStreak : temp;
+              temp = 1;
+            }
+          }
+          longestStreak = longestStreak > temp ? longestStreak : temp;
+          final today = DateTime.now();
+          DateTime check = DateTime(today.year, today.month, today.day);
+          if (!cal.containsKey(check)) {
+            check = check.subtract(const Duration(days: 1));
+          }
+          while (cal.containsKey(check)) {
+            currentStreak++;
+            check = check.subtract(const Duration(days: 1));
+          }
+        }
+
+        // ── Recent submissions from /submission endpoint ──────────────────
+        final List<RecentSubmission> recentSubmissions = [];
+        final rawSubs = recentBody is List ? recentBody
+            : (recentBody is Map ? (recentBody["submission"] ?? recentBody["submissions"] ?? recentBody["recentSubmissionList"]) : null);
+        if (rawSubs is List) {
+          debugPrint("LeetCode API: REST recent submissions: ${rawSubs.length}");
+          for (var item in rawSubs) {
+            try {
+              final ts = item["timestamp"] ?? item["time"];
+              final timestamp = ts is String ? int.tryParse(ts) : (ts as int?);
+              recentSubmissions.add(RecentSubmission(
+                title: item["title"] ?? item["problem"] ?? "",
+                titleSlug: item["titleSlug"] ?? item["title_slug"] ?? "",
+                difficulty: item["difficulty"] ?? "",
+                status: item["statusDisplay"] ?? item["status"] ?? item["verdict"] ?? "Unknown",
+                timestamp: timestamp != null
+                    ? DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)
+                    : DateTime.now(),
               ));
+            } catch (e) {
+              debugPrint("LeetCode API: Skipping submission entry: $e");
             }
           }
         }
 
         return LeetcodeStats(
-          totalSolved: stats.totalSolved,
-          easy: stats.easy,
-          medium: stats.medium,
-          hard: stats.hard,
-          avatar: stats.avatar,
-          ranking: stats.ranking,
-          rating: stats.rating,
+          totalSolved: profileData["totalSolved"] ?? 0,
+          easy: profileData["easySolved"] ?? 0,
+          medium: profileData["mediumSolved"] ?? 0,
+          hard: profileData["hardSolved"] ?? 0,
+          avatar: profileData["avatar"] ?? "",
+          ranking: profileData["ranking"] ?? 0,
+          rating: contestRating ?? 0,
           submissionCalendar: cal,
           activeDays: cal.length,
-          contestRating: stats.contestRating,
-          highestRating: stats.highestRating,
-          globalRanking: stats.globalRanking,
-          topPercentage: stats.topPercentage,
-          totalContests: stats.totalContests,
+          streak: currentStreak,
+          longestStreak: longestStreak,
+          contestRating: contestRating,
+          highestRating: highestRating,
+          globalRanking: contestBody?["contestGlobalRanking"],
+          topPercentage: contestBody?["contestTopPercentage"] != null
+              ? (contestBody!["contestTopPercentage"] as num).toDouble()
+              : null,
+          totalContests: contestBody?["contestAttend"],
           contestHistory: history,
+          recentSubmissions: recentSubmissions,
         );
       }
     } catch (e) {
       debugPrint("LeetCode API: REST fallback failed: $e");
     }
 
-    if (lastError.toString().contains("SocketException") || 
+    if (lastError.toString().contains("SocketException") ||
         lastError.toString().contains("Failed host lookup") ||
         lastError.toString().contains("TimeoutException") ||
         lastError.toString().contains("Failed to fetch")) {
@@ -242,10 +330,7 @@ class LeetcodeService {
   }
 
   LeetcodeStats _parseResponse(Map<String, dynamic> jsonResponse, String username) {
-    // Some proxies return data directly at root, others nest under "data"
     final data = jsonResponse.containsKey("data") ? jsonResponse["data"] : jsonResponse;
-    
-    // Check for matchedUser in various places
     final matchedUser = data["matchedUser"] ?? data;
 
     if (matchedUser == null || (matchedUser is Map && matchedUser.isEmpty)) {
@@ -254,32 +339,31 @@ class LeetcodeService {
 
     final profile = matchedUser["profile"] ?? {};
     final submissionStatsData = matchedUser["submitStats"] ?? matchedUser["submitStatsGlobal"];
-    
+
     if (submissionStatsData == null) {
       debugPrint("LeetCode API Warning: Could not find submission stats in response");
     }
-    
-    final submitStats = submissionStatsData != null ? (submissionStatsData["acSubmissionNum"] as List?) : null;
-    
-    // Some proxies return contest ranking at root or as separate fields
-    final contestRanking = data["userContestRanking"] ?? 
+
+    final submitStats = submissionStatsData != null
+        ? (submissionStatsData["acSubmissionNum"] as List?)
+        : null;
+
+    final contestRanking = data["userContestRanking"] ??
         (data["contestRating"] != null ? data : null);
-    
+
     final calendarRaw = matchedUser["submissionCalendar"] ?? data["submissionCalendar"];
 
-    // Parse submission calendar
     final Map<DateTime, int> submissionCalendar = {};
     if (calendarRaw != null && calendarRaw.isNotEmpty) {
       try {
-        final Map<String, dynamic> rawCalendar = 
-            calendarRaw is String ? jsonDecode(calendarRaw) : calendarRaw as Map<String, dynamic>;
-        
+        final Map<String, dynamic> rawCalendar = calendarRaw is String
+            ? jsonDecode(calendarRaw)
+            : calendarRaw as Map<String, dynamic>;
+
         rawCalendar.forEach((key, value) {
           final timestamp = int.tryParse(key);
           if (timestamp != null) {
-            // Use UTC for consistent date normalization
             final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true);
-            // Normalize to date only (midnight) in local time for UI display
             final localDate = DateTime(date.year, date.month, date.day);
             submissionCalendar[localDate] = value as int;
           }
@@ -291,7 +375,6 @@ class LeetcodeService {
     }
 
     int total = 0, easy = 0, medium = 0, hard = 0;
-
     if (submitStats != null) {
       for (var stat in submitStats) {
         if (stat["difficulty"] == "All") total = stat["count"];
@@ -301,22 +384,41 @@ class LeetcodeService {
       }
     }
 
-    final contestHistoryData = (data["userContestRankingHistory"] ?? data["contestRankingHistory"]) as List?;
-    final recentSubmissionsData = (data["recentSubmissionList"] ?? data["recentSubmissions"]) as List?;
+    final contestHistoryData =
+        (data["userContestRankingHistory"] ?? data["contestRankingHistory"]) as List?;
+    final recentSubmissionsData =
+        (data["recentSubmissionList"] ?? data["recentSubmissions"]) as List?;
 
+    // ── Parse contest history (attended filter removed) ──────────────────
     final List<LeetCodeContestHistory> contestHistory = [];
     if (contestHistoryData != null) {
-      for (var item in contestHistoryData) {
-        if (item["attended"] == true) {
-          contestHistory.add(LeetCodeContestHistory(
-            contestTitle: item["contest"]["title"],
-            rating: (item["rating"] as num).toDouble(),
-            rank: item["rank"] ?? 0,
-            date: DateTime.fromMillisecondsSinceEpoch((item["contest"]["startTime"] as int) * 1000),
-          ));
+      debugPrint("=== CONTEST DEBUG: ${contestHistoryData.length} raw entries ===");
+      for (int i = 0; i < contestHistoryData.length; i++) {
+        final item = contestHistoryData[i];
+        debugPrint("  [$i] attended=${item['attended']} rating=${item['rating']} title=${item['contest']?['title']}");
+        try {
+          final rating = item["rating"];
+          final startTime = item["contest"]?["startTime"];
+          if (rating != null && (rating as num) > 0 && startTime != null) {
+            final parsedDate = DateTime.fromMillisecondsSinceEpoch(
+                (startTime as int) * 1000);
+            debugPrint("  -> adding: rating=${(rating as num).toStringAsFixed(1)} date=$parsedDate title=${item['contest']['title']}");
+            contestHistory.add(LeetCodeContestHistory(
+              contestTitle: item["contest"]["title"] ?? 'Contest',
+              rating: (rating).toDouble(),
+              rank: item["rank"] ?? 0,
+              date: parsedDate,
+            ));
+          }
+        } catch (e) {
+          debugPrint("LeetCode API: Skipping malformed contest entry: $e");
         }
       }
+      debugPrint("=== CONTEST DEBUG: parsed ${contestHistory.length} entries ===");
+    } else {
+      debugPrint("=== CONTEST DEBUG: contestHistoryData is NULL ===");
     }
+    // ──────────────────────────────────────────────────────────────────────
 
     final List<RecentSubmission> recentSubmissions = [];
     if (recentSubmissionsData != null) {
@@ -324,30 +426,28 @@ class LeetcodeService {
         recentSubmissions.add(RecentSubmission(
           title: item["title"],
           titleSlug: item["titleSlug"],
-          difficulty: "", 
+          difficulty: "",
           status: item["statusDisplay"],
-          timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(item["timestamp"]) * 1000),
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+              int.parse(item["timestamp"]) * 1000),
         ));
       }
     }
 
-    // Calculate Streak
+    // Streak calculation
     int currentStreak = 0;
     int longestStreak = 0;
     int tempStreak = 0;
-    int activeDays = submissionCalendar.length;
+    final int activeDays = submissionCalendar.length;
 
     final today = DateTime.now();
     final normalizedToday = DateTime(today.year, today.month, today.day);
-    
-    // Sort dates to calculate streak
     final sortedDates = submissionCalendar.keys.toList()..sort();
-    
+
     if (sortedDates.isNotEmpty) {
-      // Calculate longest streak
       for (int i = 0; i < sortedDates.length; i++) {
         if (i > 0) {
-          final diff = sortedDates[i].difference(sortedDates[i-1]).inDays;
+          final diff = sortedDates[i].difference(sortedDates[i - 1]).inDays;
           if (diff == 1) {
             tempStreak++;
           } else if (diff > 1) {
@@ -360,12 +460,10 @@ class LeetcodeService {
       }
       if (tempStreak > longestStreak) longestStreak = tempStreak;
 
-      // Calculate current streak
       DateTime checkDate = normalizedToday;
       if (!submissionCalendar.containsKey(checkDate)) {
         checkDate = checkDate.subtract(const Duration(days: 1));
       }
-      
       while (submissionCalendar.containsKey(checkDate)) {
         currentStreak++;
         checkDate = checkDate.subtract(const Duration(days: 1));
@@ -375,14 +473,14 @@ class LeetcodeService {
     double rating = 0;
     if (contestRanking != null) {
       final r = contestRanking["rating"] ?? contestRanking["contestRating"];
-      if (r != null) {
-        rating = (r as num).toDouble();
-      }
+      if (r != null) rating = (r as num).toDouble();
     }
 
     double? highestRating;
     if (contestHistory.isNotEmpty) {
-      highestRating = contestHistory.map((e) => e.rating).reduce((a, b) => a > b ? a : b);
+      highestRating = contestHistory
+          .map((e) => e.rating)
+          .reduce((a, b) => a > b ? a : b);
     }
 
     return LeetcodeStats(
@@ -400,7 +498,9 @@ class LeetcodeService {
       contestRating: rating > 0 ? rating : null,
       highestRating: highestRating,
       globalRanking: contestRanking?["globalRanking"],
-      topPercentage: contestRanking?["topPercentage"] != null ? (contestRanking!["topPercentage"] as num).toDouble() : null,
+      topPercentage: contestRanking?["topPercentage"] != null
+          ? (contestRanking!["topPercentage"] as num).toDouble()
+          : null,
       totalContests: contestRanking?["attendedContestsCount"],
       contestHistory: contestHistory,
       recentSubmissions: recentSubmissions,

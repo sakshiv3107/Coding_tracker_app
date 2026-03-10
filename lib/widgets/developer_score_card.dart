@@ -1,6 +1,8 @@
+// widgets/developer_score_card.dart
+// Flat named params — matches dashboard_screen.dart call site exactly.
+
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
-import '../theme/app_theme.dart';
+import '../models/developer_score.dart';
 import 'modern_card.dart';
 import 'animations/animated_stat_counter.dart';
 
@@ -22,42 +24,46 @@ class DeveloperScoreCard extends StatefulWidget {
   State<DeveloperScoreCard> createState() => _DeveloperScoreCardState();
 }
 
-class _DeveloperScoreCardState extends State<DeveloperScoreCard> with SingleTickerProviderStateMixin {
+class _DeveloperScoreCardState extends State<DeveloperScoreCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _animation;
-
-  int get score {
-    final s = (widget.leetcodeSolved * 2) +
-        (widget.leetcodeRating / 10) +
-        (widget.githubStars * 3) +
-        (widget.githubContributions / 50);
-    return s.round();
-  }
-
-  String get rank {
-    if (score < 500) return 'Beginner Developer';
-    if (score < 1500) return 'Intermediate Developer';
-    return 'Advanced Developer';
-  }
-
-  Color get scoreColor {
-    if (score < 500) return Colors.blueAccent;
-    if (score < 1500) return AppTheme.primary;
-    return AppTheme.secondary;
-  }
+  late Animation<double> _anim;
+  late DeveloperScore _score;
 
   @override
   void initState() {
     super.initState();
+    _score = _compute();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1200),
     );
-    _animation = Tween<double>(begin: 0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-    _controller.forward();
+    _anim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _controller.forward();
+    });
   }
+
+  @override
+  void didUpdateWidget(DeveloperScoreCard old) {
+    super.didUpdateWidget(old);
+    if (old.leetcodeSolved != widget.leetcodeSolved ||
+        old.leetcodeRating != widget.leetcodeRating ||
+        old.githubStars != widget.githubStars ||
+        old.githubContributions != widget.githubContributions) {
+      _score = _compute();
+      _controller
+        ..reset()
+        ..forward();
+    }
+  }
+
+  DeveloperScore _compute() => DeveloperScore.calculate(
+        leetcodeProblems: widget.leetcodeSolved,
+        contestRating: widget.leetcodeRating,
+        githubStars: widget.githubStars,
+        totalCommits: widget.githubContributions,
+      );
 
   @override
   void dispose() {
@@ -65,129 +71,196 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard> with SingleTick
     super.dispose();
   }
 
+  Color get _color {
+    switch (_score.level) {
+      case 'Advanced Developer':
+        return const Color(0xFF6C63FF);
+      case 'Intermediate Developer':
+        return const Color(0xFF00C9A7);
+      default:
+        return const Color(0xFFFFA552);
+    }
+  }
+
+  IconData get _icon {
+    switch (_score.level) {
+      case 'Advanced Developer':
+        return Icons.workspace_premium_rounded;
+      case 'Intermediate Developer':
+        return Icons.trending_up_rounded;
+      default:
+        return Icons.auto_awesome_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    // Normalize score for progress indicator (max 3000 for full bar)
-    final progress = (score / 3000).clamp(0.0, 1.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _color;
 
     return ModernCard(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.zero,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              scoreColor.withOpacity(0.15),
-              scoreColor.withOpacity(0.05),
-            ],
+            colors: isDark
+                ? [color.withOpacity(0.15), color.withOpacity(0.05)]
+                : [color.withOpacity(0.08), color.withOpacity(0.02)],
           ),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DEVELOPER SCORE',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: scoreColor.withOpacity(0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    AnimatedStatCounter(
-                      value: score,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: scoreColor,
-                        fontSize: 48,
-                      ) ?? const TextStyle(),
-                    ),
-                  ],
-                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: scoreColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: scoreColor.withOpacity(0.2)),
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    rank.toUpperCase(),
-                    style: TextStyle(
-                      color: scoreColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  child: Icon(_icon, color: color, size: 22),
                 ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return Stack(
-                  children: [
-                    Container(
-                      height: 12,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: scoreColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    FractionallySizedBox(
-                      widthFactor: progress * _animation.value,
-                      child: Container(
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: scoreColor,
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: scoreColor.withOpacity(0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DEVELOPER SCORE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade500,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                      Text(
+                        _score.level,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedStatCounter(
+                  value: _score.score.toInt(),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: -1,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+
+            const SizedBox(height: 20),
+
+            // Overall progress bar
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Beginner',
-                  style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                  'Overall Progress',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade500,
+                  ),
                 ),
                 Text(
-                  'Advanced',
-                  style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                  '${(_score.normalizedScore * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            AnimatedBuilder(
+              animation: _anim,
+              builder: (context, _) => ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: _score.normalizedScore * _anim.value,
+                  minHeight: 10,
+                  backgroundColor: color.withOpacity(0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Breakdown bars
+            _buildBreakdown(color),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBreakdown(Color color) {
+    final total = _score.totalContributions;
+    if (total == 0) return const SizedBox.shrink();
+
+    final items = [
+      (label: 'Problems', value: _score.leetcodeContribution, color: const Color(0xFFFFA552), icon: Icons.code_rounded),
+      (label: 'Rating',   value: _score.ratingContribution,   color: const Color(0xFF00C9A7), icon: Icons.emoji_events_rounded),
+      (label: 'Stars',    value: _score.starsContribution,    color: const Color(0xFFFFD700), icon: Icons.star_rounded),
+      (label: 'Commits',  value: _score.commitsContribution,  color: const Color(0xFF6C63FF), icon: Icons.commit_rounded),
+    ];
+
+    return Column(
+      children: items.map((item) {
+        final fraction = item.value / total;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              Icon(item.icon, size: 14, color: item.color),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 58,
+                child: Text(
+                  item.label,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                ),
+              ),
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _anim,
+                  builder: (context, _) => ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: fraction * _anim.value,
+                      minHeight: 6,
+                      backgroundColor: item.color.withOpacity(0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(item.color),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 36,
+                child: Text(
+                  item.value.toStringAsFixed(0),
+                  textAlign: TextAlign.right,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: item.color),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

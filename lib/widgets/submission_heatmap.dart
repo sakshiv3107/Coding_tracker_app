@@ -1,128 +1,331 @@
-import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import 'modern_card.dart';
+// widgets/submission_heatmap.dart
+// LeetCode-style submission heatmap — month-wise columns, 7 rows (Sun–Sat),
+// rounded green squares, month labels, animated fade-in per cell.
 
-class SubmissionHeatmap extends StatelessWidget {
+import 'package:flutter/material.dart';
+
+class SubmissionHeatmap extends StatefulWidget {
   final Map<DateTime, int> datasets;
   final Color baseColor;
 
   const SubmissionHeatmap({
     super.key,
     required this.datasets,
-    this.baseColor = AppTheme.secondary,
+    this.baseColor = const Color(0xFF00B85E),
   });
 
   @override
+  State<SubmissionHeatmap> createState() => _SubmissionHeatmapState();
+}
+
+class _SubmissionHeatmapState extends State<SubmissionHeatmap>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // ── Data helpers ───────────────────────────────────────────────────────────
+
+  /// Returns the last 365 days worth of week-columns.
+  /// Each column = one week (7 cells, Sun=0 … Sat=6).
+  /// Returns list of months, each month = list of week-columns,
+  /// each week = 7 nullable DateTimes.
+  List<_MonthData> _buildMonthData() {
+    final today = DateTime.now();
+    final todayNorm = DateTime(today.year, today.month, today.day);
+
+    // Start from 52 weeks ago, aligned to Sunday
+    DateTime cursor = todayNorm.subtract(const Duration(days: 364));
+    // Roll back to nearest Sunday
+    cursor = cursor.subtract(Duration(days: cursor.weekday % 7));
+
+    final months = <_MonthData>[];
+    _MonthData? currentMonth;
+
+    while (!cursor.isAfter(todayNorm)) {
+      // Build one week column (Sun→Sat)
+      final week = <DateTime?>[];
+      for (int d = 0; d < 7; d++) {
+        final day = cursor.add(Duration(days: d));
+        week.add(day.isAfter(todayNorm) ? null : day);
+      }
+
+      // Group into months by the first non-null day's month
+      final representativeDay = week.firstWhere((d) => d != null,
+          orElse: () => null);
+      if (representativeDay != null) {
+        final monthKey = '${representativeDay.year}-${representativeDay.month}';
+        if (currentMonth == null || currentMonth.key != monthKey) {
+          currentMonth = _MonthData(
+            key: monthKey,
+            label: _monthLabel(representativeDay.month),
+            weeks: [],
+          );
+          months.add(currentMonth);
+        }
+        currentMonth.weeks.add(week);
+      }
+
+      cursor = cursor.add(const Duration(days: 7));
+    }
+
+    return months;
+  }
+
+  String _monthLabel(int month) {
+    const labels = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return labels[month];
+  }
+
+  int _countForDay(DateTime? day) {
+    if (day == null) return -1; // out of range
+    final key = DateTime(day.year, day.month, day.day);
+    return widget.datasets[key] ?? 0;
+  }
+
+  int get _totalSubmissions =>
+      widget.datasets.values.fold(0, (sum, v) => sum + v);
+
+  int get _activeDays => widget.datasets.length;
+
+  int get _maxStreak {
+    if (widget.datasets.isEmpty) return 0;
+    final sorted = widget.datasets.keys.toList()..sort();
+    int max = 1, cur = 1;
+    for (int i = 1; i < sorted.length; i++) {
+      if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
+        cur++;
+        if (cur > max) max = cur;
+      } else {
+        cur = 1;
+      }
+    }
+    return max;
+  }
+
+  // ── Color ──────────────────────────────────────────────────────────────────
+
+  Color _cellColor(int count, bool isDark) {
+    if (count < 0) return Colors.transparent; // future/padding
+    final empty = isDark
+        ? const Color(0xFF1E2A1E)
+        : const Color(0xFFEBF3EB);
+    if (count == 0) return empty;
+    final base = widget.baseColor;
+    if (count <= 2) return base.withOpacity(0.35);
+    if (count <= 5) return base.withOpacity(0.60);
+    if (count <= 9) return base.withOpacity(0.80);
+    return base;
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    
-    // We want to show the last 52 weeks
-    // Calculate the start date (Sunday of the week 51 weeks ago)
-    final startDate = today.subtract(Duration(days: today.weekday % 7 + 51 * 7));
-    
-    return ModernCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final months = _buildMonthData();
+    final total = _totalSubmissions;
+    final active = _activeDays;
+    final streak = _maxStreak;
+
+    const cellSize = 11.0;
+    const cellGap = 3.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Stats header ────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                'Submission Activity',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              _buildLegend(theme),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            reverse: true, // Show most recent first
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(52, (weekIndex) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 3),
-                  child: Column(
-                    children: List.generate(7, (dayIndex) {
-                      final date = startDate.add(Duration(days: weekIndex * 7 + dayIndex));
-                      if (date.isAfter(today)) {
-                        return const SizedBox(width: 12, height: 12);
-                      }
-                      
-                      final count = datasets[DateTime(date.year, date.month, date.day)] ?? 0;
-                      
-                      return Container(
-                        width: 12,
-                        height: 12,
-                        margin: const EdgeInsets.only(bottom: 3),
-                        decoration: BoxDecoration(
-                          color: _getColor(count, theme.brightness == Brightness.dark),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      );
-                    }),
-                  ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Last 12 months',
-                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5)),
-              ),
-              Text(
-                '${datasets.values.fold(0, (sum, val) => sum + val)} submissions',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppTheme.secondary,
-                  fontWeight: FontWeight.bold,
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$total',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' submissions in the past one year',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _statChip('Total active days:', '$active', isDark),
+                  const SizedBox(width: 16),
+                  _statChip('Max streak:', '$streak', isDark),
+                ],
+              ),
             ],
+          ),
+        ),
+
+        // ── Heatmap grid ─────────────────────────────────────────────
+        FadeTransition(
+          opacity: _fade,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: months.map((month) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Week columns
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: month.weeks.map((week) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: cellGap),
+                            child: Column(
+                              children: List.generate(7, (dayIndex) {
+                                final day = week[dayIndex];
+                                final count = _countForDay(day);
+                                final color = _cellColor(count, isDark);
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: cellGap),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    width: cellSize,
+                                    height: cellSize,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      borderRadius: BorderRadius.circular(2.5),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 6),
+                      // Month label
+                      Text(
+                        month.label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? Colors.grey.shade500
+                              : Colors.grey.shade500,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+
+        // ── Legend ───────────────────────────────────────────────────
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              'Less',
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+            ),
+            const SizedBox(width: 4),
+            ...[0, 2, 5, 9, 15].map((count) => Padding(
+                  padding: const EdgeInsets.only(left: 3),
+                  child: Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: _cellColor(count, isDark),
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                )),
+            const SizedBox(width: 4),
+            Text(
+              'More',
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _statChip(String label, String value, bool isDark) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+            ),
+          ),
+          const TextSpan(text: ' '),
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLegend(ThemeData theme) {
-    return Row(
-      children: [
-        Text('Less ', style: theme.textTheme.labelSmall?.copyWith(fontSize: 10)),
-        _legendBox(0, theme.brightness == Brightness.dark),
-        _legendBox(2, theme.brightness == Brightness.dark),
-        _legendBox(5, theme.brightness == Brightness.dark),
-        _legendBox(8, theme.brightness == Brightness.dark),
-        _legendBox(12, theme.brightness == Brightness.dark),
-        Text(' More', style: theme.textTheme.labelSmall?.copyWith(fontSize: 10)),
-      ],
-    );
-  }
+class _MonthData {
+  final String key;
+  final String label;
+  final List<List<DateTime?>> weeks;
 
-  Widget _legendBox(int count, bool isDark) {
-    return Container(
-      width: 10,
-      height: 10,
-      margin: const EdgeInsets.symmetric(horizontal: 1.5),
-      decoration: BoxDecoration(
-        color: _getColor(count, isDark),
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
-  Color _getColor(int count, bool isDark) {
-    if (count == 0) return isDark ? Colors.white10 : Colors.black.withOpacity(0.05);
-    if (count < 3) return baseColor.withOpacity(0.25);
-    if (count < 6) return baseColor.withOpacity(0.5);
-    if (count < 10) return baseColor.withOpacity(0.75);
-    return baseColor;
-  }
+  _MonthData({
+    required this.key,
+    required this.label,
+    required this.weeks,
+  });
 }
