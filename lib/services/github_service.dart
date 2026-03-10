@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/github_stats.dart';
 
@@ -8,132 +9,159 @@ class GithubService {
   static const String _token = "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";
 
   Future<GithubStats> fetchStats(String username) async {
-    const query = """
-    query getUserStats(\$username: String!) {
-      user(login: \$username) {
-        name
-        login
-        bio
-        avatarUrl
+    try {
+      const query = """
+      query getUserStats(\$username: String!) {
+        user(login: \$username) {
+          name
+          login
+          bio
+          avatarUrl
 
-        followers {
-          totalCount
-        }
+          followers {
+            totalCount
+          }
 
-        repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
-          totalCount
-          nodes {
-            name
-            description
-            stargazerCount
-            forkCount
-            updatedAt
-            url
+          starredRepositories {
+            totalCount
+          }
 
-            primaryLanguage {
+          repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+            totalCount
+            nodes {
               name
-              color
+              description
+              stargazerCount
+              forkCount
+              updatedAt
+              url
+
+              primaryLanguage {
+                name
+                color
+              }
             }
           }
-        }
 
-        contributionsCollection {
-          contributionCalendar {
-            totalContributions
-            weeks {
-              contributionDays {
-                date
-                contributionCount
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  date
+                  contributionCount
+                }
               }
             }
           }
         }
       }
-    }
-    """;
+      """;
 
-    final response = await http.post(
-      Uri.parse(_url),
+      final response = await http.post(
+        Uri.parse(_url),
+        headers: {
+          "Authorization": "Bearer $_token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "query": query,
+          "variables": {"username": username}
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("GitHub API Error: \${response.statusCode}");
+      }
+
+      final json = jsonDecode(response.body);
+
+      if (json["errors"] != null) {
+        throw Exception(json["errors"][0]["message"]);
+      }
+
+      final user = json["data"]["user"];
+
+      if (user == null) {
+        throw Exception("GitHub user '\$username' not found");
+      }
+
+      /// Calculate total stars
+      int totalStars = 0;
+
+      /// Language counts
+      Map<String, int> languageCounts = {};
+
+      final repos = user["repositories"]["nodes"];
+
+      for (var repo in repos) {
+        totalStars += (repo["stargazerCount"] ?? 0) as int;
+
+        final lang = repo["primaryLanguage"]?["name"];
+        if (lang != null) {
+          languageCounts[lang] = (languageCounts[lang] ?? 0) + 1;
+        }
+      }
+
+      /// Top language percentages
+
+      int totalLangRepos =
+          languageCounts.values.fold(0, (sum, count) => sum + count);
+
+      Map<String, double> topLanguages = {};
+
+      if (totalLangRepos > 0) {
+        var sortedLangs = languageCounts.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+        for (var entry in sortedLangs.take(5)) {
+          topLanguages[entry.key] = entry.value / totalLangRepos;
+        }
+      }
+
+      /// Contribution Heatmap
+      Map<DateTime, int> calendar = {};
+
+      final weeks = user["contributionsCollection"]["contributionCalendar"]["weeks"];
+
+      for (var week in weeks) {
+        for (var day in week["contributionDays"]) {
+          final date = DateTime.parse(day["date"]);
+          final normalizedDate = DateTime(date.year, date.month, date.day);
+
+          calendar[normalizedDate] = day["contributionCount"];
+        }
+      }
+
+      /// Convert GraphQL response to your model
+      return GithubStats.fromGraphQL(
+        user,
+        calendar,
+        totalStars,
+        user["starredRepositories"]?["totalCount"] ?? 0,
+        topLanguages,
+      );
+    } catch (e) {
+      debugPrint("GitHub API Error for \$username: \$e");
+      rethrow;
+    }
+  }
+
+  Future<List<GithubStarredRepository>> fetchStarredRepos(String username) async {
+    final response = await http.get(
+      Uri.parse("https://api.github.com/users/$username/starred"),
       headers: {
         "Authorization": "Bearer $_token",
-        "Content-Type": "application/json",
+        "Accept": "application/vnd.github.v3+json",
       },
-      body: jsonEncode({
-        "query": query,
-        "variables": {"username": username}
-      }),
     );
 
     if (response.statusCode != 200) {
-      throw Exception("GitHub API Error: ${response.statusCode}");
+      throw Exception("Failed to fetch starred repositories");
     }
 
-    final json = jsonDecode(response.body);
-
-    if (json["errors"] != null) {
-      throw Exception(json["errors"][0]["message"]);
-    }
-
-    final user = json["data"]["user"];
-
-    if (user == null) {
-      throw Exception("GitHub user '$username' not found");
-    }
-
-    /// Calculate total stars
-    int totalStars = 0;
-
-    /// Language counts
-    Map<String, int> languageCounts = {};
-
-    final repos = user["repositories"]["nodes"];
-
-    for (var repo in repos) {
-      totalStars += (repo["stargazerCount"] ?? 0) as int;
-
-      final lang = repo["primaryLanguage"]?["name"];
-      if (lang != null) {
-        languageCounts[lang] = (languageCounts[lang] ?? 0) + 1;
-      }
-    }
-
-    /// Top language percentages
-
-    int totalLangRepos =
-        languageCounts.values.fold(0, (sum, count) => sum + count);
-
-    Map<String, double> topLanguages = {};
-
-    if (totalLangRepos > 0) {
-      var sortedLangs = languageCounts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-
-      for (var entry in sortedLangs.take(5)) {
-        topLanguages[entry.key] = entry.value / totalLangRepos;
-      }
-    }
-
-    /// Contribution Heatmap
-    Map<DateTime, int> calendar = {};
-
-    final weeks = user["contributionsCollection"]["contributionCalendar"]["weeks"];
-
-    for (var week in weeks) {
-      for (var day in week["contributionDays"]) {
-        final date = DateTime.parse(day["date"]);
-        final normalizedDate = DateTime(date.year, date.month, date.day);
-
-        calendar[normalizedDate] = day["contributionCount"];
-      }
-    }
-
-    /// Convert GraphQL response to your model
-    return GithubStats.fromGraphQL(
-      user,
-      calendar,
-      totalStars,
-      topLanguages,
-    );
+    final List json = jsonDecode(response.body);
+    return json.map((repo) => GithubStarredRepository.fromJson(repo)).toList();
   }
 
   Future<List<GithubRepository>> fetchLatestRepos(String username) async {

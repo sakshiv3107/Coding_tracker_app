@@ -7,7 +7,9 @@ class GithubStats {
   final int followers;
   final int following;
   final int totalStars;
+  final int totalStarredRepos;
   final Map<String, double> topLanguages;
+  final int totalContributions;
   final Map<DateTime, int> contributionCalendar;
 
   GithubStats({
@@ -19,7 +21,9 @@ class GithubStats {
     required this.followers,
     required this.following,
     required this.totalStars,
+    required this.totalStarredRepos,
     required this.topLanguages,
+    required this.totalContributions,
     required this.contributionCalendar,
   });
 
@@ -27,8 +31,10 @@ class GithubStats {
   factory GithubStats.fromJson(
     Map<String, dynamic> json,
     Map<DateTime, int> calendar,
-    int stars,
+    int totalStars,
+    int starredRepos,
     Map<String, double> languages,
+    int totalContributions,
   ) {
     return GithubStats(
       login: json['login'] ?? '',
@@ -38,8 +44,10 @@ class GithubStats {
       publicRepos: json['public_repos'] ?? 0,
       followers: json['followers'] ?? 0,
       following: json['following'] ?? 0,
-      totalStars: stars,
+      totalStars: totalStars,
+      totalStarredRepos: starredRepos,
       topLanguages: languages,
+      totalContributions: totalContributions,
       contributionCalendar: calendar,
     );
   }
@@ -49,6 +57,7 @@ class GithubStats {
     Map<String, dynamic> user,
     Map<DateTime, int> calendar,
     int totalStars,
+    int totalStarredRepos,
     Map<String, double> topLanguages,
   ) {
     return GithubStats(
@@ -60,8 +69,39 @@ class GithubStats {
       followers: user["followers"]?["totalCount"] ?? 0,
       following: user["following"]?["totalCount"] ?? 0,
       totalStars: totalStars,
+      totalStarredRepos: totalStarredRepos,
       topLanguages: topLanguages,
+      totalContributions: user["contributionsCollection"]?["contributionCalendar"]?["totalContributions"] ?? 0,
       contributionCalendar: calendar,
+    );
+  }
+}
+
+class GithubStarredRepository {
+  final String name;
+  final String owner;
+  final String? description;
+  final int stars;
+  final String? language;
+  final String htmlUrl;
+
+  GithubStarredRepository({
+    required this.name,
+    required this.owner,
+    this.description,
+    required this.stars,
+    this.language,
+    required this.htmlUrl,
+  });
+
+  factory GithubStarredRepository.fromJson(Map<String, dynamic> json) {
+    return GithubStarredRepository(
+      name: json['name'] ?? '',
+      owner: json['owner']?['login'] ?? '',
+      description: json['description'],
+      stars: json['stargazers_count'] ?? 0,
+      language: json['language'],
+      htmlUrl: json['html_url'] ?? '',
     );
   }
 }

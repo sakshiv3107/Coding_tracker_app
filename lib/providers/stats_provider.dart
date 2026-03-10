@@ -18,7 +18,13 @@ class StatsProvider extends ChangeNotifier {
       leetcodeStats = await _service.fetchData(username);
       error = null;
     } catch (e) {
-      error = e.toString();
+      if (e.toString().contains("TIMEOUT_ERROR") || e.toString().contains("TimeoutException")) {
+        error = "The LeetCode server is taking too long to wake up. Please wait 10 seconds and try again, it will likely work then!";
+      } else if (e.toString().contains("not found")) {
+        error = "LeetCode user not found. Please check your username in profile.";
+      } else {
+        error = e.toString().replaceAll("Exception: ", "");
+      }
     }
 
     isLoading = false;

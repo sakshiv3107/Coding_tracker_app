@@ -2,75 +2,90 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Brand Colors
-  static const Color primaryMint = Color(0xFF4E8B7C);
-  static const Color primaryMintLight = Color(0xFFE8F1EF);
-  static const Color charcoal = Color(0xFF1F2937);
-  static const Color charcoalLight = Color(0xFF374151);
-  static const Color ghostWhite = Color(0xFFF8FAFC);
-  static const Color errorRed = Color(0xFFEF4444);
-  static const Color successGreen = Color(0xFF10B981);
+  // Brand Colors - Premium Palette
+  static const Color primary = Color(0xFF6366F1); // Indigo
+  static const Color secondary = Color(0xFF10B981); // Emerald
+  static const Color accent = Color(0xFFF59E0B); // Amber
+  
+  static const Color leetCodeYellow = Color(0xFFFFA116);
+  static const Color githubBlack = Color(0xFF24292E);
+  static const Color githubGrey = Color(0xFF6E7681);
+  static const Color githubBlue = Color(0xFF0366D6);
+  
+  static const Color bgLight = Color(0xFFF8FAFC);
+  static const Color bgDark = Color(0xFF0F172A);
+  
+  static const Color surfaceLight = Colors.white;
+  static const Color surfaceDark = Color(0xFF1E293B);
+  
+  static const Color textPrimaryLight = Color(0xFF1E293B);
+  static const Color textSecondaryLight = Color(0xFF64748B);
+  
+  static const Color textPrimaryDark = Color(0xFFF8FAFC);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
 
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.light(
-        primary: primaryMint,
+        primary: primary,
+        secondary: secondary,
+        tertiary: accent,
+        surface: surfaceLight,
+        background: bgLight,
         onPrimary: Colors.white,
-        secondary: charcoal,
         onSecondary: Colors.white,
-        surface: Colors.white,
-        onSurface: charcoal,
-        background: ghostWhite,
-        onBackground: charcoal,
-        error: errorRed,
+        onSurface: textPrimaryLight,
+        onBackground: textPrimaryLight,
       ),
-      scaffoldBackgroundColor: ghostWhite,
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        headlineLarge: GoogleFonts.inter(
+      scaffoldBackgroundColor: bgLight,
+      textTheme: GoogleFonts.outfitTextTheme().copyWith(
+        headlineLarge: GoogleFonts.outfit(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: charcoal,
+          color: textPrimaryLight,
+          letterSpacing: -0.5,
         ),
-        headlineMedium: GoogleFonts.inter(
+        headlineMedium: GoogleFonts.outfit(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: charcoal,
+          color: textPrimaryLight,
+          letterSpacing: -0.3,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: charcoal,
+          color: textPrimaryLight,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.outfit(
           fontSize: 16,
-          color: charcoal,
+          color: textPrimaryLight,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.outfit(
           fontSize: 14,
-          color: charcoalLight,
+          color: textSecondaryLight,
         ),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         elevation: 0,
-        color: Colors.white,
+        color: surfaceLight,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(24)),
-          side: BorderSide(color: Colors.black12, width: 1),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.black.withOpacity(0.05), width: 1),
         ),
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryMint,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -90,14 +105,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMint, width: 2),
+          borderSide: const BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: errorRed, width: 1),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1),
         ),
-        hintStyle: GoogleFonts.inter(
-          color: charcoalLight.withOpacity(0.5),
+        hintStyle: GoogleFonts.outfit(
+          color: textSecondaryLight.withOpacity(0.5),
           fontSize: 14,
         ),
       ),
@@ -109,73 +124,87 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: primaryMint,
+        primary: primary,
+        secondary: secondary,
+        tertiary: accent,
+        surface: surfaceDark,
+        background: bgDark,
         onPrimary: Colors.white,
-        secondary: charcoalLight,
         onSecondary: Colors.white,
-        surface: const Color(0xFF1F2937),
-        onSurface: Colors.white,
-        background: const Color(0xFF111827),
-        onBackground: Colors.white,
-        error: errorRed,
+        onSurface: textPrimaryDark,
+        onBackground: textPrimaryDark,
       ),
-      scaffoldBackgroundColor: const Color(0xFF111827),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-        headlineLarge: GoogleFonts.inter(
+      scaffoldBackgroundColor: bgDark,
+      textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
+        headlineLarge: GoogleFonts.outfit(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: textPrimaryDark,
+          letterSpacing: -0.5,
         ),
-        headlineMedium: GoogleFonts.inter(
+        headlineMedium: GoogleFonts.outfit(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: textPrimaryDark,
+          letterSpacing: -0.3,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: textPrimaryDark,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.outfit(
           fontSize: 16,
-          color: Colors.white,
+          color: textPrimaryDark,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.outfit(
           fontSize: 14,
-          color: Colors.white.withOpacity(0.7),
+          color: textSecondaryDark,
         ),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         elevation: 0,
-        color: Color(0xFF1F2937),
+        color: surfaceDark,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(24)),
-          side: BorderSide(color: Colors.white12, width: 1),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
         ),
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryMint,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
+          textStyle: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF374151),
+        fillColor: surfaceDark,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMint, width: 2),
+          borderSide: const BorderSide(color: primary, width: 2),
+        ),
+        hintStyle: GoogleFonts.outfit(
+          color: textSecondaryDark.withOpacity(0.5),
+          fontSize: 14,
         ),
       ),
     );

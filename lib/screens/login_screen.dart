@@ -38,13 +38,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 100,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryMintLight,
+                      color: AppTheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: const Icon(
                       Icons.code_rounded,
                       size: 60,
-                      color: AppTheme.primaryMint,
+                      color: AppTheme.primary,
                     ),
                   ),
                 ),
@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             "Forgot Password?",
                             style: TextStyle(
-                              color: AppTheme.primaryMint,
+                              color: AppTheme.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         "Sign Up",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryMint,
+                          color: AppTheme.primary,
                         ),
                       ),
                     ),
@@ -233,18 +233,18 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: AppTheme.errorRed.withOpacity(0.1),
+        color: Colors.redAccent.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.errorRed.withOpacity(0.2)),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 20),
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppTheme.errorRed, fontSize: 13),
+              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
             ),
           ),
         ],

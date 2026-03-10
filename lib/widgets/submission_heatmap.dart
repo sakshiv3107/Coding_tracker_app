@@ -9,7 +9,7 @@ class SubmissionHeatmap extends StatelessWidget {
   const SubmissionHeatmap({
     super.key,
     required this.datasets,
-    this.baseColor = AppTheme.primaryMint,
+    this.baseColor = AppTheme.secondary,
   });
 
   @override
@@ -81,7 +81,7 @@ class SubmissionHeatmap extends StatelessWidget {
               Text(
                 '${datasets.values.fold(0, (sum, val) => sum + val)} submissions',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppTheme.primaryMint,
+                  color: AppTheme.secondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),

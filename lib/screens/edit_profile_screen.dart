@@ -69,7 +69,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
-            backgroundColor: AppTheme.successGreen,
+            backgroundColor: AppTheme.secondary,
           ),
         );
         Navigator.pop(context);
@@ -79,7 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${profileProvider.error}'),
-            backgroundColor: AppTheme.errorRed,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -108,7 +108,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   'Personal Information',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryMint,
+                    color: AppTheme.primary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -136,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   'Platform Usernames',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryMint,
+                    color: AppTheme.primary,
                   ),
                 ),
                 const SizedBox(height: 16),

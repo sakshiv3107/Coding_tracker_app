@@ -42,13 +42,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     height: 80,
                     width: 80,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryMintLight,
+                      color: AppTheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: const Icon(
                       Icons.person_add_rounded,
                       size: 40,
-                      color: AppTheme.primaryMint,
+                      color: AppTheme.primary,
                     ),
                   ),
                 ),
@@ -141,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           Checkbox(
                             value: agreeToTerms,
                             onChanged: (v) => setState(() => agreeToTerms = v ?? false),
-                            activeColor: AppTheme.primaryMint,
+                            activeColor: AppTheme.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                           ),
                           Expanded(
@@ -187,7 +187,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         "Sign In",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryMint,
+                          color: AppTheme.primary,
                         ),
                       ),
                     ),
@@ -217,18 +217,18 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: AppTheme.errorRed.withOpacity(0.1),
+        color: Colors.redAccent.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.errorRed.withOpacity(0.2)),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 20),
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppTheme.errorRed, fontSize: 13),
+              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
             ),
           ),
         ],

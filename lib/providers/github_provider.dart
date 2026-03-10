@@ -7,6 +7,7 @@ class GithubProvider extends ChangeNotifier {
 
   GithubStats? githubStats;
   List<GithubRepository> latestRepos = [];
+  List<GithubStarredRepository> starredRepos = [];
   bool isLoading = false;
   String? error;
 
@@ -22,10 +23,12 @@ class GithubProvider extends ChangeNotifier {
       final results = await Future.wait([
         _service.fetchStats(username),
         _service.fetchLatestRepos(username),
+        _service.fetchStarredRepos(username),
       ]);
 
       githubStats = results[0] as GithubStats;
       latestRepos = results[1] as List<GithubRepository>;
+      starredRepos = results[2] as List<GithubStarredRepository>;
       error = null;
     } catch (e) {
       error = e.toString();

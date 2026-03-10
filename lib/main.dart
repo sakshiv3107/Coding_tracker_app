@@ -7,6 +7,10 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
+import '../providers/goal_provider.dart';
+import '../providers/achievement_provider.dart';
+import 'screens/coding_stats_screen.dart';
+import 'screens/github_stats_screen.dart';
 import 'firebase_options.dart';
 import '../theme/app_theme.dart';
 
@@ -22,6 +26,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => GithubProvider()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()),
+        ChangeNotifierProvider(create: (_) => AchievementProvider()),
         // Stream provider for real-time auth state
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),
@@ -47,6 +53,10 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       home: const AuthWrapper(),
+      routes: {
+        '/leetcode_stats': (context) => const CodingStatsScreen(),
+        '/github_stats': (context) => const GitHubStatsScreen(),
+      },
     );
   }
 }
