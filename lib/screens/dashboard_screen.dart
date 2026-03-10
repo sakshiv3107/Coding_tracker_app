@@ -24,7 +24,7 @@ class DashboardScreen extends StatelessWidget {
     final profile = context.watch<ProfileProvider>();
     final leetcode = context.watch<StatsProvider>();
     final github = context.watch<GithubProvider>();
-    
+
     final userName = auth.user?["name"] ?? "Developer";
 
     return Scaffold(
@@ -33,13 +33,18 @@ class DashboardScreen extends StatelessWidget {
           onRefresh: () async {
             final leetcodeUser = profile.profile?["leetcode"] ?? "";
             final githubUser = profile.profile?["github"] ?? "";
-            if (leetcodeUser.isNotEmpty) context.read<StatsProvider>().fetchLeetCodeStats(leetcodeUser);
-            if (githubUser.isNotEmpty) context.read<GithubProvider>().fetchGithubData(githubUser);
+            if (leetcodeUser.isNotEmpty)
+              context.read<StatsProvider>().fetchLeetCodeStats(leetcodeUser);
+            if (githubUser.isNotEmpty)
+              context.read<GithubProvider>().fetchGithubData(githubUser);
           },
           child: CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     child: Row(
@@ -51,7 +56,9 @@ class DashboardScreen extends StatelessWidget {
                             Text(
                               'Welcome back,',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                             Text(
@@ -64,8 +71,13 @@ class DashboardScreen extends StatelessWidget {
                           tag: 'profile_avatar',
                           child: CircleAvatar(
                             radius: 28,
-                            backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                            child: const Icon(Icons.person_rounded, color: AppTheme.primary),
+                            backgroundColor: AppTheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: AppTheme.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -73,7 +85,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
@@ -85,7 +97,10 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 120),
@@ -93,14 +108,18 @@ class DashboardScreen extends StatelessWidget {
                       leetcodeSolved: leetcode.leetcodeStats?.totalSolved ?? 0,
                       leetcodeRating: leetcode.leetcodeStats?.rating ?? 0,
                       githubStars: github.githubStats?.totalStars ?? 0,
-                      githubContributions: github.githubStats?.totalContributions ?? 0,
+                      githubContributions:
+                          github.githubStats?.totalContributions ?? 0,
                     ),
                   ),
                 ),
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 150),
@@ -110,14 +129,20 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 200),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Learning Path', style: theme.textTheme.titleLarge),
+                        Text(
+                          'Learning Path',
+                          style: theme.textTheme.titleLarge,
+                        ),
                         const SizedBox(height: 16),
                         _buildPlatformCards(context, leetcode, github),
                       ],
@@ -127,7 +152,10 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 300),
@@ -144,7 +172,11 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAnalyticsSection(BuildContext context, StatsProvider leetcode, GithubProvider github) {
+  Widget _buildAnalyticsSection(
+    BuildContext context,
+    StatsProvider leetcode,
+    GithubProvider github,
+  ) {
     final theme = Theme.of(context);
     final isDataLoading = leetcode.isLoading || github.isLoading;
     final hasError = leetcode.error != null || github.error != null;
@@ -154,14 +186,23 @@ class DashboardScreen extends StatelessWidget {
     List<double> ghData = List.filled(7, 0.0);
 
     final now = DateTime.now();
-    final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+    // Monday is 1, Sunday is 7 in Dart's DateTime.weekday
+    final startDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
 
     for (int i = 0; i < 7; i++) {
       final date = startDate.add(Duration(days: i));
       final normalizedLookup = DateTime(date.year, date.month, date.day);
-      
-      lcData[i] = (leetcode.leetcodeStats?.submissionCalendar[normalizedLookup] ?? 0).toDouble();
-      ghData[i] = (github.githubStats?.contributionCalendar[normalizedLookup] ?? 0).toDouble();
+
+      lcData[i] =
+          (leetcode.leetcodeStats?.submissionCalendar[normalizedLookup] ?? 0)
+              .toDouble();
+      ghData[i] =
+          (github.githubStats?.contributionCalendar[normalizedLookup] ?? 0)
+              .toDouble();
     }
 
     double maxVal = 5.0;
@@ -175,14 +216,17 @@ class DashboardScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Coding Activity', style: theme.textTheme.titleLarge),
+            Text('Weekly Coding Activity', style: theme.textTheme.titleLarge),
             Row(
               children: [
                 if (isDataLoading)
                   const SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primary,
+                    ),
                   ),
                 const SizedBox(width: 12),
                 _buildLegendItem(AppTheme.leetCodeYellow, 'LC'),
@@ -199,18 +243,26 @@ class DashboardScreen extends StatelessWidget {
           showBorder: false,
           child: Column(
             children: [
-              if (hasError && lcData.every((e) => e == 0) && ghData.every((e) => e == 0))
+              if (hasError &&
+                  lcData.every((e) => e == 0) &&
+                  ghData.every((e) => e == 0))
                 SizedBox(
                   height: 150,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline_rounded, color: Colors.red.withOpacity(0.5)),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.red.withOpacity(0.5),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           'Failed to load activity',
-                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 12),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -236,17 +288,19 @@ class DashboardScreen extends StatelessWidget {
                             showTitles: true,
                             getTitlesWidget: (value, meta) {
                               final index = value.toInt();
-                              if (index < 0 || index >= 7) return const SizedBox();
-                              
+                              if (index < 0 || index >= 7)
+                                return const SizedBox();
+
                               final date = startDate.add(Duration(days: index));
                               final dayLabel = DateFormat('E').format(date);
-                              
+
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
                                   dayLabel,
                                   style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -255,9 +309,15 @@ class DashboardScreen extends StatelessWidget {
                             },
                           ),
                         ),
-                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                       ),
                       gridData: const FlGridData(show: false),
                       borderData: FlBorderData(show: false),
@@ -281,7 +341,6 @@ class DashboardScreen extends StatelessWidget {
                         );
                       }),
                     ),
-                  swapAnimationDuration: const Duration(milliseconds: 500),
                   ),
                 ),
             ],
@@ -302,7 +361,11 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
         ),
       ],
     );
@@ -322,7 +385,13 @@ class DashboardScreen extends StatelessWidget {
             Text('Recent Achievements', style: theme.textTheme.titleLarge),
             TextButton(
               onPressed: () {},
-              child: const Text('View all', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'View all',
+                style: TextStyle(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -333,7 +402,9 @@ class DashboardScreen extends StatelessWidget {
             child: Center(
               child: Text(
                 'No achievements yet. Keep coding!',
-                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
               ),
             ),
           )
@@ -360,7 +431,11 @@ class DashboardScreen extends StatelessWidget {
                             color: AppTheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(achievement.icon, color: AppTheme.primary, size: 24),
+                          child: Icon(
+                            achievement.icon,
+                            color: AppTheme.primary,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -368,7 +443,10 @@ class DashboardScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -419,16 +497,20 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlatformCards(BuildContext context, StatsProvider leetcode, GithubProvider github) {
+  Widget _buildPlatformCards(
+    BuildContext context,
+    StatsProvider leetcode,
+    GithubProvider github,
+  ) {
     return Column(
       children: [
         _PlatformTile(
           name: 'LeetCode',
           icon: FontAwesomeIcons.code,
           color: AppTheme.leetCodeYellow,
-          stats: leetcode.leetcodeStats != null 
-            ? '${leetcode.leetcodeStats!.totalSolved} Solved' 
-            : 'Not Syncing',
+          stats: leetcode.leetcodeStats != null
+              ? '${leetcode.leetcodeStats!.totalSolved} Solved'
+              : 'Not Syncing',
           onTap: () => Navigator.pushNamed(context, '/leetcode_stats'),
         ),
         const SizedBox(height: 12),
@@ -436,9 +518,9 @@ class DashboardScreen extends StatelessWidget {
           name: 'GitHub',
           icon: FontAwesomeIcons.github,
           color: AppTheme.githubGrey,
-          stats: github.githubStats != null 
-            ? '${github.githubStats!.publicRepos} Repositories'
-            : 'Not Syncing',
+          stats: github.githubStats != null
+              ? '${github.githubStats!.publicRepos} Repositories'
+              : 'Not Syncing',
           onTap: () => Navigator.pushNamed(context, '/github_stats'),
         ),
       ],
@@ -485,10 +567,19 @@ class _StatGridItem extends StatelessWidget {
             children: [
               AnimatedStatCounter(
                 value: value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (suffix.isNotEmpty)
-                Text(suffix, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  suffix,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
             ],
           ),
           Text(
@@ -496,7 +587,9 @@ class _StatGridItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
               letterSpacing: 1.1,
             ),
           ),
@@ -541,12 +634,31 @@ class _PlatformTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(stats, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  stats,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
         ],
       ),
     );

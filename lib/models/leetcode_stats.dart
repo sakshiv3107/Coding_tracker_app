@@ -15,6 +15,7 @@ class LeetcodeStats {
   final double? contestRating;
   final double? highestRating;
   final int? globalRanking;
+  final double? topPercentage;
   final int? totalContests;
   final List<LeetCodeContestHistory>? contestHistory;
   
@@ -36,6 +37,7 @@ class LeetcodeStats {
     this.contestRating,
     this.highestRating,
     this.globalRanking,
+    this.topPercentage,
     this.totalContests,
     this.contestHistory,
     this.recentSubmissions,

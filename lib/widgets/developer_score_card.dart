@@ -69,7 +69,7 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard> with SingleTick
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    // Normalize score for progress indicator (max 5000 for full circle)
+    // Normalize score for progress indicator (max 3000 for full bar)
     final progress = (score / 3000).clamp(0.0, 1.0);
 
     return ModernCard(
@@ -86,77 +86,104 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard> with SingleTick
             ],
           ),
         ),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              alignment: Alignment.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 140,
-                  height: 140,
-                  child: AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return CircularProgressIndicator(
-                        value: progress * _animation.value,
-                        strokeWidth: 12,
-                        backgroundColor: scoreColor.withOpacity(0.1),
-                        valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                        strokeCap: StrokeCap.round,
-                      );
-                    },
-                  ),
-                ),
                 Column(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'DEVELOPER SCORE',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: scoreColor.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     AnimatedStatCounter(
                       value: score,
                       style: theme.textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                         color: scoreColor,
-                        fontSize: 36,
+                        fontSize: 48,
                       ) ?? const TextStyle(),
-                    ),
-                    Text(
-                      'DEV SCORE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: scoreColor.withOpacity(0.7),
-                      ),
                     ),
                   ],
                 ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: scoreColor.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    rank.toUpperCase(),
+                    style: TextStyle(
+                      color: scoreColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: scoreColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: scoreColor.withOpacity(0.2)),
-              ),
-              child: Text(
-                rank.toUpperCase(),
-                style: TextStyle(
-                  color: scoreColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 0.5,
-                ),
-              ),
+            const SizedBox(height: 32),
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Stack(
+                  children: [
+                    Container(
+                      height: 12,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: scoreColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress * _animation.value,
+                      child: Container(
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: scoreColor,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: scoreColor.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Your score is based on problems solved, contest performance, stars, and repository contributions.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Beginner',
+                  style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                ),
+                Text(
+                  'Advanced',
+                  style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                ),
+              ],
             ),
           ],
         ),

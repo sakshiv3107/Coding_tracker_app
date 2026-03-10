@@ -149,7 +149,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
 
                       FadeSlideTransition(
                         delay: const Duration(milliseconds: 350),
-                        child: DifficultyPieChart(
+                        child: DifficultyBarChart(
                           easy: stats.leetcodeStats!.easy,
                           medium: stats.leetcodeStats!.medium,
                           hard: stats.leetcodeStats!.hard,
@@ -296,12 +296,18 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
                   _buildContestStat('Rating', stats.contestRating?.toStringAsFixed(0) ?? 'N/A', Colors.blue),
                   _buildContestStat('Highest', stats.highestRating?.toStringAsFixed(0) ?? 'N/A', Colors.purple),
                   _buildContestStat('Global Rank', stats.globalRanking?.toString() ?? 'N/A', Colors.amber),
+                  if (stats.topPercentage != null)
+                    _buildContestStat('Top %', '${stats.topPercentage!.toStringAsFixed(1)}%', Colors.green),
+                  if (stats.totalContests != null)
+                    _buildContestStat('Attended', stats.totalContests.toString(), Colors.teal),
                 ],
               ),
               const SizedBox(height: 24),
@@ -358,6 +364,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                       ),
                     ],
                   ),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOutCubic,
                 ),
               ),
             ],

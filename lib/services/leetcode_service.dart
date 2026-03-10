@@ -175,6 +175,8 @@ class LeetcodeService {
               ? (contestBody["contestRating"] as num).toDouble() : null,
           highestRating: (contestBody?["contestHighestRating"] as num?)?.toDouble(),
           globalRanking: contestBody?["contestGlobalRanking"],
+          topPercentage: contestBody?["contestTopPercentage"] != null 
+              ? (contestBody!["contestTopPercentage"] as num).toDouble() : null,
           totalContests: contestBody?["contestAttend"],
         );
 
@@ -220,6 +222,7 @@ class LeetcodeService {
           contestRating: stats.contestRating,
           highestRating: stats.highestRating,
           globalRanking: stats.globalRanking,
+          topPercentage: stats.topPercentage,
           totalContests: stats.totalContests,
           contestHistory: history,
         );
@@ -397,6 +400,7 @@ class LeetcodeService {
       contestRating: rating > 0 ? rating : null,
       highestRating: highestRating,
       globalRanking: contestRanking?["globalRanking"],
+      topPercentage: contestRanking?["topPercentage"] != null ? (contestRanking!["topPercentage"] as num).toDouble() : null,
       totalContests: contestRanking?["attendedContestsCount"],
       contestHistory: contestHistory,
       recentSubmissions: recentSubmissions,
