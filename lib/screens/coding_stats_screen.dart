@@ -17,7 +17,6 @@ import '../widgets/streak_card.dart';
 import '../widgets/recent_submission_section.dart';
 import '../widgets/developer_score_card.dart';
 import '../widgets/difficulty_bar_chart.dart';
-import '../widgets/weekly_activity_chart.dart';
 import '../widgets/contest_analytics_section.dart' hide AppTheme;
 import 'package:intl/intl.dart';
 

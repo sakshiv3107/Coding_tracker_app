@@ -1,19 +1,28 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/github_stats.dart';
 
 class GithubService {
   static const String _url = "https://api.github.com/graphql";
-  static const String _token = String.fromEnvironment("GITHUB_TOKEN");
+
+  final String _token = dotenv.env['GITHUB_TOKEN']?.trim() ?? "";
 
   Map<String, String> get _headers => {
-    "Authorization": "Bearer $_token",
-    "Content-Type": "application/json",
-  };
+        "Authorization": "Bearer $_token",
+        "Content-Type": "application/json",
+      };
 
+  /// Fetch GitHub user stats
   Future<GithubStats> fetchStats(String username) async {
     try {
+      if (_token.isEmpty) {
+        throw Exception("GitHub token not provided. Check your .env file.");
+      }
+
+      debugPrint("GitHub Token Loaded");
+
       const query = """
       query getUserStats(\$username: String!) {
         user(login: \$username) {
@@ -66,8 +75,6 @@ class GithubService {
         }),
       );
 
-      // FIX 1: was "GitHub API Error: \${response.statusCode}" — backslash
-      //        prevented interpolation, showing literal text instead of code.
       if (response.statusCode != 200) {
         throw Exception("GitHub API Error: ${response.statusCode}");
       }
@@ -81,40 +88,44 @@ class GithubService {
 
       final user = json["data"]["user"];
 
-      // FIX 2: was "GitHub user '\$username' not found" — same backslash bug.
       if (user == null) {
         throw Exception("GitHub user '$username' not found");
       }
 
       int totalStars = 0;
       Map<String, int> languageCounts = {};
+
       final repos = user["repositories"]["nodes"] as List;
 
       for (var repo in repos) {
         totalStars += (repo["stargazerCount"] ?? 0) as int;
+
         final lang = repo["primaryLanguage"]?["name"];
         if (lang != null) {
           languageCounts[lang] = (languageCounts[lang] ?? 0) + 1;
         }
       }
 
-      int totalLangRepos = languageCounts.values.fold(
-        0,
-        (sum, count) => sum + count,
-      );
+      int totalLangRepos =
+          languageCounts.values.fold(0, (sum, count) => sum + count);
+
       Map<String, double> topLanguages = {};
+
       if (totalLangRepos > 0) {
         var sortedLangs = languageCounts.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
+
         for (var entry in sortedLangs.take(5)) {
           topLanguages[entry.key] = entry.value / totalLangRepos;
         }
       }
 
       Map<DateTime, int> calendar = {};
+
       final weeks =
           user["contributionsCollection"]["contributionCalendar"]["weeks"]
               as List;
+
       for (var week in weeks) {
         for (var day in week["contributionDays"]) {
           final date = DateTime.parse(day["date"] as String);
@@ -131,15 +142,18 @@ class GithubService {
         topLanguages,
       );
     } catch (e) {
-      // FIX 3: was "GitHub API Error for \$username: \$e" — same backslash bug.
       debugPrint("GitHub API Error for $username: $e");
       rethrow;
     }
   }
 
+  /// Fetch starred repositories
   Future<List<GithubStarredRepository>> fetchStarredRepos(
-    String username,
-  ) async {
+      String username) async {
+    if (_token.isEmpty) {
+      throw Exception("GitHub token missing. Check .env file.");
+    }
+
     final response = await http.get(
       Uri.parse("https://api.github.com/users/$username/starred"),
       headers: {
@@ -150,15 +164,23 @@ class GithubService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to fetch starred repositories: ${response.statusCode}",
-      );
+          "Failed to fetch starred repositories: ${response.statusCode}");
     }
 
     final List json = jsonDecode(response.body);
-    return json.map((repo) => GithubStarredRepository.fromJson(repo)).toList();
+
+    return json
+        .map<GithubStarredRepository>(
+            (repo) => GithubStarredRepository.fromJson(repo))
+        .toList();
   }
 
+  /// Fetch latest repositories
   Future<List<GithubRepository>> fetchLatestRepos(String username) async {
+    if (_token.isEmpty) {
+      throw Exception("GitHub token missing. Check .env file.");
+    }
+
     const query = """
     query latestRepos(\$username: String!) {
       user(login: \$username) {
@@ -194,6 +216,7 @@ class GithubService {
     }
 
     final json = jsonDecode(response.body);
+
     final repos = json["data"]["user"]["repositories"]["nodes"] as List;
 
     return repos.map<GithubRepository>((repo) {
