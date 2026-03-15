@@ -19,8 +19,8 @@ class CodeforcesStatsScreen extends StatelessWidget {
       icon: Icons.trending_up_rounded,
       color: Colors.blueAccent,
       username: username,
-      isLoading: stats.isLoading,
-      errorMessage: stats.error,
+      isLoading: stats.codeforcesLoading,
+      errorMessage: stats.codeforcesError,
       onRefresh: () {
         if (username.isNotEmpty) {
           stats.fetchCodeforcesStats(username);

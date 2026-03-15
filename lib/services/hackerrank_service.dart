@@ -1,47 +1,50 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../models/platform_stats.dart';
+import '../models/hackerrank_stats.dart';
 
 class HackerRankService {
-  Future<PlatformStats> fetchData(String username) async {
+  Future<HackerRankStats> fetchData(String username) async {
     if (username.isEmpty) {
       throw Exception("HackerRank username is empty");
     }
 
-    // This is an unofficial endpoint, but often works for public profile summary
-    final url = "https://www.hackerrank.com/rest/contests/master/users/$username/profile";
+    // Stable REST endpoints identified via network analysis
+    final profileUrl = "https://www.hackerrank.com/rest/contests/master/hackers/$username/profile";
+    final badgesUrl = "https://www.hackerrank.com/rest/hackers/$username/badges";
+    final scoresUrl = "https://www.hackerrank.com/rest/hackers/$username/scores_elo";
+
+    Future<Map<String, dynamic>> fetchJson(String url) async {
+      String finalUrl = url;
+      if (kIsWeb) {
+        // Use corsproxy.io for web
+        finalUrl = "https://corsproxy.io/?${Uri.encodeComponent(url)}";
+      }
+      
+      final response = await http.get(Uri.parse(finalUrl)).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Status ${response.statusCode}");
+      }
+    }
 
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      final results = await Future.wait([
+        fetchJson(profileUrl),
+        fetchJson(badgesUrl),
+        fetchJson(scoresUrl),
+      ]);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final model = data["model"];
-        
-        if (model == null) {
-          throw Exception("User not found on HackerRank");
-        }
-
-        // HackerRank solves are usually listed in badges or specialized sections
-        // For a simple aggregate, we can sum problems solved in different tracks if available
-        // But the profile model usually has basic info.
-        
-        return PlatformStats(
-          platform: "HackerRank",
-          username: username,
-          totalSolved: model["solved_problems_count"] ?? 0,
-          rank: model["rank"]?.toString(),
-          avatarUrl: model["avatar"],
-          extraMetrics: {
-            "country": model["country"],
-            "personal_best_rank": model["personal_best_rank"],
-            "total_badges": model["badges_count"] ?? 0,
-          },
-        );
-      } else {
-        throw Exception("Failed to fetch HackerRank data (Status: ${response.statusCode})");
-      }
+      return HackerRankStats.fromMultipleSources(
+        profileJson: results[0],
+        badgesJson: results[1],
+        scoresJson: results[2],
+      );
     } catch (e) {
+      if (e.toString().contains("TimeoutException")) {
+        throw Exception("HackerRank request timed out. Please try again.");
+      }
       throw Exception("HackerRank Error: $e");
     }
   }

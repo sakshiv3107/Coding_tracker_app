@@ -9,11 +9,13 @@ class PlatformQuickStatsGrid extends StatelessWidget {
   final Map<String, dynamic> codeforces;
   final Map<String, dynamic> codechef;
   final Map<String, dynamic> gfg;
+  final Map<String, dynamic> hackerrank;
   final VoidCallback? onLeetCodeTap;
   final VoidCallback? onGitHubTap;
   final VoidCallback? onCodeforcesTap;
   final VoidCallback? onCodeChefTap;
   final VoidCallback? onGfgTap;
+  final VoidCallback? onHackerRankTap;
 
   const PlatformQuickStatsGrid({
     super.key,
@@ -22,11 +24,13 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     required this.codeforces,
     required this.codechef,
     required this.gfg,
+    required this.hackerrank,
     this.onLeetCodeTap,
     this.onGitHubTap,
     this.onCodeforcesTap,
     this.onCodeChefTap,
     this.onGfgTap,
+    this.onHackerRankTap,
   });
 
   @override
@@ -93,6 +97,17 @@ class PlatformQuickStatsGrid extends StatelessWidget {
             'Score: ${gfg['score'] ?? 0}',
           ],
           onGfgTap,
+        ),
+        _platformCard(
+          context,
+          'HackerRank',
+          FontAwesomeIcons.hackerrank,
+          const Color(0xFF2EC866),
+          [
+            'Solved: ${hackerrank['solved'] ?? 0}',
+            'Rank: ${hackerrank['rank'] ?? 'N/A'}',
+          ],
+          onHackerRankTap,
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../models/hackerrank_stats.dart';
 import '../providers/stats_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
@@ -81,28 +82,50 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                   ),
                 ),
               ),
-            ] else
+            ] else if (statsProvider.hackerrankError != null)
               SliverFillRemaining(
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline_rounded, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text("Failed to load HackerRank stats"),
-                      const SizedBox(height: 24),
-                      ElevatedButton(onPressed: _refreshStats, child: const Text("Retry")),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.cloud_off_rounded, size: 64, color: Colors.red),
+                        const SizedBox(height: 16),
+                        const Text("Connection Error", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        const SizedBox(height: 8),
+                        Text(
+                          statsProvider.hackerrankError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: _refreshStats,
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            child: const Text("Try Again"),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              )
+            else ...[
+              // Fallback for when data is null but no error yet
+              const SliverFillRemaining(
+                child: Center(child: Text("No data available")),
+              )
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(dynamic stats) {
+  Widget _buildProfileHeader(HackerRankStats stats) {
     return ModernCard(
       padding: const EdgeInsets.all(24),
       child: Row(
@@ -123,7 +146,7 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'HackerRank Developer',
+                  'HackerRank Developer ${stats.country != null ? "• ${stats.country}" : ""}',
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               ],
@@ -134,7 +157,7 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
     );
   }
 
-  Widget _buildMainStats(dynamic stats) {
+  Widget _buildMainStats(HackerRankStats stats) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -145,8 +168,8 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
       children: [
         _statCard('Solved', stats.totalSolved.toString(), Icons.check_circle_outline, Colors.green),
         _statCard('Rank', stats.rank ?? 'N/A', Icons.trending_up, Colors.blue),
-        _statCard('Badges', stats.extraMetrics["total_badges"]?.toString() ?? '0', Icons.badge, Colors.orange),
-        _statCard('Country', stats.extraMetrics["country"] ?? 'N/A', Icons.public, Colors.purple),
+        _statCard('Badges', stats.extraMetrics["badges_count"]?.toString() ?? '0', Icons.badge, Colors.orange),
+        _statCard('Country', stats.country ?? 'N/A', Icons.public, Colors.purple),
       ],
     );
   }

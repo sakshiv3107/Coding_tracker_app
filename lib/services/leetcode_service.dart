@@ -87,7 +87,7 @@ class LeetcodeService {
           'query': query,
           'variables': {'username': username},
         }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
@@ -115,6 +115,7 @@ class LeetcodeService {
     final List<String> proxies = [
       "https://leetcode-api-f6df.onrender.com/graphql",
       "https://alfa-leetcode-api.onrender.com/graphql",
+      "https://leetcode-api-f6df.vercel.app/graphql",
     ];
 
     Object? lastError;
@@ -167,11 +168,22 @@ class LeetcodeService {
       debugPrint("LeetCode API: Using full REST fallback for $username");
 
       // Fetch all 5 endpoints in parallel
-      final profileFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/userProfile/$username"));
-      final calendarFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/calendar"));
-      final contestFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/contest"));
-      final contestHistoryFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/contest/history"));
-      final recentFuture = http.get(Uri.parse("https://alfa-leetcode-api.onrender.com/$username/submission?limit=15"));
+      // Fetch all 5 endpoints in parallel
+      // Using direct proxy or CORS proxy to bypass rate limits
+      Future<http.Response> getProxy(String path) {
+        String url = "https://alfa-leetcode-api.onrender.com/$path";
+        if (kIsWeb) {
+          // Use allorigins to potentially bypass Render's 429 if corsproxy.io is flagged
+          url = "https://api.allorigins.win/raw?url=${Uri.encodeComponent(url)}";
+        }
+        return http.get(Uri.parse(url)).timeout(const Duration(seconds: 25));
+      }
+
+      final profileFuture = getProxy("userProfile/$username");
+      final calendarFuture = getProxy("$username/calendar");
+      final contestFuture = getProxy("$username/contest");
+      final contestHistoryFuture = getProxy("$username/contest/history");
+      final recentFuture = getProxy("$username/submission?limit=15");
 
       final results = await Future.wait([profileFuture, calendarFuture, contestFuture, contestHistoryFuture, recentFuture]);
 

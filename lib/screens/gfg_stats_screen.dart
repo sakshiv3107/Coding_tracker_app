@@ -14,13 +14,13 @@ class GfgStatsScreen extends StatelessWidget {
     final username = profile.profile?["gfg"] ?? "";
 
     return PlatformStatsDetailsScreen(
-      stats: stats.gfgStats,
+      stats: stats.gfgStats?.toPlatformStats(),
       platformName: "GeeksforGeeks",
       icon: Icons.school_rounded,
       color: Colors.green,
       username: username,
-      isLoading: stats.isLoading,
-      errorMessage: stats.error,
+      isLoading: stats.gfgLoading,
+      errorMessage: stats.gfgError,
       onRefresh: () {
         if (username.isNotEmpty) {
           stats.fetchGfgStats(username);

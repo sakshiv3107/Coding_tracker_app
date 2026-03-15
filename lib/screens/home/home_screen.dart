@@ -27,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProfileScreen(),
   ];
 
+  String? _lastGhUser;
+  String? _lastLcUser;
+
   @override
   void initState() {
     super.initState();
@@ -55,13 +58,34 @@ class _HomeScreenState extends State<HomeScreen> {
       hackerrank: hrUser,
     );
     
-    if (ghUser.isNotEmpty) github.fetchGithubData(ghUser);
+    if (ghUser.isNotEmpty) {
+      github.fetchGithubData(ghUser).then((_) {
+        if (github.githubStats != null) {
+          stats.updateGitHubData(
+            commitCalendar: github.githubStats!.contributionCalendar,
+            stars: github.githubStats!.totalStars,
+            totalCommits: github.githubStats!.totalContributions,
+          );
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final profile = context.watch<ProfileProvider>();
     
+    // Auto-refresh if usernames changed (e.g. after editing profile)
+    final lcUser = profile.profile?["leetcode"] ?? "";
+    final ghUser = profile.profile?["github"] ?? "";
+    
+    if (lcUser != _lastLcUser || ghUser != _lastGhUser) {
+      _lastLcUser = lcUser;
+      _lastGhUser = ghUser;
+      // Use microtask to avoid calling notifyListeners during build
+      Future.microtask(() => _refreshAllData());
+    }
     return Scaffold(
       drawer: const AppDrawer(),
       body: IndexedStack(

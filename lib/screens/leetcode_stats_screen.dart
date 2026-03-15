@@ -84,7 +84,7 @@ void initState() {
                       const SizedBox(width: 16),
                       Text('LeetCode', style: theme.textTheme.headlineMedium),
                       const Spacer(),
-                      _buildRefreshButton(stats.isLoading),
+                      _buildRefreshButton(stats.leetcodeLoading),
                     ],
                   ),
                 ),
@@ -97,19 +97,19 @@ void initState() {
                   color: AppTheme.leetCodeYellow,
                 )
               // ── Error State ──────────────────────────────────────────
-              else if (stats.error != null)
+              else if (stats.leetcodeError != null)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
-                      child: _buildErrorBanner(stats.error!, _refreshStats),
+                      child: _buildErrorBanner(stats.leetcodeError!, _refreshStats),
                     ),
                   ),
                 )
 
               // ── Loading Skeleton ──────────────────────────────────────
-              else if (stats.isLoading && stats.leetcodeStats == null)
+              else if (stats.leetcodeLoading && stats.leetcodeStats == null)
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverList(

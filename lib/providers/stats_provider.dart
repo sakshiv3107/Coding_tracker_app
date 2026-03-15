@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/leetcode_stats.dart';
+import '../models/hackerrank_stats.dart';
+import '../models/gfg_stats.dart';
 import '../models/platform_stats.dart';
 import '../models/developer_score.dart';
 import '../services/leetcode_service.dart';
+import '../services/github_service.dart';
 import '../services/codeforces_service.dart';
 import '../services/codechef_service.dart';
 import '../services/gfg_service.dart';
@@ -13,8 +16,8 @@ class StatsProvider extends ChangeNotifier {
   LeetcodeStats? _leetcodeStats;
   PlatformStats? _codeforcesStats;
   PlatformStats? _codechefStats;
-  PlatformStats? _gfgStats;
-  PlatformStats? _hackerrankStats;
+  GfgStats? _gfgStats;
+  HackerRankStats? _hackerrankStats;
 
   // ── Per-platform loading flags ─────────────────────────────────────────
   // Using per-platform flags instead of one global _isLoading means:
@@ -50,12 +53,14 @@ class StatsProvider extends ChangeNotifier {
   int _githubStars = 0;
   int _githubTotalCommits = 0;
 
+  Map<DateTime, int> get githubCommitCalendar => _githubCommitCalendar;
+
   // ── Public getters — stats ─────────────────────────────────────────────
   LeetcodeStats? get leetcodeStats => _leetcodeStats;
   PlatformStats? get codeforcesStats => _codeforcesStats;
   PlatformStats? get codechefStats => _codechefStats;
-  PlatformStats? get gfgStats => _gfgStats;
-  PlatformStats? get hackerrankStats => _hackerrankStats;
+  GfgStats? get gfgStats => _gfgStats;
+  HackerRankStats? get hackerrankStats => _hackerrankStats;
 
   // ── Public getters — loading ───────────────────────────────────────────
   // Global isLoading = true only while ALL platforms are still loading
@@ -69,6 +74,7 @@ class StatsProvider extends ChangeNotifier {
   bool get gfgLoading => _gfgLoading;
   bool get hackerrankLoading => _hackerrankLoading;
 
+
   // ── Public getters — errors ────────────────────────────────────────────
   // Legacy single error getter — returns the first non-null error
   String? get error => _leetcodeError ?? _codeforcesError ?? _codechefError ?? _gfgError ?? _hackerrankError;
@@ -78,8 +84,6 @@ class StatsProvider extends ChangeNotifier {
   String? get codechefError => _codechefError;
   String? get gfgError => _gfgError;
   String? get hackerrankError => _hackerrankError;
-
-  Map<DateTime, int> get githubCommitCalendar => _githubCommitCalendar;
 
   // ── Developer score ────────────────────────────────────────────────────
   DeveloperScore? get developerScore {
