@@ -21,6 +21,9 @@ class LeetcodeStats {
   
   // Recent Submissions
   final List<RecentSubmission>? recentSubmissions;
+  
+  // Badges
+  final List<LeetCodeBadge>? badges;
 
   LeetcodeStats({
     required this.totalSolved,
@@ -41,6 +44,7 @@ class LeetcodeStats {
     this.totalContests,
     this.contestHistory,
     this.recentSubmissions,
+    this.badges,
   });
 }
 
@@ -71,5 +75,19 @@ class RecentSubmission {
     required this.difficulty,
     required this.status,
     required this.timestamp,
+  });
+}
+
+class LeetCodeBadge {
+  final String name;
+  final String icon;
+  final String? description;
+  final String? earnedDate;
+
+  LeetCodeBadge({
+    required this.name,
+    required this.icon,
+    this.description,
+    this.earnedDate,
   });
 }

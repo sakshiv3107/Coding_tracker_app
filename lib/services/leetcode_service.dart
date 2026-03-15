@@ -28,6 +28,12 @@ class LeetcodeService {
               count
             }
           }
+          badges {
+            name
+            icon
+            hoverText
+            creationDate
+          }
         }
         userContestRanking(username: \$username) {
           rating
@@ -203,7 +209,7 @@ class LeetcodeService {
 
         debugPrint("LeetCode API: raw contest history entries: ${rawHistory?.length ?? 0}");
 
-        if (rawHistory != null && rawHistory is List) {
+        if (rawHistory != null ) {
           for (var item in rawHistory) {
             try {
               final rating = item["rating"] ?? item["contestRating"];
@@ -402,7 +408,7 @@ class LeetcodeService {
           if (rating != null && (rating as num) > 0 && startTime != null) {
             final parsedDate = DateTime.fromMillisecondsSinceEpoch(
                 (startTime as int) * 1000);
-            debugPrint("  -> adding: rating=${(rating as num).toStringAsFixed(1)} date=$parsedDate title=${item['contest']['title']}");
+            debugPrint("  -> adding: rating=${rating .toStringAsFixed(1)} date=$parsedDate title=${item['contest']['title']}");
             contestHistory.add(LeetCodeContestHistory(
               contestTitle: item["contest"]["title"] ?? 'Contest',
               rating: (rating).toDouble(),
@@ -430,6 +436,23 @@ class LeetcodeService {
           status: item["statusDisplay"],
           timestamp: DateTime.fromMillisecondsSinceEpoch(
               int.parse(item["timestamp"]) * 1000),
+        ));
+      }
+    }
+
+    final List<LeetCodeBadge> badges = [];
+    final badgesData = matchedUser["badges"] as List?;
+    if (badgesData != null) {
+      for (var badge in badgesData) {
+        String icon = badge["icon"] ?? "";
+        if (icon.isNotEmpty && !icon.startsWith("http")) {
+          icon = "https://leetcode.com$icon";
+        }
+        badges.add(LeetCodeBadge(
+          name: badge["name"] ?? "",
+          icon: icon,
+          description: badge["hoverText"],
+          earnedDate: badge["creationDate"],
         ));
       }
     }
@@ -504,6 +527,7 @@ class LeetcodeService {
       totalContests: contestRanking?["attendedContestsCount"],
       contestHistory: contestHistory,
       recentSubmissions: recentSubmissions,
+      badges: badges,
     );
   }
 }

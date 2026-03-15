@@ -1,4 +1,6 @@
 
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
@@ -17,7 +19,8 @@ import '../widgets/streak_card.dart';
 import '../widgets/recent_submission_section.dart';
 import '../widgets/developer_score_card.dart';
 import '../widgets/difficulty_bar_chart.dart';
-import '../widgets/contest_analytics_section.dart' hide AppTheme;
+import '../widgets/contest_analytics_section.dart' ;
+import '../widgets/badges_section.dart';
 import 'package:intl/intl.dart';
 
 class CodingStatsScreen extends StatefulWidget {
@@ -29,23 +32,29 @@ class CodingStatsScreen extends StatefulWidget {
 
 class _CodingStatsScreenState extends State<CodingStatsScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshStats());
-  }
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final stats = context.read<StatsProvider>();
+    // Only fetch if no cached data — cache handles repeat visits
+    if (stats.leetcodeStats == null && !stats.leetcodeLoading) {
+      _refreshStats();
+    }
+  });
+}
 
   void _refreshStats() {
-    final profile = context.read<ProfileProvider>();
-    final statsProvider = context.read<StatsProvider>();
-    final username = profile.profile?["leetcode"] ?? "";
+  final profile = context.read<ProfileProvider>();
+  final statsProvider = context.read<StatsProvider>();
+  final username = profile.profile?["leetcode"] ?? "";
 
-    if (username.isNotEmpty) {
-      statsProvider.fetchLeetCodeStats(username);
-    } else {
-      statsProvider.setError("LeetCode username not set in profile");
-    }
+  if (username.isNotEmpty) {
+    // forceRefresh: true — bypasses cache on manual pull-to-refresh
+    statsProvider.fetchLeetCodeStats(username, forceRefresh: true);
+  } else {
+    statsProvider.setError("LeetCode username not set in profile");
   }
-
+}
   @override
   Widget build(BuildContext context) {
     final stats = context.watch<StatsProvider>();
@@ -237,36 +246,19 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         ),
       ],
 
+      // 11. Badges section
+      if (lc.badges != null && lc.badges!.isNotEmpty) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 480),
+          child: BadgesSection(badges: lc.badges!),
+        ),
+      ],
+
       const SizedBox(height: 120),
     ];
   }
 
 
-  Widget _buildStreakSection(LeetcodeStats stats) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildDetailedStatCard(
-            'CURRENT STREAK',
-            stats.streak,
-            Icons.local_fire_department_rounded,
-            Colors.orange,
-            subtitle: 'Consecutive days',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildDetailedStatCard(
-            'MAX STREAK',
-            stats.longestStreak,
-            Icons.emoji_events_rounded,
-            Colors.amber,
-            subtitle: 'Best record',
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildDetailedStatCard(String title, int value, IconData icon, Color color,
       {String subtitle = ''}) {

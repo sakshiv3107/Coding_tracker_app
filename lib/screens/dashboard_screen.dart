@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -12,6 +14,8 @@ import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/developer_score_card.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/recent_submission_section.dart';
+import '../widgets/app_drawer.dart';
+import '../widgets/unified_analytics_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -24,18 +28,28 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final auth = context.watch<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
-    final leetcode = context.watch<StatsProvider>();
+    final stats = context.watch<StatsProvider>();
     final github = context.watch<GithubProvider>();
     final userName = auth.user?["name"] ?? "Developer";
 
     return Scaffold(
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
             final leetcodeUser = profile.profile?["leetcode"] ?? "";
             final githubUser = profile.profile?["github"] ?? "";
-            if (leetcodeUser.isNotEmpty)
-              context.read<StatsProvider>().fetchLeetCodeStats(leetcodeUser);
+            final cfUser = profile.profile?["codeforces"] ?? "";
+            final ccUser = profile.profile?["codechef"] ?? "";
+            final gfgUser = profile.profile?["gfg"] ?? "";
+            
+            await stats.fetchAllStats(
+              leetcode: leetcodeUser,
+              codeforces: cfUser,
+              codechef: ccUser,
+              gfg: gfgUser,
+            );
+            
             if (githubUser.isNotEmpty)
               context.read<GithubProvider>().fetchGithubData(githubUser);
           },
@@ -46,9 +60,35 @@ class DashboardScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Builder(
+                              builder: (context) => IconButton(
+                                onPressed: () => Scaffold.of(context).openDrawer(),
+                                icon: const Icon(Icons.menu_rounded),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.surface,
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                            Hero(
+                              tag: 'profile_avatar',
+                              child: CircleAvatar(
+                                radius: 24,
+                                backgroundColor:
+                                    AppTheme.primary.withValues(alpha: 0.1),
+                                child: const Icon(Icons.person_rounded,
+                                    color: AppTheme.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -63,29 +103,26 @@ class DashboardScreen extends StatelessWidget {
                                 style: theme.textTheme.headlineMedium),
                           ],
                         ),
-                        Hero(
-                          tag: 'profile_avatar',
-                          child: CircleAvatar(
-                            radius: 28,
-                            backgroundColor:
-                                AppTheme.primary.withValues(alpha: 0.1),
-                            child: const Icon(Icons.person_rounded,
-                                color: AppTheme.primary),
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ),
               ),
 
-              // ── Global quick stats ────────────────────────────────────────
+              // ── Unified Analytics ────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 80),
-                    child: _buildGlobalStats(leetcode, github),
+                    child: UnifiedAnalyticsCard(
+                      leetcode: stats.leetcodeStats?.totalSolved ?? 0,
+                      codeforces: stats.codeforcesStats?.totalSolved ?? 0,
+                      codechef: stats.codechefStats?.totalSolved ?? 0,
+                      gfg: stats.gfgStats?.totalSolved ?? 0,
+                      githubStars: github.githubStats?.totalStars ?? 0,
+                      githubRepos: github.githubStats?.publicRepos ?? 0,
+                    ),
                   ),
                 ),
               ),
@@ -93,7 +130,7 @@ class DashboardScreen extends StatelessWidget {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── Streak card (compact) ─────────────────────────────────────
-              if (leetcode.leetcodeStats != null)
+              if (stats.leetcodeStats != null)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
@@ -101,9 +138,9 @@ class DashboardScreen extends StatelessWidget {
                       delay: const Duration(milliseconds: 110),
                       child: StreakCard(
                         currentStreak:
-                            leetcode.leetcodeStats!.streak,
+                            stats.leetcodeStats!.streak,
                         maxStreak:
-                            leetcode.leetcodeStats!.longestStreak,
+                            stats.leetcodeStats!.longestStreak,
                         compact: true,
                       ),
                     ),
@@ -120,9 +157,9 @@ class DashboardScreen extends StatelessWidget {
                     delay: const Duration(milliseconds: 120),
                     child: DeveloperScoreCard(
                       leetcodeSolved:
-                          leetcode.leetcodeStats?.totalSolved ?? 0,
+                          stats.leetcodeStats?.totalSolved ?? 0,
                       leetcodeRating:
-                          leetcode.leetcodeStats?.rating ?? 0,
+                          stats.leetcodeStats?.rating ?? 0,
                       githubStars:
                           github.githubStats?.totalStars ?? 0,
                       githubContributions:
@@ -140,7 +177,7 @@ class DashboardScreen extends StatelessWidget {
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 150),
-                    child: _buildAnalyticsSection(context, leetcode, github),
+                    child: _buildAnalyticsSection(context, stats, github),
                   ),
                 ),
               ),
@@ -159,7 +196,7 @@ class DashboardScreen extends StatelessWidget {
                         Text('Learning Path',
                             style: theme.textTheme.titleLarge),
                         const SizedBox(height: 16),
-                        _buildPlatformCards(context, leetcode, github),
+                        _buildPlatformCards(context, stats, github),
                       ],
                     ),
                   ),
@@ -169,8 +206,8 @@ class DashboardScreen extends StatelessWidget {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── Recent Submissions (home screen, limit 5) ─────────────────
-              if (leetcode.leetcodeStats?.recentSubmissions != null &&
-                  leetcode.leetcodeStats!.recentSubmissions!.isNotEmpty)
+              if (stats.leetcodeStats?.recentSubmissions != null &&
+                  stats.leetcodeStats!.recentSubmissions!.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
@@ -178,7 +215,7 @@ class DashboardScreen extends StatelessWidget {
                       delay: const Duration(milliseconds: 250),
                       child: RecentSubmissionsSection(
                         submissions:
-                            leetcode.leetcodeStats!.recentSubmissions!,
+                            stats.leetcodeStats!.recentSubmissions!,
                         limit: 5,
                         showTitle: true,
                       ),
@@ -343,52 +380,49 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGlobalStats(StatsProvider leetcode, GithubProvider github) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatGridItem(
-            label: 'SOLVED',
-            value: leetcode.leetcodeStats?.totalSolved ?? 0,
-            icon: Icons.code_rounded,
-            color: AppTheme.primary,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatGridItem(
-            label: 'STREAK',
-            value: leetcode.leetcodeStats?.streak ?? 0,
-            icon: Icons.local_fire_department_rounded,
-            color: Colors.orange,
-            suffix: 'd',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatGridItem(
-            label: 'STARS',
-            value: github.githubStats?.totalStars ?? 0,
-            icon: Icons.star_rounded,
-            color: Colors.amber,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildPlatformCards(
-      BuildContext context, StatsProvider leetcode, GithubProvider github) {
+      BuildContext context, StatsProvider stats, GithubProvider github) {
     return Column(
       children: [
         _PlatformTile(
           name: 'LeetCode',
           icon: FontAwesomeIcons.code,
           color: AppTheme.leetCodeYellow,
-          stats: leetcode.leetcodeStats != null
-              ? '${leetcode.leetcodeStats!.totalSolved} Solved'
+          stats: stats.leetcodeStats != null
+              ? '${stats.leetcodeStats!.totalSolved} Solved'
               : 'Not Syncing',
           onTap: () => Navigator.pushNamed(context, '/leetcode_stats'),
+        ),
+        const SizedBox(height: 12),
+         _PlatformTile(
+          name: 'Codeforces',
+          icon: Icons.trending_up_rounded,
+          color: Colors.blueAccent,
+          stats: stats.codeforcesStats != null
+              ? '${stats.codeforcesStats!.totalSolved} Solved'
+              : 'Not Syncing',
+          onTap: () => Navigator.pushNamed(context, '/codeforces_stats'),
+        ),
+        const SizedBox(height: 12),
+        _PlatformTile(
+          name: 'CodeChef',
+          icon: Icons.restaurant_menu_rounded,
+          color: Colors.brown,
+          stats: stats.codechefStats != null
+              ? '${stats.codechefStats!.totalSolved} Solved'
+              : 'Not Syncing',
+          onTap: () => Navigator.pushNamed(context, '/codechef_stats'),
+        ),
+        const SizedBox(height: 12),
+         _PlatformTile(
+          name: 'GeeksforGeeks',
+          icon: Icons.school_rounded,
+          color: Colors.green,
+          stats: stats.gfgStats != null
+              ? '${stats.gfgStats!.totalSolved} Solved'
+              : 'Not Syncing',
+          onTap: () => Navigator.pushNamed(context, '/gfg_stats'),
         ),
         const SizedBox(height: 12),
         _PlatformTile(

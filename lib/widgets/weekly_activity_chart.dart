@@ -1,9 +1,6 @@
-// widgets/weekly_activity_chart.dart
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weekly_activity.dart';
-import '../theme/app_theme.dart';
 import 'modern_card.dart';
 
 class WeeklyActivityChart extends StatefulWidget {

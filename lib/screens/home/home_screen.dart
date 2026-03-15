@@ -4,7 +4,7 @@ import '../../providers/profile_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../providers/github_provider.dart';
 import '../profile_screen.dart';
-import '../coding_stats_screen.dart';
+import '../leetcode_stats_screen.dart';
 import '../github_stats_screen.dart';
 import '../dashboard_screen.dart';
 import '../goals_screen.dart';
