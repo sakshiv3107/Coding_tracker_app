@@ -13,11 +13,11 @@ class HackerRankService {
     final profileUrl = "https://www.hackerrank.com/rest/contests/master/hackers/$username/profile";
     final badgesUrl = "https://www.hackerrank.com/rest/hackers/$username/badges";
     final scoresUrl = "https://www.hackerrank.com/rest/hackers/$username/scores_elo";
+    final historyUrl = "https://www.hackerrank.com/rest/hackers/$username/submission_histories";
 
-    Future<Map<String, dynamic>> fetchJson(String url) async {
+    Future<dynamic> fetchJson(String url) async {
       String finalUrl = url;
       if (kIsWeb) {
-        // Use corsproxy.io for web
         finalUrl = "https://corsproxy.io/?${Uri.encodeComponent(url)}";
       }
       
@@ -34,12 +34,24 @@ class HackerRankService {
         fetchJson(profileUrl),
         fetchJson(badgesUrl),
         fetchJson(scoresUrl),
+        fetchJson(historyUrl),
       ]);
+
+      // Parse submission history
+      final Map<DateTime, int> historyMap = {};
+      final rawHistory = results[3] as Map<String, dynamic>;
+      rawHistory.forEach((dateStr, count) {
+        final date = DateTime.tryParse(dateStr);
+        if (date != null) {
+          historyMap[DateTime(date.year, date.month, date.day)] = (count as num).toInt();
+        }
+      });
 
       return HackerRankStats.fromMultipleSources(
         profileJson: results[0],
         badgesJson: results[1],
         scoresJson: results[2],
+        history: historyMap,
       );
     } catch (e) {
       if (e.toString().contains("TimeoutException")) {

@@ -6,11 +6,13 @@ import 'modern_card.dart';
 class WeeklyActivityChart extends StatefulWidget {
   final Map<DateTime, int> leetcodeCalendar;
   final Map<DateTime, int> githubCalendar;
+  final Map<DateTime, int>? hackerrankCalendar;
 
   const WeeklyActivityChart({
     super.key,
     required this.leetcodeCalendar,
     required this.githubCalendar,
+    this.hackerrankCalendar,
   });
 
   @override
@@ -25,6 +27,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
 
   static const _leetcodeColor = Color(0xFFFFA116); // LeetCode yellow
   static const _githubColor = Color(0xFF6C63FF);
+  static const _hackerrankColor = Color(0xFF2EC866);
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     _weeklyActivity = WeeklyActivity.fromData(
       leetcodeCalendar: widget.leetcodeCalendar,
       githubCalendar: widget.githubCalendar,
+      hackerrankCalendar: widget.hackerrankCalendar ?? {},
     );
     _controller = AnimationController(
       vsync: this,
@@ -68,9 +72,11 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              _buildLegendDot('LeetCode', _leetcodeColor),
-              const SizedBox(width: 14),
-              _buildLegendDot('GitHub', _githubColor),
+              _buildLegendDot('LC', _leetcodeColor),
+              const SizedBox(width: 8),
+              _buildLegendDot('GH', _githubColor),
+              const SizedBox(width: 8),
+              _buildLegendDot('HR', _hackerrankColor),
             ],
           ),
           const SizedBox(height: 20),
@@ -87,10 +93,18 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                       tooltipRoundedRadius: 10,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final day = _weeklyActivity.days[groupIndex];
-                        final label = rodIndex == 0 ? 'LC' : 'GH';
-                        final val = rodIndex == 0
-                            ? day.leetcodeSubmissions
-                            : day.githubCommits;
+                        String label = '';
+                        int val = 0;
+                        if (rodIndex == 0) {
+                          label = 'LC';
+                          val = day.leetcodeSubmissions;
+                        } else if (rodIndex == 1) {
+                          label = 'GH';
+                          val = day.githubCommits;
+                        } else {
+                          label = 'HR';
+                          val = day.hackerrankSubmissions;
+                        }
                         return BarTooltipItem(
                           '$label: $val',
                           const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
@@ -105,14 +119,17 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, meta) => Text(
-                          _dayLabels[value.toInt()],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
+                        getTitlesWidget: (value, meta) {
+                          if (value.toInt() < 0 || value.toInt() >= _dayLabels.length) return const SizedBox();
+                          return Text(
+                            _dayLabels[value.toInt()],
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade500,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -129,19 +146,25 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     final day = _weeklyActivity.days[i];
                     return BarChartGroupData(
                       x: i,
-                      barsSpace: 4,
+                      barsSpace: 2,
                       barRods: [
                         BarChartRodData(
                           toY: day.leetcodeSubmissions * _animation.value,
                           color: _leetcodeColor,
-                          width: 10,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          width: 8,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                         BarChartRodData(
                           toY: day.githubCommits * _animation.value,
                           color: _githubColor,
-                          width: 10,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          width: 8,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                        ),
+                        BarChartRodData(
+                          toY: day.hackerrankSubmissions * _animation.value,
+                          color: _hackerrankColor,
+                          width: 8,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                       ],
                     );
@@ -159,15 +182,15 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     return Row(
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 6,
+          height: 6,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 9,
             fontWeight: FontWeight.bold,
             color: Colors.grey.shade500,
           ),

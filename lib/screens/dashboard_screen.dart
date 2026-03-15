@@ -15,6 +15,7 @@ import '../widgets/skill_radar_chart.dart';
 import '../widgets/monthly_progress_chart.dart';
 import '../widgets/ai_insights_card.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/weekly_activity_chart.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -49,6 +50,7 @@ class DashboardScreen extends StatelessWidget {
     Map<DateTime, int> heatmapData = {};
     _mergeHeatmapData(heatmapData, stats.leetcodeStats?.submissionCalendar);
     _mergeHeatmapData(heatmapData, github.githubStats?.contributionCalendar);
+    _mergeHeatmapData(heatmapData, stats.hackerrankStats?.submissionHistory);
 
     return Material(
       color: theme.scaffoldBackgroundColor,
@@ -189,7 +191,18 @@ class DashboardScreen extends StatelessWidget {
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 300),
-                    child: CodingHeatmap(datasets: heatmapData),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CodingHeatmap(datasets: heatmapData),
+                        const SizedBox(height: 16),
+                        WeeklyActivityChart(
+                          leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
+                          githubCalendar: github.githubStats?.contributionCalendar ?? {},
+                          hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

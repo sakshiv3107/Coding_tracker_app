@@ -7,6 +7,7 @@ class HackerRankStats {
   final String? avatarUrl;
   final int followers;
   final String? country;
+  final Map<DateTime, int> submissionHistory;
   final Map<String, dynamic> extraMetrics;
 
   HackerRankStats({
@@ -16,6 +17,7 @@ class HackerRankStats {
     this.avatarUrl,
     required this.followers,
     this.country,
+    this.submissionHistory = const {},
     this.extraMetrics = const {},
   });
 
@@ -23,6 +25,7 @@ class HackerRankStats {
     required Map<String, dynamic> profileJson,
     required Map<String, dynamic> badgesJson,
     required Map<String, dynamic> scoresJson,
+    required Map<DateTime, int> history,
   }) {
     final model = profileJson['model'] ?? {};
     final badges = badgesJson['models'] as List? ?? [];
@@ -53,6 +56,7 @@ class HackerRankStats {
       avatarUrl: model['avatar'],
       followers: model['followers_count'] ?? 0,
       country: model['country'],
+      submissionHistory: history,
       extraMetrics: {
         'level': model['level'],
         'badges_count': badges.length,

@@ -142,7 +142,7 @@ class GithubService {
         topLanguages,
       );
     } catch (e) {
-      debugPrint("GitHub API Error for $username: $e");
+      debugPrint("GitHub API ERROR [$username]: $e");
       rethrow;
     }
   }

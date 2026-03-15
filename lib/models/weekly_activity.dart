@@ -4,14 +4,16 @@ class DailyActivity {
   final DateTime date;
   final int leetcodeSubmissions;
   final int githubCommits;
+  final int hackerrankSubmissions;
 
   DailyActivity({
     required this.date,
     required this.leetcodeSubmissions,
     required this.githubCommits,
+    this.hackerrankSubmissions = 0,
   });
 
-  int get total => leetcodeSubmissions + githubCommits;
+  int get total => leetcodeSubmissions + githubCommits + hackerrankSubmissions;
 }
 
 class WeeklyActivity {
@@ -22,6 +24,7 @@ class WeeklyActivity {
   factory WeeklyActivity.fromData({
     required Map<DateTime, int> leetcodeCalendar,
     required Map<DateTime, int> githubCalendar,
+    required Map<DateTime, int> hackerrankCalendar,
   }) {
     final today = DateTime.now();
     final monday = today.subtract(Duration(days: today.weekday - 1));
@@ -33,6 +36,7 @@ class WeeklyActivity {
         date: date,
         leetcodeSubmissions: leetcodeCalendar[normalized] ?? 0,
         githubCommits: githubCalendar[normalized] ?? 0,
+        hackerrankSubmissions: hackerrankCalendar[normalized] ?? 0,
       );
     });
 

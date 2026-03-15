@@ -12,6 +12,8 @@ import '../widgets/skeleton_loading.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/not_connected_widget.dart';
+import '../providers/stats_provider.dart';
+import '../widgets/weekly_activity_chart.dart';
 
 class GitHubStatsScreen extends StatefulWidget {
   const GitHubStatsScreen({super.key});
@@ -48,6 +50,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
     final theme = Theme.of(context);
     final profile = context.watch<ProfileProvider>();
     final github = context.watch<GithubProvider>();
+    final stats = context.watch<StatsProvider>(); // Added this line
     final username = profile.profile?["github"] ?? "";
 
     return Scaffold(
@@ -130,6 +133,12 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                               datasets: github.githubStats!.contributionCalendar,
                               baseColor: const Color(0xFF2EA44F),
                             ),
+                            const SizedBox(height: 16),
+                              WeeklyActivityChart(
+                                leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
+                                githubCalendar: github.githubStats!.contributionCalendar,
+                                hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
+                              ),
                           ],
                         ),
                       ),
