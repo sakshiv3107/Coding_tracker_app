@@ -11,6 +11,7 @@ import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/skeleton_loading.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../widgets/not_connected_widget.dart';
 
 class GitHubStatsScreen extends StatefulWidget {
   const GitHubStatsScreen({super.key});
@@ -74,7 +75,11 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
               ),
 
               if (username.isEmpty)
-                _buildMissingUsername(theme)
+                const NotConnectedWidget(
+                  platformName: 'GitHub',
+                  icon: FontAwesomeIcons.github,
+                  color: AppTheme.githubBlack,
+                )
               else if (github.error != null)
                 _buildErrorState(github.error!)
               else if (github.isLoading && github.githubStats == null)

@@ -7,14 +7,14 @@ import 'modern_card.dart';
 import 'animations/animated_stat_counter.dart';
 
 class DeveloperScoreCard extends StatefulWidget {
-  final int leetcodeSolved;
+  final int totalSolved;
   final double leetcodeRating;
   final int githubStars;
   final int githubContributions;
 
   const DeveloperScoreCard({
     super.key,
-    required this.leetcodeSolved,
+    required this.totalSolved,
     required this.leetcodeRating,
     required this.githubStars,
     required this.githubContributions,
@@ -47,7 +47,7 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard>
   @override
   void didUpdateWidget(DeveloperScoreCard old) {
     super.didUpdateWidget(old);
-    if (old.leetcodeSolved != widget.leetcodeSolved ||
+    if (old.totalSolved != widget.totalSolved ||
         old.leetcodeRating != widget.leetcodeRating ||
         old.githubStars != widget.githubStars ||
         old.githubContributions != widget.githubContributions) {
@@ -59,7 +59,7 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard>
   }
 
   DeveloperScore _compute() => DeveloperScore.calculate(
-        leetcodeProblems: widget.leetcodeSolved,
+        totalProblems: widget.totalSolved,
         contestRating: widget.leetcodeRating,
         githubStars: widget.githubStars,
         totalCommits: widget.githubContributions,
@@ -212,7 +212,7 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard>
     if (total == 0) return const SizedBox.shrink();
 
     final items = [
-      (label: 'Problems', value: _score.leetcodeContribution, color: const Color(0xFFFFA552), icon: Icons.code_rounded),
+      (label: 'Solved',   value: _score.problemsContribution, color: const Color(0xFFFFA552), icon: Icons.code_rounded),
       (label: 'Rating',   value: _score.ratingContribution,   color: const Color(0xFF00C9A7), icon: Icons.emoji_events_rounded),
       (label: 'Stars',    value: _score.starsContribution,    color: const Color(0xFFFFD700), icon: Icons.star_rounded),
       (label: 'Commits',  value: _score.commitsContribution,  color: const Color(0xFF6C63FF), icon: Icons.commit_rounded),

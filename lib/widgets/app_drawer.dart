@@ -6,15 +6,8 @@ import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 
-class AppDrawer extends StatefulWidget {
+class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
-
-  @override
-  State<AppDrawer> createState() => _AppDrawerState();
-}
-
-class _AppDrawerState extends State<AppDrawer> {
-  bool _isGuiMode = true;
 
   @override
   Widget build(BuildContext context) {
@@ -26,35 +19,48 @@ class _AppDrawerState extends State<AppDrawer> {
     
     final userName = auth.user?["name"] ?? "Developer";
     final leetcodeUser = profile.profile?["leetcode"] ?? "not_set";
+    final profilePic = profile.profile?["profilePic"];
 
     return Drawer(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: isDark ? AppTheme.bgDark : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(0),
-          bottomRight: Radius.circular(0),
-        ),
+        borderRadius: BorderRadius.zero,
       ),
       child: Column(
         children: [
-          // ── Header / Profile Section ─────────────────────────────────────
+          // ── Profile Section (Top) ──────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+            padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primary,
+                  AppTheme.primary.withOpacity(0.8),
+                ],
+              ),
             ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primary, width: 2),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.transparent,
-                    child: Icon(Icons.person_rounded, color: AppTheme.primary, size: 30),
+                Hero(
+                  tag: 'drawer_avatar',
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: (profilePic != null && profilePic.isNotEmpty) 
+                          ? NetworkImage(profilePic) 
+                          : null,
+                      child: (profilePic == null || profilePic.isEmpty)
+                          ? const Icon(Icons.person_rounded, color: Colors.white, size: 36)
+                          : null,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -64,12 +70,17 @@ class _AppDrawerState extends State<AppDrawer> {
                     children: [
                       Text(
                         userName,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '@$leetcodeUser',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
                           fontFamily: 'monospace',
                         ),
                       ),
@@ -80,41 +91,38 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ),
 
-          // ── Navigation Items ──────────────────────────────────────────────
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
               children: [
+                // ── Navigation Section ─────────────────────────────────────
+                _buildSectionHeader('NAVIGATION'),
                 _buildDrawerItem(
                   context,
                   title: 'Dashboard',
                   icon: Icons.dashboard_rounded,
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.pushReplacementNamed(context, '/'); // Or however you handle home
+                    if (ModalRoute.of(context)?.settings.name != '/') {
+                      Navigator.pushReplacementNamed(context, '/');
+                    }
                   },
-                  isActive: true,
+                  isActive: ModalRoute.of(context)?.settings.name == '/',
                 ),
                 _buildDrawerItem(
                   context,
                   title: 'Projects',
-                  icon: Icons.folder_rounded,
-                  onTap: () {},
+                  icon: Icons.folder_special_rounded,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/github_stats');
+                  },
                 ),
+
+                const SizedBox(height: 24),
                 
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  child: Text(
-                    'PLATFORMS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                
+                // ── Platforms Section ──────────────────────────────────────
+                _buildSectionHeader('PLATFORMS'),
                 _buildDrawerItem(
                   context,
                   title: 'LeetCode',
@@ -124,15 +132,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/leetcode_stats');
                   },
-                ),
-                _buildDrawerItem(
-                  context,
-                  title: 'CodeChef',
-                  icon: Icons.restaurant_menu_rounded,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/codechef_stats');
-                  },
+                  isActive: ModalRoute.of(context)?.settings.name == '/leetcode_stats',
                 ),
                 _buildDrawerItem(
                   context,
@@ -142,6 +142,17 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/codeforces_stats');
                   },
+                  isActive: ModalRoute.of(context)?.settings.name == '/codeforces_stats',
+                ),
+                _buildDrawerItem(
+                  context,
+                  title: 'CodeChef',
+                  icon: Icons.restaurant_menu_rounded,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/codechef_stats');
+                  },
+                  isActive: ModalRoute.of(context)?.settings.name == '/codechef_stats',
                 ),
                 _buildDrawerItem(
                   context,
@@ -151,6 +162,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/gfg_stats');
                   },
+                  isActive: ModalRoute.of(context)?.settings.name == '/gfg_stats',
                 ),
                 _buildDrawerItem(
                   context,
@@ -161,6 +173,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/github_stats');
                   },
+                  isActive: ModalRoute.of(context)?.settings.name == '/github_stats',
                 ),
                 _buildDrawerItem(
                   context,
@@ -171,10 +184,14 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/hackerrank_stats');
                   },
+                  isActive: ModalRoute.of(context)?.settings.name == '/hackerrank_stats',
                 ),
-                
-                const Divider(height: 32, indent: 16, endIndent: 16),
-                
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Divider(height: 48),
+                ),
+
                 _buildDrawerItem(
                   context,
                   title: 'Settings',
@@ -183,6 +200,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/settings');
                   },
+                  isActive: ModalRoute.of(context)?.settings.name == '/settings',
                 ),
                 _buildDrawerItem(
                   context,
@@ -197,13 +215,13 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ),
 
-          // ── Footer / Toggle Section ──────────────────────────────────────
+          // ── Footer / Theme Toggle ────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
                 ),
               ),
             ),
@@ -213,28 +231,46 @@ class _AppDrawerState extends State<AppDrawer> {
                 Row(
                   children: [
                     Icon(
-                      _isGuiMode ? Icons.auto_awesome_rounded : Icons.terminal_rounded,
+                      isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                       size: 20,
                       color: AppTheme.primary,
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'GUI Mode',
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      'Theme',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ],
                 ),
                 Switch.adaptive(
-                  value: _isGuiMode,
+                  value: isDark,
                   activeColor: AppTheme.primary,
                   onChanged: (val) {
-                    setState(() => _isGuiMode = val);
+                    themeProvider.toggleTheme(val);
                   },
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
+          color: Colors.grey,
+        ),
       ),
     );
   }
@@ -256,21 +292,22 @@ class _AppDrawerState extends State<AppDrawer> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: isActive 
-            ? AppTheme.primary.withValues(alpha: isDark ? 0.15 : 0.08) 
+            ? AppTheme.primary.withOpacity(isDark ? 0.15 : 0.08) 
             : Colors.transparent,
       ),
       child: ListTile(
         onTap: onTap,
         dense: true,
+        visualDensity: VisualDensity.compact,
         leading: Icon(
           icon,
           size: iconSize,
-          color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+          color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withOpacity(0.7)),
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+            color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withOpacity(0.8)),
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),

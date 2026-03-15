@@ -57,6 +57,20 @@ class LeetcodeService {
           statusDisplay
           lang
         }
+        tagProblemCounts(username: \$username) {
+          advanced {
+            tagName
+            problemsSolved
+          }
+          intermediate {
+            tagName
+            problemsSolved
+          }
+          fundamental {
+            tagName
+            problemsSolved
+          }
+        }
       }
     """;
 
@@ -425,7 +439,6 @@ class LeetcodeService {
       debugPrint("=== CONTEST DEBUG: contestHistoryData is NULL ===");
     }
     // ──────────────────────────────────────────────────────────────────────
-
     final List<RecentSubmission> recentSubmissions = [];
     if (recentSubmissionsData != null) {
       for (var item in recentSubmissionsData) {
@@ -454,6 +467,24 @@ class LeetcodeService {
           description: badge["hoverText"],
           earnedDate: badge["creationDate"],
         ));
+      }
+    }
+
+    // ── Parse Skill Tags ───────────────────────────────────────────────
+    final Map<String, int> tagStats = {};
+    final tagData = data["tagProblemCounts"];
+    if (tagData != null) {
+      for (var level in ["fundamental", "intermediate", "advanced"]) {
+        final List? categories = tagData[level];
+        if (categories != null) {
+          for (var item in categories) {
+            final name = item["tagName"] ?? "";
+            final count = item["problemsSolved"] ?? 0;
+            if (name.isNotEmpty) {
+              tagStats[name] = (tagStats[name] ?? 0) + (count as int);
+            }
+          }
+        }
       }
     }
 
@@ -528,6 +559,7 @@ class LeetcodeService {
       contestHistory: contestHistory,
       recentSubmissions: recentSubmissions,
       badges: badges,
+      tagStats: tagStats,
     );
   }
 }

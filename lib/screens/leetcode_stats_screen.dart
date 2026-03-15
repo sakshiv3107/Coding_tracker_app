@@ -21,7 +21,9 @@ import '../widgets/developer_score_card.dart';
 import '../widgets/difficulty_bar_chart.dart';
 import '../widgets/contest_analytics_section.dart' ;
 import '../widgets/badges_section.dart';
+import '../widgets/not_connected_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CodingStatsScreen extends StatefulWidget {
   const CodingStatsScreen({super.key});
@@ -61,6 +63,7 @@ void initState() {
     final profile = context.watch<ProfileProvider>();
     final github = context.watch<GithubProvider>();
     final theme = Theme.of(context);
+    final username = profile.profile?["leetcode"] ?? "";
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -87,8 +90,14 @@ void initState() {
                 ),
               ),
 
+              if (username.isEmpty)
+                const NotConnectedWidget(
+                  platformName: 'LeetCode',
+                  icon: FontAwesomeIcons.code,
+                  color: AppTheme.leetCodeYellow,
+                )
               // ── Error State ──────────────────────────────────────────
-              if (stats.error != null)
+              else if (stats.error != null)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
@@ -151,7 +160,7 @@ void initState() {
       FadeSlideTransition(
         delay: const Duration(milliseconds: 80),
         child: DeveloperScoreCard(
-          leetcodeSolved: lc.totalSolved,
+          totalSolved: lc.totalSolved,
           leetcodeRating: lc.contestRating ?? 0,
           githubStars: github.githubStats?.totalStars ?? 0,
           githubContributions: github.githubStats?.totalContributions ?? 0,

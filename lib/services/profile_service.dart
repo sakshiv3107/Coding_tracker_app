@@ -12,6 +12,7 @@ class ProfileService {
   Future<void> saveUserInfo({
     required String email,
     required String name,
+    String? profilePic,
   }) async {
     if (currentUserId == null) {
       throw Exception("User not authenticated");
@@ -22,6 +23,7 @@ class ProfileService {
         'uid': currentUserId,
         'email': email,
         'name': name,
+        if (profilePic != null) 'profilePic': profilePic,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -36,6 +38,8 @@ class ProfileService {
     required String codechef,
     required String codeforces,
     required String github,
+    String? hackerrank,
+    String? gfg,
   }) async {
     if (currentUserId == null) {
       throw Exception("User not authenticated");
@@ -48,6 +52,8 @@ class ProfileService {
           'codechef': codechef,
           'codeforces': codeforces,
           'github': github,
+          if (hackerrank != null) 'hackerrank': hackerrank,
+          if (gfg != null) 'gfg': gfg,
         },
         'profileCompleted': true,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -82,13 +88,17 @@ class ProfileService {
 
     try {
       final doc = await _db.collection('users').doc(currentUserId).get();
-      if (doc.exists && doc.data()?['profile'] != null) {
-        final profileData = doc.data()?['profile'];
+      if (doc.exists) {
+        final data = doc.data();
+        final profileData = data?['profile'] ?? {};
         return {
           'leetcode': profileData['leetcode'] ?? '',
           'codechef': profileData['codechef'] ?? '',
           'codeforces': profileData['codeforces'] ?? '',
           'github': profileData['github'] ?? '',
+          'hackerrank': profileData['hackerrank'] ?? '',
+          'gfg': profileData['gfg'] ?? '',
+          'profilePic': data?['profilePic'] ?? '',
         };
       }
       return null;
@@ -130,10 +140,13 @@ class ProfileService {
   // Update full profile including name and coding platform usernames
   Future<void> updateFullProfile({
     String? name,
+    String? profilePic,
     required String leetcode,
     required String codechef,
     required String codeforces,
     required String github,
+    String? hackerrank,
+    String? gfg,
   }) async {
     if (currentUserId == null) {
       throw Exception("User not authenticated");
@@ -142,11 +155,14 @@ class ProfileService {
     try {
       final updates = {
         if (name != null) 'name': name,
+        if (profilePic != null) 'profilePic': profilePic,
         'profile': {
           'leetcode': leetcode,
           'codechef': codechef,
           'codeforces': codeforces,
           'github': github,
+          if (hackerrank != null) 'hackerrank': hackerrank,
+          if (gfg != null) 'gfg': gfg,
         },
         'updatedAt': FieldValue.serverTimestamp(),
       };

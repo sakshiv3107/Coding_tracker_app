@@ -34,6 +34,8 @@ class ProfileProvider extends ChangeNotifier {
     required String codechef,
     required String codeforces,
     required String github,
+    String? hackerrank,
+    String? gfg,
   }) async {
     try {
       isLoading = true;
@@ -45,6 +47,8 @@ class ProfileProvider extends ChangeNotifier {
         codechef: codechef,
         codeforces: codeforces,
         github: github,
+        hackerrank: hackerrank,
+        gfg: gfg,
       );
 
       profile = {
@@ -52,6 +56,8 @@ class ProfileProvider extends ChangeNotifier {
         "codechef": codechef,
         "codeforces": codeforces,
         "github": github,
+        "hackerrank": hackerrank ?? "",
+        "gfg": gfg ?? "",
       };
     } catch (e) {
       error = e.toString();
@@ -63,10 +69,13 @@ class ProfileProvider extends ChangeNotifier {
   // Update profile in Firestore and local state
   Future<void> updateFullProfile({
     String? name,
+    String? profilePic,
     required String leetcode,
     required String codechef,
     required String codeforces,
     required String github,
+    String? hackerrank,
+    String? gfg,
   }) async {
     try {
       isLoading = true;
@@ -75,10 +84,13 @@ class ProfileProvider extends ChangeNotifier {
 
       await _profileService.updateFullProfile(
         name: name,
+        profilePic: profilePic,
         leetcode: leetcode,
         codechef: codechef,
         codeforces: codeforces,
         github: github,
+        hackerrank: hackerrank,
+        gfg: gfg,
       );
 
       profile = {
@@ -86,6 +98,9 @@ class ProfileProvider extends ChangeNotifier {
         "codechef": codechef,
         "codeforces": codeforces,
         "github": github,
+        "hackerrank": hackerrank ?? "",
+        "gfg": gfg ?? "",
+        "profilePic": profilePic ?? profile?["profilePic"] ?? "",
       };
     } catch (e) {
       error = e.toString();

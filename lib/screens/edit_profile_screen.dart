@@ -15,10 +15,13 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _picController;
   late TextEditingController _leetcodeController;
   late TextEditingController _codechefController;
   late TextEditingController _codeforcesController;
   late TextEditingController _githubController;
+  late TextEditingController _hackerrankController;
+  late TextEditingController _gfgController;
 
   @override
   void initState() {
@@ -27,19 +30,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final profile = context.read<ProfileProvider>();
 
     _nameController = TextEditingController(text: auth.user?["name"] ?? "");
+    _picController = TextEditingController(text: profile.profile?["profilePic"] ?? "");
     _leetcodeController = TextEditingController(text: profile.profile?["leetcode"] ?? "");
     _codechefController = TextEditingController(text: profile.profile?["codechef"] ?? "");
     _codeforcesController = TextEditingController(text: profile.profile?["codeforces"] ?? "");
     _githubController = TextEditingController(text: profile.profile?["github"] ?? "");
+    _hackerrankController = TextEditingController(text: profile.profile?["hackerrank"] ?? "");
+    _gfgController = TextEditingController(text: profile.profile?["gfg"] ?? "");
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _picController.dispose();
     _leetcodeController.dispose();
     _codechefController.dispose();
     _codeforcesController.dispose();
     _githubController.dispose();
+    _hackerrankController.dispose();
+    _gfgController.dispose();
     super.dispose();
   }
 
@@ -50,17 +59,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final authProvider = context.read<AuthProvider>();
 
     final name = _nameController.text.trim();
+    final pic = _picController.text.trim();
     final leetcode = _leetcodeController.text.trim();
     final codechef = _codechefController.text.trim();
     final codeforces = _codeforcesController.text.trim();
     final github = _githubController.text.trim();
+    final hackerrank = _hackerrankController.text.trim();
+    final gfg = _gfgController.text.trim();
 
     await profileProvider.updateFullProfile(
       name: name,
+      profilePic: pic,
       leetcode: leetcode,
       codechef: codechef,
       codeforces: codeforces,
       github: github,
+      hackerrank: hackerrank,
+      gfg: gfg,
     );
 
     if (profileProvider.error == null) {
@@ -128,6 +143,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _picController,
+                        label: 'Profile Picture URL',
+                        hint: 'https://example.com/photo.jpg',
+                        icon: Icons.image_outlined,
+                      ),
                     ],
                   ),
                 ),
@@ -147,29 +169,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       _buildTextField(
                         controller: _leetcodeController,
                         label: 'LeetCode Username',
-                        hint: 'e.g. alex_rivera',
+                        hint: 'e.g. user_123',
                         icon: Icons.code,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _githubController,
                         label: 'GitHub Username',
-                        hint: 'e.g. alexrivera',
-                        icon: Icons.pets,
+                        hint: 'e.g. github_user',
+                        icon: Icons.alternate_email,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _codechefController,
                         label: 'CodeChef Username',
-                        hint: 'e.g. coder_alex',
-                        icon: Icons.bar_chart,
+                        hint: 'e.g. chef_45',
+                        icon: Icons.restaurant_menu,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _codeforcesController,
                         label: 'CodeForces Username',
-                        hint: 'e.g. cf_user123',
+                        hint: 'e.g. cf_grandmaster',
                         icon: Icons.trending_up,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _hackerrankController,
+                        label: 'HackerRank Username',
+                        hint: 'e.g. hr_coding',
+                        icon: Icons.terminal,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _gfgController,
+                        label: 'GFG Username',
+                        hint: 'e.g. gfg_sol',
+                        icon: Icons.school,
                       ),
                     ],
                   ),
@@ -181,6 +217,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onPressed: isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: isLoading
                         ? const SizedBox(

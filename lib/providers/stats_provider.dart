@@ -6,6 +6,7 @@ import '../services/leetcode_service.dart';
 import '../services/codeforces_service.dart';
 import '../services/codechef_service.dart';
 import '../services/gfg_service.dart';
+import '../services/hackerrank_service.dart';
 
 class StatsProvider extends ChangeNotifier {
   // ── Stats data ────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ class StatsProvider extends ChangeNotifier {
   PlatformStats? _codeforcesStats;
   PlatformStats? _codechefStats;
   PlatformStats? _gfgStats;
+  PlatformStats? _hackerrankStats;
 
   // ── Per-platform loading flags ─────────────────────────────────────────
   // Using per-platform flags instead of one global _isLoading means:
@@ -22,12 +24,14 @@ class StatsProvider extends ChangeNotifier {
   bool _codeforcesLoading = false;
   bool _codechefLoading = false;
   bool _gfgLoading = false;
+  bool _hackerrankLoading = false;
 
   // ── Per-platform errors ───────────────────────────────────────────────
   String? _leetcodeError;
   String? _codeforcesError;
   String? _codechefError;
   String? _gfgError;
+  String? _hackerrankError;
 
   // ── Cache timestamps ──────────────────────────────────────────────────
   // Prevents refetching on every screen visit / hot restart
@@ -35,6 +39,7 @@ class StatsProvider extends ChangeNotifier {
   DateTime? _codeforcesLastFetch;
   DateTime? _codechefLastFetch;
   DateTime? _gfgLastFetch;
+  DateTime? _hackerrankLastFetch;
 
   // 10 minutes for LeetCode (rate-limited proxy), 5 min for others
   static const _leetcodeCacheDuration = Duration(minutes: 10);
@@ -50,26 +55,29 @@ class StatsProvider extends ChangeNotifier {
   PlatformStats? get codeforcesStats => _codeforcesStats;
   PlatformStats? get codechefStats => _codechefStats;
   PlatformStats? get gfgStats => _gfgStats;
+  PlatformStats? get hackerrankStats => _hackerrankStats;
 
   // ── Public getters — loading ───────────────────────────────────────────
   // Global isLoading = true only while ALL platforms are still loading
   // (used by screens that don't care which platform is loading)
   bool get isLoading =>
-      _leetcodeLoading || _codeforcesLoading || _codechefLoading || _gfgLoading;
+      _leetcodeLoading || _codeforcesLoading || _codechefLoading || _gfgLoading || _hackerrankLoading;
 
   bool get leetcodeLoading => _leetcodeLoading;
   bool get codeforcesLoading => _codeforcesLoading;
   bool get codechefLoading => _codechefLoading;
   bool get gfgLoading => _gfgLoading;
+  bool get hackerrankLoading => _hackerrankLoading;
 
   // ── Public getters — errors ────────────────────────────────────────────
   // Legacy single error getter — returns the first non-null error
-  String? get error => _leetcodeError ?? _codeforcesError ?? _codechefError ?? _gfgError;
+  String? get error => _leetcodeError ?? _codeforcesError ?? _codechefError ?? _gfgError ?? _hackerrankError;
 
   String? get leetcodeError => _leetcodeError;
   String? get codeforcesError => _codeforcesError;
   String? get codechefError => _codechefError;
   String? get gfgError => _gfgError;
+  String? get hackerrankError => _hackerrankError;
 
   Map<DateTime, int> get githubCommitCalendar => _githubCommitCalendar;
 
@@ -79,9 +87,10 @@ class StatsProvider extends ChangeNotifier {
     final totalSolved = _leetcodeStats!.totalSolved +
         (_codeforcesStats?.totalSolved ?? 0) +
         (_codechefStats?.totalSolved ?? 0) +
-        (_gfgStats?.totalSolved ?? 0);
+        (_gfgStats?.totalSolved ?? 0) +
+        (_hackerrankStats?.totalSolved ?? 0);
     return DeveloperScore.calculate(
-      leetcodeProblems: totalSolved,
+      totalProblems: totalSolved,
       contestRating: _leetcodeStats!.contestRating ?? 0,
       githubStars: _githubStars,
       totalCommits: _githubTotalCommits,
@@ -217,6 +226,31 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── HackerRank ────────────────────────────────────────────────────────
+  Future<void> fetchHackerRankStats(String username, {bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _isFresh(_hackerrankLastFetch, _otherCacheDuration) &&
+        _hackerrankStats != null) {
+      debugPrint("HackerRank: serving from cache");
+      return;
+    }
+
+    _hackerrankLoading = true;
+    _hackerrankError = null;
+    notifyListeners();
+
+    try {
+      _hackerrankStats = await HackerRankService().fetchData(username);
+      _hackerrankLastFetch = DateTime.now();
+    } catch (e) {
+      _hackerrankError = e.toString().replaceAll('Exception: ', '');
+      debugPrint("HackerRank fetch error: $e");
+    }
+
+    _hackerrankLoading = false;
+    notifyListeners();
+  }
+
   // ── fetchAllStats ──────────────────────────────────────────────────────
   // Fires all platforms in parallel — each updates independently as it
   // completes, so the UI shows data platform by platform instead of waiting
@@ -226,6 +260,7 @@ class StatsProvider extends ChangeNotifier {
     String? codeforces,
     String? codechef,
     String? gfg,
+    String? hackerrank,
     bool forceRefresh = false,
   }) async {
     final futures = <Future>[];
@@ -241,6 +276,9 @@ class StatsProvider extends ChangeNotifier {
     }
     if (gfg != null && gfg.isNotEmpty) {
       futures.add(fetchGfgStats(gfg, forceRefresh: forceRefresh));
+    }
+    if (hackerrank != null && hackerrank.isNotEmpty) {
+      futures.add(fetchHackerRankStats(hackerrank, forceRefresh: forceRefresh));
     }
 
     // Run all in parallel — don't await sequentially
@@ -261,6 +299,7 @@ class StatsProvider extends ChangeNotifier {
     _codeforcesError = null;
     _codechefError = null;
     _gfgError = null;
+    _hackerrankError = null;
     notifyListeners();
   }
 }

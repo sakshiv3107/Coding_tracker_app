@@ -10,7 +10,7 @@ class LeetcodeStats {
   final int streak;
   final int longestStreak;
   final int activeDays;
-  
+  final List<LeetCodeBadge>? badges;
   // Contest Info
   final double? contestRating;
   final double? highestRating;
@@ -22,8 +22,8 @@ class LeetcodeStats {
   // Recent Submissions
   final List<RecentSubmission>? recentSubmissions;
   
-  // Badges
-  final List<LeetCodeBadge>? badges;
+  // Tag Stats for Radar Chart
+  final Map<String, int>? tagStats;
 
   LeetcodeStats({
     required this.totalSolved,
@@ -34,6 +34,7 @@ class LeetcodeStats {
     required this.ranking,
     required this.rating,
     required this.submissionCalendar,
+
     this.streak = 0,
     this.longestStreak = 0,
     this.activeDays = 0,
@@ -45,6 +46,7 @@ class LeetcodeStats {
     this.contestHistory,
     this.recentSubmissions,
     this.badges,
+    this.tagStats,
   });
 }
 

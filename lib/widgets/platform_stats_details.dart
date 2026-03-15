@@ -4,6 +4,8 @@ import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
+import '../widgets/not_connected_widget.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PlatformStatsDetailsScreen extends StatelessWidget {
   final PlatformStats? stats;
@@ -56,7 +58,13 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                 ),
               ),
 
-              if (isLoading && stats == null)
+              if (username.isEmpty)
+                NotConnectedWidget(
+                  platformName: platformName,
+                  icon: icon,
+                  color: color,
+                )
+              else if (isLoading && stats == null)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
