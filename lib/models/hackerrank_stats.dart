@@ -22,40 +22,60 @@ class HackerRankStats {
   });
 
   factory HackerRankStats.fromMultipleSources({
-    required Map<String, dynamic> profileJson,
-    required Map<String, dynamic> badgesJson,
-    required Map<String, dynamic> scoresJson,
+    required dynamic profileJson,
+    required dynamic badgesJson,
+    required dynamic scoresJson,
     required Map<DateTime, int> history,
   }) {
-    final model = profileJson['model'] ?? {};
-    final badges = badgesJson['models'] as List? ?? [];
+    // Safe profile parsing
+    final profileMap = profileJson is Map<String, dynamic> ? profileJson : {};
+    final model = profileMap['model'] is Map<String, dynamic> ? profileMap['model'] : {};
+    
+    // Safe badges parsing
+    List badges = [];
+    if (badgesJson is Map<String, dynamic>) {
+      badges = badgesJson['models'] is List ? badgesJson['models'] : [];
+    } else if (badgesJson is List) {
+      badges = badgesJson;
+    }
     
     // Sum solved problems from all badges
     int solvedCount = 0;
     for (var b in badges) {
-      solvedCount += (b['solved'] as num? ?? 0).toInt();
+      if (b is Map) {
+        solvedCount += (b['solved'] as num? ?? 0).toInt();
+      }
     }
 
-    // Find Algorithms rank as primary rank
+    // Safe scores parsing to find Algorithm rank
     String? rank;
-    final tracks = scoresJson is List
-        ? scoresJson
-        : (scoresJson['tracks'] is List ? scoresJson['tracks'] : []);
+    List tracks = [];
+    if (scoresJson is List) {
+      tracks = scoresJson;
+    } else if (scoresJson is Map<String, dynamic>) {
+      tracks = scoresJson['tracks'] is List 
+          ? scoresJson['tracks'] 
+          : (scoresJson['models'] is List ? scoresJson['models'] : []);
+    }
+
     for (var track in tracks) {         
-      if (track['slug'] == 'algorithms') {
-        rank = track['practice']?['rank']?.toString();
+      if (track is Map && track['slug'] == 'algorithms') {
+        final practice = track['practice'];
+        if (practice is Map) {
+          rank = practice['rank']?.toString();
+        }
         if (rank == "null" || rank == "0") rank = null;
         break;
       }
     }
 
     return HackerRankStats(
-      username: model['username'] ?? '',
+      username: model['username']?.toString() ?? '',
       totalSolved: solvedCount,
       rank: rank ?? 'N/A',
-      avatarUrl: model['avatar'],
-      followers: model['followers_count'] ?? 0,
-      country: model['country'],
+      avatarUrl: model['avatar']?.toString(),
+      followers: (model['followers_count'] as num? ?? 0).toInt(),
+      country: model['country']?.toString(),
       submissionHistory: history,
       extraMetrics: {
         'level': model['level'],

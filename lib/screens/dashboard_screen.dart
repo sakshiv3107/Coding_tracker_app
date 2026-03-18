@@ -16,6 +16,7 @@ import '../widgets/monthly_progress_chart.dart';
 import '../widgets/ai_insights_card.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/weekly_activity_chart.dart';
+import '../widgets/contest_tracker_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -37,6 +38,11 @@ class DashboardScreen extends StatelessWidget {
     final hrUser = profile.profile?["hackerrank"] ?? "";
     final profilePic = profile.profile?["profilePic"];
 
+    // Dynamic Level Calculation (Example: 1000 XP per level)
+    final xp = stats.xpPoints;
+    final level = (xp / 1000).floor() + 1;
+    final progressToNextLevel = (xp % 1000) / 1000;
+
     // Count connected platforms
     int connectedPlatforms = 0;
     if (leetcodeUser.isNotEmpty) connectedPlatforms++;
@@ -57,22 +63,23 @@ class DashboardScreen extends StatelessWidget {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await stats.fetchAllStats(
-              leetcode: leetcodeUser,
-              codeforces: cfUser,
-              codechef: ccUser,
-              gfg: gfgUser,
-              hackerrank: hrUser,
-              forceRefresh: true,
-            );
-            if (githubUser.isNotEmpty) {
-              await github.fetchGithubData(githubUser);
-            }
+            await Future.wait([
+              stats.fetchAllStats(
+                leetcode: leetcodeUser,
+                codeforces: cfUser,
+                codechef: ccUser,
+                gfg: gfgUser,
+                hackerrank: hrUser,
+                forceRefresh: true,
+              ),
+              if (githubUser.isNotEmpty) github.fetchGithubData(githubUser),
+              stats.fetchUpcomingContests(),
+            ]);
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // ── Header / Drawer Toggle ──────────────────────────────────
+              // ── Header / XP Level ──────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 sliver: SliverToBoxAdapter(
@@ -80,17 +87,38 @@ class DashboardScreen extends StatelessWidget {
                     children: [
                       Builder(
                         builder: (context) => IconButton(
-                          onPressed: () {
-                            // This now correctly targets the HomeScreen's Scaffold
-                            Scaffold.of(context).openDrawer();
-                          },
+                          onPressed: () => Scaffold.of(context).openDrawer(),
                           icon: const Icon(Icons.menu_rounded),
                           style: IconButton.styleFrom(
                             backgroundColor: theme.colorScheme.surface,
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 16),
+                      // XP Level Indicator
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text('LEVEL $level', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                const Spacer(),
+                                Text('$xp XP', style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            LinearProgressIndicator(
+                              value: progressToNextLevel,
+                              backgroundColor: theme.colorScheme.surface,
+                              color: AppTheme.primary,
+                              borderRadius: BorderRadius.circular(4),
+                              minHeight: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       const Icon(Icons.notifications_none_rounded),
                     ],
                   ),
@@ -117,12 +145,28 @@ class DashboardScreen extends StatelessWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── B. Total Problems Solved ────────────────────────────────
+              // ── B. Contest Tracker Card ────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 100),
+                    child: ContestTrackerCard(
+                      contests: stats.upcomingContests,
+                      isLoading: stats.contestsLoading,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── C. Total Problems Solved ────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverToBoxAdapter(
+                  child: FadeSlideTransition(
+                    delay: const Duration(milliseconds: 200),
                     child: UnifiedAnalyticsCard(
                       leetcode: stats.leetcodeStats?.totalSolved ?? 0,
                       codeforces: stats.codeforcesStats?.totalSolved ?? 0,
@@ -136,15 +180,15 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
+              
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── C. Platform Quick Stats ─────────────────────────────────
+              // ── D. Platform Quick Stats ─────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 200),
+                    delay: const Duration(milliseconds: 300),
                     child: PlatformQuickStatsGrid(
                       leetcode: {
                         'solved': stats.leetcodeStats?.totalSolved,
@@ -185,12 +229,33 @@ class DashboardScreen extends StatelessWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── D. Coding Activity Heatmap ──────────────────────────────
+              // ── E. AI Coding Insights ──────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 300),
+                    delay: const Duration(milliseconds: 400),
+                    child: AIInsightsCard(
+                      leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
+                      githubCommits: github.githubStats?.totalContributions ?? 0,
+                      tagStats: stats.leetcodeStats?.tagStats ?? {},
+                      easy: stats.leetcodeStats?.easy ?? 0,
+                      medium: stats.leetcodeStats?.medium ?? 0,
+                      hard: stats.leetcodeStats?.hard ?? 0,
+                      recommendation: stats.aiRecommendation,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── F. Coding Activity Heatmap ──────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverToBoxAdapter(
+                  child: FadeSlideTransition(
+                    delay: const Duration(milliseconds: 500),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -209,53 +274,17 @@ class DashboardScreen extends StatelessWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── E. Skill Radar Chart ────────────────────────────────────
+              // ── G. Skill Radar Chart ────────────────────────────────────
               if (stats.leetcodeStats?.tagStats != null)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
                     child: FadeSlideTransition(
-                      delay: const Duration(milliseconds: 400),
+                      delay: const Duration(milliseconds: 600),
                       child: SkillRadarChart(tagStats: stats.leetcodeStats!.tagStats!),
                     ),
                   ),
                 ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // ── F. Monthly Progress Chart ───────────────────────────────
-              if (stats.leetcodeStats?.submissionCalendar != null)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  sliver: SliverToBoxAdapter(
-                    child: FadeSlideTransition(
-                      delay: const Duration(milliseconds: 500),
-                      child: MonthlyProgressChart(
-                        submissionCalendar: stats.leetcodeStats!.submissionCalendar,
-                      ),
-                    ),
-                  ),
-                ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // ── G. AI Coding Insights ──────────────────────────────────
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 600),
-                    child: AIInsightsCard(
-                      leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
-                      githubCommits: github.githubStats?.totalContributions ?? 0,
-                      tagStats: stats.leetcodeStats?.tagStats ?? {},
-                      easy: stats.leetcodeStats?.easy ?? 0,
-                      medium: stats.leetcodeStats?.medium ?? 0,
-                      hard: stats.leetcodeStats?.hard ?? 0,
-                    ),
-                  ),
-                ),
-              ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],

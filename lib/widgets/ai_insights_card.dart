@@ -9,6 +9,7 @@ class AIInsightsCard extends StatelessWidget {
   final int easy;
   final int medium;
   final int hard;
+  final String? recommendation;
 
   const AIInsightsCard({
     super.key,
@@ -18,10 +19,14 @@ class AIInsightsCard extends StatelessWidget {
     required this.easy,
     required this.medium,
     required this.hard,
+    this.recommendation,
   });
 
   List<String> _generateInsights() {
     List<String> insights = [];
+    if (recommendation != null) {
+      insights.add(recommendation!);
+    }
 
     // Analyze difficulty
     if (medium > easy && medium > hard) {

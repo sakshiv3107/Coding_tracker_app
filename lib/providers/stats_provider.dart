@@ -10,6 +10,8 @@ import '../services/codeforces_service.dart';
 import '../services/codechef_service.dart';
 import '../services/gfg_service.dart';
 import '../services/hackerrank_service.dart';
+import '../services/contest_service.dart';
+import '../core/analytics_engine.dart';
 
 class StatsProvider extends ChangeNotifier {
   // ── Stats data ────────────────────────────────────────────────────────
@@ -124,11 +126,62 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── LeetCode ───────────────────────────────────────────────────────────
+  // ─── Analytics & Gamification ──────────────────────────────────────────
+  int _xpPoints = 0;
+  Map<String, List<String>> _topicStrengths = {};
+  String _aiRecommendation = "Connecting sources...";
+  Map<DateTime, int> _progressData = {};
+
+  int get xpPoints => _xpPoints;
+  Map<String, List<String>> get topicStrengths => _topicStrengths;
+  String get aiRecommendation => _aiRecommendation;
+  Map<DateTime, int> get progressData => _progressData;
+
+  List<Contest> _upcomingContests = [];
+  bool _contestsLoading = false;
+  List<Contest> get upcomingContests => _upcomingContests;
+  bool get contestsLoading => _contestsLoading;
+
+  Future<void> fetchUpcomingContests() async {
+    _contestsLoading = true;
+    notifyListeners();
+    try {
+      _upcomingContests = await ContestService().fetchUpcomingContests();
+    } catch (e) {
+      debugPrint("Contest fetch error: $e");
+    }
+    _contestsLoading = false;
+    notifyListeners();
+  }
+
+  void _calculateAnalytics() {
+    if (_leetcodeStats != null) {
+      _topicStrengths = AnalyticsEngine.analyzeTopicStrengths(_leetcodeStats!.tagStats);
+      _aiRecommendation = AnalyticsEngine.getDailyRecommendation(_leetcodeStats);
+      
+      _xpPoints = AnalyticsEngine.calculateXP(
+        totalSolved: _leetcodeStats!.totalSolved + 
+                     (_codeforcesStats?.totalSolved ?? 0) +
+                     (_codechefStats?.totalSolved ?? 0) +
+                     (_gfgStats?.totalSolved ?? 0) +
+                     (_hackerrankStats?.totalSolved ?? 0),
+        streak: _leetcodeStats!.streak,
+        rating: _leetcodeStats!.rating,
+        contestsAttended: _leetcodeStats!.totalContests,
+      );
+
+      _progressData = AnalyticsEngine.aggregateProgress(_leetcodeStats!.submissionCalendar);
+      
+      // Auto-fetch contests if not already loading
+      if (_upcomingContests.isEmpty && !_contestsLoading) {
+        fetchUpcomingContests();
+      }
+    }
+    notifyListeners();
+  }
+
+  // ─── LeetCode ───────────────────────────────────────────────────────────
   Future<void> fetchLeetCodeStats(String username, {bool forceRefresh = false}) async {
-    // Return cached data if still fresh — this is the fix for 429 errors.
-    // The proxy (alfa-leetcode-api.onrender.com) rate-limits aggressively,
-    // so we must not call it on every screen visit.
     if (!forceRefresh &&
         _isFresh(_leetcodeLastFetch, _leetcodeCacheDuration) &&
         _leetcodeStats != null) {
@@ -143,6 +196,7 @@ class StatsProvider extends ChangeNotifier {
     try {
       _leetcodeStats = await LeetcodeService().fetchData(username);
       _leetcodeLastFetch = DateTime.now();
+      _calculateAnalytics();
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
       _leetcodeError = (msg.contains('TimeoutException') || msg.contains('TIMEOUT_ERROR'))

@@ -39,13 +39,20 @@ class HackerRankService {
 
       // Parse submission history
       final Map<DateTime, int> historyMap = {};
-      final rawHistory = results[3] as Map<String, dynamic>;
-      rawHistory.forEach((dateStr, count) {
-        final date = DateTime.tryParse(dateStr);
-        if (date != null) {
-          historyMap[DateTime(date.year, date.month, date.day)] = (count as num).toInt();
-        }
-      });
+      final dynamic historyData = results[3];
+      
+      if (historyData is Map) {
+        historyData.forEach((dateStr, count) {
+          final date = DateTime.tryParse(dateStr.toString());
+          if (date != null) {
+            historyMap[DateTime(date.year, date.month, date.day)] = 
+                (count is num) ? count.toInt() : 0;
+          }
+        });
+      } else if (historyData is List) {
+        // If it's an empty list or unexpected array, just keep historyMap empty
+        debugPrint("HackerRank: submission_histories returned a List instead of Map");
+      }
 
       return HackerRankStats.fromMultipleSources(
         profileJson: results[0],
