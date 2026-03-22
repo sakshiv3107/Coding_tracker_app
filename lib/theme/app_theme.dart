@@ -13,10 +13,10 @@ class AppTheme {
   static const Color githubBlue = Color(0xFF0366D6);
   
   static const Color bgLight = Color(0xFFF8FAFC);
-  static const Color bgDark = Color(0xFF0F172A);
+  static const Color bgDark = Color(0xFF020617); // Deeper dark
   
   static const Color surfaceLight = Colors.white;
-  static const Color surfaceDark = Color(0xFF1E293B);
+  static const Color surfaceDark = Color(0xFF0F172A); // Slower dark
   
   static const Color textPrimaryLight = Color(0xFF1E293B);
   static const Color textSecondaryLight = Color(0xFF64748B);
@@ -33,11 +33,9 @@ class AppTheme {
         secondary: secondary,
         tertiary: accent,
         surface: surfaceLight,
-        background: bgLight,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: textPrimaryLight,
-        onBackground: textPrimaryLight,
       ),
       scaffoldBackgroundColor: bgLight,
       textTheme: GoogleFonts.outfitTextTheme().copyWith(
@@ -91,31 +89,6 @@ class AppTheme {
           ),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.black.withOpacity(0.1)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.black.withOpacity(0.1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-        ),
-        hintStyle: GoogleFonts.outfit(
-          color: textSecondaryLight.withOpacity(0.5),
-          fontSize: 14,
-        ),
-      ),
     );
   }
 
@@ -128,11 +101,9 @@ class AppTheme {
         secondary: secondary,
         tertiary: accent,
         surface: surfaceDark,
-        background: bgDark,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: textPrimaryDark,
-        onBackground: textPrimaryDark,
       ),
       scaffoldBackgroundColor: bgDark,
       textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
@@ -148,10 +119,10 @@ class AppTheme {
           color: textPrimaryDark,
           letterSpacing: -0.3,
         ),
-        titleLarge: GoogleFonts.outfit(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
+        titleLarge: GoogleFonts.jetBrainsMono( // Terminal vibe
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
         bodyLarge: GoogleFonts.outfit(
           fontSize: 16,
@@ -161,10 +132,16 @@ class AppTheme {
           fontSize: 14,
           color: textSecondaryDark,
         ),
+
+        labelLarge: GoogleFonts.jetBrainsMono(
+           color: primary,
+           fontWeight: FontWeight.bold,
+        ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: 10,
         color: surfaceDark,
+        shadowColor: primary.withOpacity(0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
@@ -179,7 +156,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 0,
+          elevation: 8,
+          shadowColor: primary.withOpacity(0.5),
           textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,

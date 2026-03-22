@@ -4,10 +4,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/hackerrank_stats.dart';
 import '../providers/stats_provider.dart';
 import '../providers/profile_provider.dart';
-import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/not_connected_widget.dart';
+import '../widgets/coding_heatmap.dart';
+import '../widgets/responsive_card.dart';
+import '../theme/app_theme.dart';
 
 class HackerRankStatsScreen extends StatefulWidget {
   const HackerRankStatsScreen({super.key});
@@ -44,13 +46,16 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
     final username = profileProvider.profile?["hackerrank"] ?? "";
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('HackerRank Analytics'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
       body: RefreshIndicator(
         onRefresh: _refreshStats,
+        color: const Color(0xFF2EC866),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -65,23 +70,65 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (stats != null) ...[
+              // 1. Profile header
               SliverPadding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
-                    child: _buildProfileHeader(stats),
+                    child: _buildProfileHeader(stats, theme),
                   ),
                 ),
               ),
+
+              // 2. Main stats grid (Solved, Rank, Badges, Country)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 100),
-                    child: _buildMainStats(stats),
+                    child: _buildMainStatsGrid(stats),
                   ),
                 ),
               ),
+
+              // 3. Activity Heatmap
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                sliver: SliverToBoxAdapter(
+                  child: FadeSlideTransition(
+                    delay: const Duration(milliseconds: 200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(theme, 'Activity Heatmap'),
+                        const SizedBox(height: 12),
+                        CodingHeatmap(datasets: stats.submissionHistory),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // 4. Platform Metrics
+              if (stats.extraMetrics.isNotEmpty || stats.followers > 0)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  sliver: SliverToBoxAdapter(
+                    child: FadeSlideTransition(
+                      delay: const Duration(milliseconds: 300),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader(theme, 'Platform Metrics'),
+                          const SizedBox(height: 12),
+                          _buildPlatformMetricsGrid(stats, theme),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ] else if (statsProvider.hackerrankError != null)
               SliverFillRemaining(
                 child: Center(
@@ -104,7 +151,11 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                           width: 200,
                           child: ElevatedButton(
                             onPressed: _refreshStats,
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                             child: const Text("Try Again"),
                           ),
                         ),
@@ -113,41 +164,65 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                   ),
                 ),
               )
-            else ...[
-              // Fallback for when data is null but no error yet
+            else
               const SliverFillRemaining(
                 child: Center(child: Text("No data available")),
-              )
-            ],
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(HackerRankStats stats) {
+  Widget _buildProfileHeader(HackerRankStats stats, ThemeData theme) {
     return ModernCard(
       padding: const EdgeInsets.all(24),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.green.withOpacity(0.1),
-            backgroundImage: (stats.avatarUrl != null && stats.avatarUrl!.isNotEmpty) ? NetworkImage(stats.avatarUrl!) : null,
-            child: (stats.avatarUrl == null || stats.avatarUrl!.isEmpty) ? const Icon(Icons.person, size: 40, color: Colors.green) : null,
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF2EC866).withOpacity(0.2), width: 3),
+            ),
+            child: CircleAvatar(
+              radius: 40,
+              backgroundColor: const Color(0xFF2EC866).withOpacity(0.1),
+              backgroundImage: (stats.avatarUrl != null && stats.avatarUrl!.isNotEmpty)
+                  ? NetworkImage(stats.avatarUrl!)
+                  : null,
+              child: (stats.avatarUrl == null || stats.avatarUrl!.isEmpty)
+                  ? const Icon(Icons.person, size: 40, color: Color(0xFF2EC866))
+                  : null,
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   stats.username,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
+                const SizedBox(height: 4),
                 Text(
                   'HackerRank Developer ${stats.country != null ? "• ${stats.country}" : ""}',
-                  style: TextStyle(color: Colors.grey.shade600),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    _buildHeaderBadge(Icons.workspace_premium_rounded, '${stats.extraMetrics["badges_count"] ?? 0} Badges', Colors.orange),
+                    _buildHeaderBadge(Icons.verified_user_rounded, 'Verified', Colors.green),
+                  ],
                 ),
               ],
             ),
@@ -157,35 +232,104 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
     );
   }
 
-  Widget _buildMainStats(HackerRankStats stats) {
+  Widget _buildHeaderBadge(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainStatsGrid(HackerRankStats stats) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.25, // Responsive aspect ratio
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       children: [
-        _statCard('Solved', stats.totalSolved.toString(), Icons.check_circle_outline, Colors.green),
-        _statCard('Rank', stats.rank ?? 'N/A', Icons.trending_up, Colors.blue),
-        _statCard('Badges', stats.extraMetrics["badges_count"]?.toString() ?? '0', Icons.badge, Colors.orange),
-        _statCard('Country', stats.country ?? 'N/A', Icons.public, Colors.purple),
+        ResponsiveCard(label: 'Solved', value: stats.totalSolved.toString(), icon: Icons.check_circle_outline_rounded, color: Colors.green),
+        ResponsiveCard(label: 'Rank', value: stats.rank ?? 'N/A', icon: Icons.trending_up_rounded, color: Colors.blue),
+        ResponsiveCard(label: 'Badges', value: stats.extraMetrics["badges_count"]?.toString() ?? '0', icon: Icons.workspace_premium_rounded, color: Colors.orange),
+        ResponsiveCard(label: 'Country', value: stats.country ?? 'N/A', icon: Icons.public_rounded, color: Colors.purple),
       ],
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
-    return ModernCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
+
+
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, right: 4),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
+    );
+  }
+
+  Widget _buildPlatformMetricsGrid(HackerRankStats stats, ThemeData theme) {
+    // Collect all extra metrics
+    final metrics = <String, dynamic>{};
+    if (stats.followers > 0) metrics['Followers'] = stats.followers;
+    if (stats.extraMetrics['level'] != null) metrics['Level'] = stats.extraMetrics['level'];
+    
+    // Add any other dynamic items
+    stats.extraMetrics.forEach((key, value) {
+      if (key != 'badges_count' && key != 'level') {
+        metrics[key] = value;
+      }
+    });
+
+    if (metrics.isEmpty) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Adjust column count based on width
+        int crossAxisCount = constraints.maxWidth > 500 ? 3 : 2;
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: metrics.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 1.2, // Consistent ratio
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemBuilder: (context, index) {
+            final key = metrics.keys.elementAt(index);
+            final value = metrics.values.elementAt(index);
+            
+            return ResponsiveCard(
+              label: key,
+              value: value.toString(),
+              icon: Icons.analytics_rounded,
+            );
+          },
+        );
+      }
     );
   }
 }

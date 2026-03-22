@@ -8,6 +8,7 @@ import '../widgets/modern_card.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
+import '../widgets/responsive_card.dart';
 
 class CodeChefStatsScreen extends StatefulWidget {
   const CodeChefStatsScreen({super.key});
@@ -271,6 +272,8 @@ class _ProfileHeader extends StatelessWidget {
                 Text(
                   username,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -291,9 +294,13 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'CodeChef',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                    Flexible(
+                      child: Text(
+                        'CodeChef',
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ],
                 ),
@@ -407,8 +414,8 @@ class _MainStatRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _MiniStatCard(
-            label: 'PROBLEMS\nSOLVED',
+          child: ResponsiveCard(
+            label: 'SOLVED',
             value: stats.totalSolved.toString(),
             icon: Icons.check_circle_rounded,
             color: Colors.green,
@@ -416,8 +423,8 @@ class _MainStatRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _MiniStatCard(
-            label: 'GLOBAL\nRANK',
+          child: ResponsiveCard(
+            label: 'GLOBAL',
             value: globalRank != null && globalRank != '0' ? '#$globalRank' : '—',
             icon: Icons.public_rounded,
             color: const Color(0xFFE08D2D),
@@ -425,8 +432,8 @@ class _MainStatRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _MiniStatCard(
-            label: 'COUNTRY\nRANK',
+          child: ResponsiveCard(
+            label: 'COUNTRY',
             value: countryRank != null && countryRank != '0' ? '#$countryRank' : '—',
             icon: Icons.flag_rounded,
             color: Colors.blue,
@@ -437,51 +444,7 @@ class _MainStatRow extends StatelessWidget {
   }
 }
 
-class _MiniStatCard extends StatelessWidget {
-  const _MiniStatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
 
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return ModernCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade500,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stars / Division card
@@ -787,51 +750,17 @@ class _ExtraMetricsGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      childAspectRatio: 2.2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      children: entries.map((e) {
-        final icon  = _iconMap[e.key] ?? Icons.info_outline_rounded;
-        final color = _colorMap[e.key] ?? const Color(0xFFE08D2D);
-        return ModernCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 16),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _labelFor(e.key),
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      e.value.toString(),
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+      childAspectRatio: 1.2, 
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      children: entries.map((entry) {
+        final key = entry.key;
+        final value = entry.value.toString();
+        return ResponsiveCard(
+          label: _labelFor(key),
+          value: value,
+          icon: _iconMap[key] ?? Icons.analytics_rounded,
+          color: _colorMap[key],
         );
       }).toList(),
     );
@@ -847,6 +776,7 @@ class _ExtraMetricsGrid extends StatelessWidget {
     return labels[key] ?? key.toUpperCase();
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Section Header

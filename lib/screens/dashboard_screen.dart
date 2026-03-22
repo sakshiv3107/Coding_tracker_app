@@ -5,16 +5,14 @@ import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../theme/app_theme.dart';
+import '../providers/achievement_provider.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/unified_analytics_card.dart';
-import '../widgets/developer_score_card.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
 import '../widgets/coding_heatmap.dart';
 import '../widgets/skill_radar_chart.dart';
-import '../widgets/monthly_progress_chart.dart';
 import '../widgets/ai_insights_card.dart';
-import '../widgets/streak_card.dart';
 import '../widgets/weekly_activity_chart.dart';
 import '../widgets/contest_tracker_card.dart';
 
@@ -57,6 +55,15 @@ class DashboardScreen extends StatelessWidget {
     _mergeHeatmapData(heatmapData, stats.leetcodeStats?.submissionCalendar);
     _mergeHeatmapData(heatmapData, github.githubStats?.contributionCalendar);
     _mergeHeatmapData(heatmapData, stats.hackerrankStats?.submissionHistory);
+
+    final achievementProvider = context.read<AchievementProvider>();
+    if (stats.leetcodeStats != null) {
+      Future.microtask(() => achievementProvider.checkAchievements(
+            stats.leetcodeStats,
+            stats.totalSolved,
+            github.githubStats?.totalStars ?? 0,
+          ));
+    }
 
     return Material(
       color: theme.scaffoldBackgroundColor,
@@ -138,6 +145,84 @@ class DashboardScreen extends StatelessWidget {
                       profilePicUrl: (profilePic != null && profilePic.isNotEmpty)
                           ? profilePic
                           : stats.leetcodeStats?.avatar,
+                    ),
+                  ),
+                ),
+              ),
+
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── B. Resume Mode & Career ────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverToBoxAdapter(
+                  child: FadeSlideTransition(
+                    delay: const Duration(milliseconds: 50),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.pushNamed(context, '/resume'),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppTheme.primary, Color(0xFF818CF8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.description_rounded, color: Colors.white),
+                              ),
+                              const SizedBox(width: 16),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Resume Mode',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    Text(
+                                      'Generate & Export your Portfolio',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -229,6 +314,57 @@ class DashboardScreen extends StatelessWidget {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
+              // ── E1. Failure Analysis ──────────────────────────────────
+              if (stats.failedProblems.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  sliver: SliverToBoxAdapter(
+                    child: FadeSlideTransition(
+                      delay: const Duration(milliseconds: 350),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: theme.colorScheme.error.withOpacity(0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.report_problem_rounded, color: theme.colorScheme.error),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Retry Suggestions',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'You have some unsolved problems. Don\'t give up!',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16),
+                            ...stats.failedProblems.take(2).map((p) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(p.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('Status: ${p.status}', style: TextStyle(color: theme.colorScheme.error)),
+                              trailing: ElevatedButton(
+                                onPressed: () {}, // Redirect to problem if possible
+                                child: const Text('Retry'),
+                              ),
+                            )),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
               // ── E. AI Coding Insights ──────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -247,6 +383,70 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── F. Achievements / Badges ────────────────────────────────
+              if (achievementProvider.unlockedAchievements.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  sliver: SliverToBoxAdapter(
+                    child: FadeSlideTransition(
+                      delay: const Duration(milliseconds: 450),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.workspace_premium_rounded, color: AppTheme.accent),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Achievements',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 80,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: achievementProvider.unlockedAchievements.length,
+                                itemBuilder: (context, index) {
+                                  final achievement = achievementProvider.unlockedAchievements[index];
+                                  return Tooltip(
+                                    message: achievement.description,
+                                    child: Container(
+                                      margin: const EdgeInsets.only(right: 12),
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accent.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        achievement.icon is IconData ? achievement.icon : Icons.emoji_events,
+                                        color: AppTheme.accent,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 

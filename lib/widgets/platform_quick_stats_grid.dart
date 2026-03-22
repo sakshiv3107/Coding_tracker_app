@@ -41,7 +41,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 0.9,
+      childAspectRatio: 1.15, // Better aspect ratio for mobile
       children: [
         _platformCard(
           context,
@@ -61,7 +61,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           AppTheme.githubGrey,
           [
             '${github['repos'] ?? 0} Repos',
-            '${github['commits'] ?? 0} Commits',
+            '${github['commits'] ?? 0} Contributions', // Fixed: more precise label
           ],
           onGitHubTap,
         ),
@@ -127,29 +127,50 @@ class PlatformQuickStatsGrid extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: FaIcon(icon, color: color, size: 20),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              ...stats.map((s) => Text(
-                    s,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+          padding: const EdgeInsets.all(16), // Slightly reduced padding for grid
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: FaIcon(icon, color: color, size: (constraints.maxHeight * 0.18).clamp(16, 20)),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  ...stats.map((s) => Flexible(
+                    child: Text(
+                      s,
+                      style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   )),
-            ],
+                ],
+              );
+            }
           ),
         ),
       ),

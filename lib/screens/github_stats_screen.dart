@@ -173,7 +173,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                           delay: Duration(milliseconds: 500 + (entry.key * 100)),
                           child: _buildRepoCard(entry.value, theme),
                         );
-                      }).toList(),
+                      }),
                       
                       const SizedBox(height: 100),
                     ]),

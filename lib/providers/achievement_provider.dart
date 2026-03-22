@@ -1,53 +1,75 @@
 import 'package:flutter/material.dart';
 import '../models/achievement.dart';
+import '../models/leetcode_stats.dart';
+import '../services/gamification_service.dart';
 
 class AchievementProvider with ChangeNotifier {
-  final List<Achievement> _achievements = [
-    Achievement(
-      id: '1',
-      title: 'First Step',
-      description: 'Solved your first LeetCode problem.',
-      icon: Icons.auto_awesome_rounded,
-      isUnlocked: true,
-      unlockedAt: DateTime.now().subtract(const Duration(days: 10)),
-    ),
-    Achievement(
-      id: '2',
-      title: 'Streak Starter',
-      description: 'Maintain a 3-day coding streak.',
-      icon: Icons.local_fire_department_rounded,
-      isUnlocked: true,
-      unlockedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Achievement(
-      id: '3',
-      title: 'GitHub Guru',
-      description: 'Reach 50 total GitHub stars.',
-      icon: Icons.star_rounded,
-    ),
-    Achievement(
-      id: '4',
-      title: 'Hardcore Coder',
-      description: 'Solve 10 hard LeetCode problems.',
-      icon: Icons.psychology_rounded,
-    ),
-  ];
+  List<Achievement> _achievements = [];
+  int _currentStreak = 0;
 
   List<Achievement> get achievements => _achievements;
-  List<Achievement> get unlockedAchievements => _achievements.where((a) => a.isUnlocked).toList();
+  List<Achievement> get unlockedAchievements => _achievements.where((a) => a.isEarned).toList();
+  int get currentStreak => _currentStreak;
 
-  void checkAndUnlock(String title) {
-    final index = _achievements.indexWhere((a) => a.title == title);
-    if (index != -1 && !_achievements[index].isUnlocked) {
-      _achievements[index] = Achievement(
-        id: _achievements[index].id,
-        title: _achievements[index].title,
-        description: _achievements[index].description,
-        icon: _achievements[index].icon,
-        isUnlocked: true,
-        unlockedAt: DateTime.now(),
-      );
+  Future<void> init() async {
+    await GamificationService.init();
+    _achievements = GamificationService.getAchievements();
+    _currentStreak = await GamificationService.getStreak();
+    notifyListeners();
+  }
+
+  void checkAchievements(LeetcodeStats? lc, int totalSolved, int githubStars) {
+    if (lc == null) return;
+    
+    bool changed = false;
+
+    // 1. Solving first problem
+    if (totalSolved >= 1 && !_isEarned('1')) {
+      _unlock('1');
+      changed = true;
+    }
+
+    // 2. 7-Day Streak
+    if (lc.streak >= 7 && !_isEarned('streak_7')) {
+      _unlock('streak_7');
+      changed = true;
+    }
+
+    // 3. 100 Problems
+    if (totalSolved >= 100 && !_isEarned('solved_100')) {
+      _unlock('solved_100');
+      changed = true;
+    }
+
+    // 4. Github Stars
+    if (githubStars >= 50 && !_isEarned('3')) {
+      _unlock('3');
+      changed = true;
+    }
+
+    // 5. Hard Problems
+    if (lc.hard >= 10 && !_isEarned('4')) {
+      _unlock('4');
+      changed = true;
+    }
+
+    if (changed) {
+      _achievements = GamificationService.getAchievements();
       notifyListeners();
     }
+
+    if (lc.streak != _currentStreak) {
+      _currentStreak = lc.streak;
+      GamificationService.updateStreak(lc.streak);
+      notifyListeners();
+    }
+  }
+
+  bool _isEarned(String id) {
+    return _achievements.any((a) => a.id == id && a.isEarned);
+  }
+
+  Future<void> _unlock(String id) async {
+    await GamificationService.saveAchievement(id);
   }
 }

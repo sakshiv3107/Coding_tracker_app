@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weekly_activity.dart';
 import 'modern_card.dart';
+import 'responsive_row.dart';
 
 class WeeklyActivityChart extends StatefulWidget {
   final Map<DateTime, int> leetcodeCalendar;
@@ -48,6 +49,24 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
   }
 
   @override
+  void didUpdateWidget(WeeklyActivityChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.leetcodeCalendar != oldWidget.leetcodeCalendar ||
+        widget.githubCalendar != oldWidget.githubCalendar ||
+        widget.hackerrankCalendar != oldWidget.hackerrankCalendar) {
+      setState(() {
+        _weeklyActivity = WeeklyActivity.fromData(
+          leetcodeCalendar: widget.leetcodeCalendar,
+          githubCalendar: widget.githubCalendar,
+          hackerrankCalendar: widget.hackerrankCalendar ?? {},
+        );
+      });
+      _controller.reset();
+      _controller.forward();
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -65,18 +84,39 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          ResponsiveRow(
+            alignment: WrapAlignment.spaceBetween,
             children: [
-              const Text(
-                'This Week',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'This Week',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  if (_weeklyActivity.isDummyData) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('SAMPLE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    ),
+                  ],
+                ],
               ),
-              const Spacer(),
-              _buildLegendDot('LC', _leetcodeColor),
-              const SizedBox(width: 8),
-              _buildLegendDot('GH', _githubColor),
-              const SizedBox(width: 8),
-              _buildLegendDot('HR', _hackerrankColor),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildLegendDot('LC', _leetcodeColor),
+                  const SizedBox(width: 8),
+                  _buildLegendDot('GH', _githubColor),
+                  const SizedBox(width: 8),
+                  _buildLegendDot('HR', _hackerrankColor),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/platform_stats.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
+import '../widgets/responsive_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/not_connected_widget.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PlatformStatsDetailsScreen extends StatelessWidget {
   final PlatformStats? stats;
@@ -150,10 +150,14 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                 Text(
                   username,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 Text(
                   '$platformName ${stats?.rank ?? "User"}',
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),
@@ -201,77 +205,26 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      childAspectRatio: 1.6, // Even more height (smaller ratio = taller)
-      mainAxisSpacing: 0,
+      childAspectRatio: 1.1, // Even more vertical space to prevent bottom overflow
+      mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       children: stats!.extraMetrics.entries.map((entry) {
-        return ModernCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(
-                    entry.key.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: constraints.maxHeight * 0.12, 
-                      color: Colors.grey, 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          entry.value.toString(),
-                          style: TextStyle(
-                            fontSize: constraints.maxHeight * 0.25, 
-                            fontWeight: FontWeight.bold
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-          ),
+        return ResponsiveCard(
+          label: entry.key,
+          value: entry.value.toString(),
+          icon: Icons.bar_chart_rounded,
+          color: color,
         );
       }).toList(),
     );
   }
 
   Widget _buildStatCard(String label, int value, IconData icon, Color cardColor) {
-    return ModernCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: cardColor, size: 20),
-          const SizedBox(height: 12),
-          AnimatedStatCounter(
-            value: value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade500,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
-      ),
+    return ResponsiveCard(
+      label: label,
+      value: value.toString(),
+      icon: icon,
+      color: cardColor,
     );
   }
 

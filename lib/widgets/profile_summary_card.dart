@@ -47,10 +47,17 @@ class ProfileSummaryCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  name,
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    name,
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -58,13 +65,17 @@ class ProfileSummaryCard extends StatelessWidget {
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                     fontFamily: 'monospace',
+                    fontSize: 12,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 const SizedBox(height: 12),
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
                   children: [
                     _smallBadge(Icons.hub_rounded, '$totalPlatforms Platforms', Colors.indigo),
-                    const SizedBox(width: 8),
                     _smallBadge(Icons.verified_user_rounded, 'Verified', Colors.green),
                   ],
                 ),

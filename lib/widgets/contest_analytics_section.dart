@@ -255,7 +255,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
         : ((maxR - minR) * 0.3).clamp(40.0, 180.0);
 
     final deduped = <double, FlSpot>{};
-    for (final s in allSpots) deduped[s.x] = s;
+    for (final s in allSpots) {
+      deduped[s.x] = s;
+    }
     final cleanSpots = deduped.values.toList()
       ..sort((a, b) => a.x.compareTo(b.x));
 

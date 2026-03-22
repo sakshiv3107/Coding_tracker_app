@@ -5,7 +5,6 @@ import '../models/gfg_stats.dart';
 import '../models/platform_stats.dart';
 import '../models/developer_score.dart';
 import '../services/leetcode_service.dart';
-import '../services/github_service.dart';
 import '../services/codeforces_service.dart';
 import '../services/codechef_service.dart';
 import '../services/gfg_service.dart';
@@ -87,16 +86,19 @@ class StatsProvider extends ChangeNotifier {
   String? get gfgError => _gfgError;
   String? get hackerrankError => _hackerrankError;
 
+  int get totalSolved =>
+      (_leetcodeStats?.totalSolved ?? 0) +
+      (_codeforcesStats?.totalSolved ?? 0) +
+      (_codechefStats?.totalSolved ?? 0) +
+      (_gfgStats?.totalSolved ?? 0) +
+      (_hackerrankStats?.totalSolved ?? 0);
+
   // ── Developer score ────────────────────────────────────────────────────
   DeveloperScore? get developerScore {
     if (_leetcodeStats == null) return null;
-    final totalSolved = _leetcodeStats!.totalSolved +
-        (_codeforcesStats?.totalSolved ?? 0) +
-        (_codechefStats?.totalSolved ?? 0) +
-        (_gfgStats?.totalSolved ?? 0) +
-        (_hackerrankStats?.totalSolved ?? 0);
+    final totalSolvedVal = totalSolved;
     return DeveloperScore.calculate(
-      totalProblems: totalSolved,
+      totalProblems: totalSolvedVal,
       contestRating: _leetcodeStats!.contestRating ?? 0,
       githubStars: _githubStars,
       totalCommits: _githubTotalCommits,
@@ -131,11 +133,13 @@ class StatsProvider extends ChangeNotifier {
   Map<String, List<String>> _topicStrengths = {};
   String _aiRecommendation = "Connecting sources...";
   Map<DateTime, int> _progressData = {};
+  List<RecentSubmission> _failedProblems = [];
 
   int get xpPoints => _xpPoints;
   Map<String, List<String>> get topicStrengths => _topicStrengths;
   String get aiRecommendation => _aiRecommendation;
   Map<DateTime, int> get progressData => _progressData;
+  List<RecentSubmission> get failedProblems => _failedProblems;
 
   List<Contest> _upcomingContests = [];
   bool _contestsLoading = false;
@@ -175,6 +179,13 @@ class StatsProvider extends ChangeNotifier {
       // Auto-fetch contests if not already loading
       if (_upcomingContests.isEmpty && !_contestsLoading) {
         fetchUpcomingContests();
+      }
+
+      // Track failed problems from recent submissions
+      if (_leetcodeStats!.recentSubmissions != null) {
+        _failedProblems = _leetcodeStats!.recentSubmissions!
+            .where((s) => s.status != 'Accepted')
+            .toList();
       }
     }
     notifyListeners();

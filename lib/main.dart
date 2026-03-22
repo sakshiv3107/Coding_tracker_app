@@ -9,7 +9,9 @@ import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
+import '../providers/resume_provider.dart';
 import '../providers/theme_provider.dart';
+// import '../services/notification_service.dart';
 import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
@@ -18,6 +20,7 @@ import 'screens/gfg_stats_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/hackerrank_stats_screen.dart';
+import 'screens/resume_screen.dart';
 import 'firebase_options.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -27,6 +30,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await NotificationService.init();0
 
   runApp(
     MultiProvider(
@@ -37,7 +41,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => GithubProvider()),
         ChangeNotifierProvider(create: (_) => GoalProvider()),
-        ChangeNotifierProvider(create: (_) => AchievementProvider()),
+        ChangeNotifierProvider(create: (_) => ResumeProvider()..init()),
+        ChangeNotifierProvider(create: (_) => AchievementProvider()..init()),
         // Stream provider for real-time auth state
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),
@@ -74,6 +79,7 @@ class MyApp extends StatelessWidget {
         '/hackerrank_stats': (context) => const HackerRankStatsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/edit_profile': (context) => const EditProfileScreen(),
+        '/resume': (context) => const ResumeScreen(),
       },
     );
   }

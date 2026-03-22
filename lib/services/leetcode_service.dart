@@ -12,11 +12,15 @@ class LeetcodeService {
   final Duration _cacheDuration = const Duration(minutes: 5);
 
   // ─── Stale-while-revalidate controller ────────────────────────────────────
-  // Prevents multiple background refreshes from racing
   final Map<String, Completer<LeetcodeStats>> _inFlight = {};
 
   static const String _cacheKeyPrefix = 'lc_cache_';
   static const String _cacheTimePrefix = 'lc_cache_time_';
+
+  // ─── Proxy URL ─────────────────────────────────────────────────────────────
+  // Replace with your actual Vercel deployment URL after deploying the proxy.
+  static const String _proxyUrl =
+      "https://<YOUR-PROJECT>.vercel.app/api/leetcode";
 
   // ─── GraphQL query ─────────────────────────────────────────────────────────
   final String _query = """
@@ -87,7 +91,7 @@ class LeetcodeService {
   }) async {
     if (username.isEmpty) throw Exception("Username cannot be empty");
 
-    // 1. In-memory cache hit (Fresh)
+    // 1. In-memory cache hit (fresh)
     if (!forceRefresh &&
         _cache != null &&
         _lastFetch != null &&
@@ -103,8 +107,6 @@ class LeetcodeService {
         debugPrint("LeetCode: returning disk cache, refreshing in background");
         _cache = diskData;
         _lastFetch = DateTime.now();
-
-        // Fire-and-forget background refresh
         _backgroundRefresh(username, onBackgroundRefresh);
         return diskData;
       }
@@ -138,88 +140,110 @@ class LeetcodeService {
     });
   }
 
-  // ─── Parallel Strategy ───────────────────────────────────────────────────
-  /// Fires all sources simultaneously and returns the FIRST SUCCESSFUL one.
-  /// This is MUCH more stable than Future.any because it ignores individual failures.
+  // ─── Parallel strategy ────────────────────────────────────────────────────
   Future<LeetcodeStats> _fetchFresh(String username) async {
-    debugPrint("LeetCode: starting optimized parallel fetch for $username");
-
-    // GraphQL Endpoints (CORS-enabled or server-to-server)
-    final urls = [
-      "https://alfa-leetcode-api.onrender.com/graphql",
-      "https://leetcode-api-f6df.onrender.com/graphql",
-      if (!kIsWeb) "https://leetcode.com/graphql",
-    ];
+    debugPrint("LeetCode: starting parallel fetch for $username");
 
     final List<Future<LeetcodeStats>> tasks = [];
 
-    // 1. Add GraphQL Sources
-    for (var url in urls) {
-      tasks.add(_fetchGraphQL(username, url));
+    if (kIsWeb) {
+      // Proxy is the primary CORS-safe source — runs server-side on Vercel.
+      tasks.add(_fetchGraphQL(username, _proxyUrl));
+      // alfa-leetcode-api sets Access-Control-Allow-Origin: * but cold-starts
+      // on Render's free tier, so give it a longer timeout via REST.
+      tasks.add(_fetchRest(
+        username,
+        "https://alfa-leetcode-api.onrender.com",
+        timeout: const Duration(seconds: 35),
+      ));
+    } else {
+      // Mobile/desktop: no CORS restriction, hit leetcode.com directly.
+      tasks.add(_fetchGraphQL(username, "https://leetcode.com/graphql"));
+      tasks.add(_fetchGraphQL(
+          username, "https://alfa-leetcode-api.onrender.com/graphql"));
+      tasks.add(_fetchGraphQL(
+          username, "https://leetcode-api-f6df.onrender.com/graphql"));
+      tasks.add(_fetchRest(username, "https://alfa-leetcode-api.onrender.com"));
+      tasks.add(_fetchRest(username, "https://leetcode-rest-api.vercel.app"));
     }
 
-    // 2. Add REST Fallback Sources
-    tasks.add(_fetchRest(username, "https://alfa-leetcode-api.onrender.com"));
-    tasks.add(_fetchRest(username, "https://leetcode-rest-api.vercel.app"));
-
-    // 3. Race for the first success
     try {
-      final stats = await _firstSuccess(tasks);
-      
-      // Update cache
+      final stats = await _firstSuccess(
+        tasks,
+        timeout: kIsWeb
+            ? const Duration(seconds: 40)
+            : const Duration(seconds: 15),
+      );
+
       _cache = stats;
       _lastFetch = DateTime.now();
       _saveToDisk(username, stats);
-      
+
       return stats;
     } catch (e) {
       debugPrint("LeetCode: all sources failed: $e");
-      throw Exception("All sources failed. Check your connection or try again later.");
+      final hint = kIsWeb
+          ? "All sources failed on web. Check your proxy URL or network."
+          : "All sources failed. Check your connection or try again later.";
+      throw Exception(hint);
     }
   }
 
-  // ─── Helper: First Success ────────────────────────────────────────────────
-  /// Returns the first SUCCESSFUL future, ignoring errors unless ALL fail.
-  Future<T> _firstSuccess<T>(List<Future<T>> futures) async {
+  // ─── Helper: first success ────────────────────────────────────────────────
+  Future<T> _firstSuccess<T>(
+    List<Future<T>> futures, {
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
     final completer = Completer<T>();
-    int count = 0;
+    int errorCount = 0;
     final List<dynamic> errors = [];
 
-    for (var f in futures) {
+    for (final f in futures) {
       f.then((value) {
         if (!completer.isCompleted) completer.complete(value);
       }).catchError((e) {
         errors.add(e);
-        count++;
-        if (count == futures.length && !completer.isCompleted) {
+        errorCount++;
+        if (errorCount == futures.length && !completer.isCompleted) {
           completer.completeError(Exception(errors.join(", ")));
         }
       });
     }
 
     return completer.future.timeout(
-      const Duration(seconds: 15), 
-      onTimeout: () => throw TimeoutException("Fetching LeetCode data timed out."),
+      timeout,
+      onTimeout: () => throw TimeoutException(
+        "Fetching LeetCode data timed out after ${timeout.inSeconds}s.",
+      ),
     );
   }
 
-  // ─── GraphQL fetch with retry ──────────────────────────────────────────────
-  Future<LeetcodeStats> _fetchGraphQL(String username, String url, {int retries = 1}) async {
+  // ─── GraphQL fetch ────────────────────────────────────────────────────────
+  Future<LeetcodeStats> _fetchGraphQL(
+    String username,
+    String url, {
+    int retries = 1,
+  }) async {
+    final attemptTimeout =
+        kIsWeb ? const Duration(seconds: 30) : const Duration(seconds: 10);
+
     int attempt = 0;
     while (attempt <= retries) {
       try {
-        final response = await http.post(
-          Uri.parse(url),
-          headers: {
-            "Content-Type": "application/json",
-            "Referer": "https://leetcode.com",
-            if (!kIsWeb) "User-Agent": "Mozilla/5.0",
-          },
-          body: jsonEncode({
-            'query': _query,
-            'variables': {'username': username},
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              Uri.parse(url),
+              headers: {
+                "Content-Type": "application/json",
+                "Referer": "https://leetcode.com",
+                if (!kIsWeb) "User-Agent": "Mozilla/5.0",
+              },
+              body: jsonEncode({
+                'query': _query,
+                'variables': {'username': username},
+              }),
+            )
+            .timeout(attemptTimeout);
 
         if (response.statusCode == 429 && attempt < retries) {
           await Future.delayed(Duration(seconds: 1 << attempt));
@@ -231,7 +255,8 @@ class LeetcodeService {
           throw Exception("HTTP ${response.statusCode}");
         }
 
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        final jsonResponse =
+            jsonDecode(response.body) as Map<String, dynamic>;
         if (jsonResponse["errors"] != null) {
           throw Exception(jsonResponse["errors"][0]["message"]);
         }
@@ -242,16 +267,22 @@ class LeetcodeService {
         attempt++;
       }
     }
-    throw Exception("GraphQL failed");
+    throw Exception("GraphQL failed after $retries retries");
   }
 
-  // ─── REST fallback fetch ───────────────────────────────────────────────────
-  Future<LeetcodeStats> _fetchRest(String username, String baseUrl) async {
+  // ─── REST fallback fetch ──────────────────────────────────────────────────
+  Future<LeetcodeStats> _fetchRest(
+    String username,
+    String baseUrl, {
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
     Future<http.Response> getWithRetry(String endpoint) async {
       int attempt = 0;
       while (attempt <= 1) {
         try {
-          final res = await http.get(Uri.parse("$baseUrl/$endpoint")).timeout(const Duration(seconds: 8));
+          final res = await http
+              .get(Uri.parse("$baseUrl/$endpoint"))
+              .timeout(timeout);
           if (res.statusCode == 429 && attempt < 1) {
             await Future.delayed(const Duration(seconds: 2));
             attempt++;
@@ -267,7 +298,6 @@ class LeetcodeService {
     }
 
     try {
-      // Fetch required pieces in parallel
       final results = await Future.wait([
         getWithRetry("userProfile/$username"),
         getWithRetry("$username/calendar"),
@@ -276,15 +306,18 @@ class LeetcodeService {
 
       if (results[0].statusCode != 200) throw Exception("REST profile failed");
 
-      final profileData = jsonDecode(results[0].body) as Map<String, dynamic>;
-      final calendarBody = results[1].statusCode == 200 ? jsonDecode(results[1].body) : null;
-      final contestBody = results[2].statusCode == 200 ? jsonDecode(results[2].body) : null;
+      final profileData =
+          jsonDecode(results[0].body) as Map<String, dynamic>;
+      final calendarBody =
+          results[1].statusCode == 200 ? jsonDecode(results[1].body) : null;
+      final contestBody =
+          results[2].statusCode == 200 ? jsonDecode(results[2].body) : null;
 
-      // Basic parsing logic (minimized for speed)
       final Map<DateTime, int> cal = {};
       final rawCal = calendarBody?["submissionCalendar"];
       if (rawCal != null) {
-        final Map<String, dynamic> calMap = rawCal is String ? jsonDecode(rawCal) : rawCal;
+        final Map<String, dynamic> calMap =
+            rawCal is String ? jsonDecode(rawCal) : rawCal;
         calMap.forEach((key, val) {
           final ts = int.tryParse(key);
           if (ts != null) {
@@ -317,13 +350,13 @@ class LeetcodeService {
             ? (contestBody!["contestTopPercentage"] as num).toDouble()
             : null,
         totalContests: contestBody?["contestAttend"],
-        contestHistory: [], // Usually not needed for dashboard
+        contestHistory: [],
         recentSubmissions: [],
       );
     } catch (e) {
       throw Exception("REST fallback failed: $e");
     }
-  }
+  } // ← _fetchRest closes here
 
   // ─── Disk cache ────────────────────────────────────────────────────────────
   Future<LeetcodeStats?> _loadFromDisk(String username) async {
@@ -338,10 +371,10 @@ class LeetcodeService {
         DateTime.fromMillisecondsSinceEpoch(timeMs),
       );
 
-      // Disk cache valid for 24 hours; stale beyond that
       if (cacheAge > const Duration(hours: 24)) return null;
 
-      return LeetcodeStats.fromJson(jsonDecode(json) as Map<String, dynamic>);
+      return LeetcodeStats.fromJson(
+          jsonDecode(json) as Map<String, dynamic>);
     } catch (e) {
       debugPrint("LeetCode: disk cache read failed → $e");
       return null;
@@ -364,7 +397,6 @@ class LeetcodeService {
     }
   }
 
-  /// Call this to wipe both in-memory and disk cache for a user.
   Future<void> clearCache(String username) async {
     _cache = null;
     _lastFetch = null;
@@ -411,8 +443,8 @@ class LeetcodeService {
         rawCalendar.forEach((key, value) {
           final ts = int.tryParse(key);
           if (ts != null) {
-            final date =
-                DateTime.fromMillisecondsSinceEpoch(ts * 1000, isUtc: true);
+            final date = DateTime.fromMillisecondsSinceEpoch(
+                ts * 1000, isUtc: true);
             submissionCalendar[DateTime(date.year, date.month, date.day)] =
                 value as int;
           }
