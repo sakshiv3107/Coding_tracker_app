@@ -11,7 +11,37 @@ class TopicWiseSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tagStats.isEmpty) return const SizedBox.shrink();
+    if (tagStats.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.label_outline_rounded, size: 20, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text('Topic distribution',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ModernCard(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.bar_chart_rounded, size: 40, color: Colors.grey.withValues(alpha: 0.3)),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No topic data available',
+                    style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     // Sort by count descending and take top 8
     final sortedTags = tagStats.entries.toList()

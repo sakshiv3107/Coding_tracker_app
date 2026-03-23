@@ -1,3 +1,5 @@
+import 'submission.dart';
+
 class PlatformStats {
   final String platform;
   final String username;
@@ -7,6 +9,7 @@ class PlatformStats {
   final String? rank;
   final int? rating;
   final int? maxRating;
+  final List<Submission> recentSubmissions;
   final Map<String, dynamic> extraMetrics;
 
   PlatformStats({
@@ -18,6 +21,7 @@ class PlatformStats {
     this.rank,
     this.rating,
     this.maxRating,
+    this.recentSubmissions = const [],
     this.extraMetrics = const {},
   });
 }

@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/platform_stats.dart';
+import '../models/submission.dart';
 
 class CodeChefService {
   Future<PlatformStats> fetchData(String username) async {
-    // Community API proxy for CodeChef - updated to a working variant
     // Community API proxy for CodeChef - updated to a working variant
     String urlStr = "https://codechefapi.vercel.app/handle/$username";
     
@@ -21,6 +21,23 @@ class CodeChefService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json["success"] == true || json["name"] != null) {
+          // Parse submissions
+          final List<Submission> submissions = [];
+          final rawSubs = json['recentSubmissions'] ?? json['submissions'];
+          if (rawSubs is List) {
+            for (var s in rawSubs) {
+              try {
+                submissions.add(Submission(
+                  title: s['problemName'] ?? s['title'] ?? 'Problem',
+                  status: s['result'] ?? s['status'] ?? 'Success',
+                  timestamp: DateTime.fromMillisecondsSinceEpoch(
+                    (s['timestamp'] is int ? s['timestamp'] : int.tryParse(s['timestamp'].toString()) ?? 0) * 1000,
+                  ),
+                ));
+              } catch (_) {}
+            }
+          }
+
           return PlatformStats(
             platform: "CodeChef",
             username: username,
@@ -29,6 +46,7 @@ class CodeChefService {
             rating: json["currentRating"],
             maxRating: json["highestRating"],
             rank: json["stars"] ?? "N/A",
+            recentSubmissions: submissions,
             extraMetrics: {
               "globalRank": json["globalRank"],
               "countryRank": json["countryRank"],

@@ -1,4 +1,5 @@
 import 'platform_stats.dart';
+import 'submission.dart';
 
 class GfgStats {
   final String username;
@@ -9,6 +10,7 @@ class GfgStats {
   final String? rank;
   final int monthlyRank;
   final Map<String, int> difficultySolved;
+  final List<Submission> recentSubmissions;
 
   GfgStats({
     required this.username,
@@ -19,6 +21,7 @@ class GfgStats {
     this.rank,
     this.monthlyRank = 0,
     this.difficultySolved = const {},
+    this.recentSubmissions = const [],
   });
 
   factory GfgStats.fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,25 @@ class GfgStats {
     
     // Some APIs return difficulty details
     final solvedData = json['solvedData'] ?? {};
+    
+    // Parse submissions if available
+    final List<Submission> submissions = [];
+    final rawSubs = json['recentSubmissions'] ?? json['submissions'];
+    if (rawSubs is List) {
+      for (var s in rawSubs) {
+        try {
+          submissions.add(Submission(
+            title: s['title'] ?? s['problemName'] ?? 'Problem',
+            status: s['status'] ?? s['result'] ?? 'Success',
+            difficulty: s['difficulty'],
+            lang: s['language'] ?? s['lang'],
+            timestamp: DateTime.fromMillisecondsSinceEpoch(
+              (s['timestamp'] is int ? s['timestamp'] : int.tryParse(s['timestamp'].toString()) ?? 0) * 1000,
+            ),
+          ));
+        } catch (_) {}
+      }
+    }
     
     return GfgStats(
       username: info['userName'] ?? info['handle'] ?? '',
@@ -43,6 +65,7 @@ class GfgStats {
         'Medium': solvedData['Medium'] ?? 0,
         'Hard': solvedData['Hard'] ?? 0,
       },
+      recentSubmissions: submissions,
     );
   }
 
@@ -54,6 +77,7 @@ class GfgStats {
       rank: rank,
       rating: score,
       avatarUrl: profilePic,
+      recentSubmissions: recentSubmissions,
       extraMetrics: {
         'Score': score,
         'Monthly Rank': monthlyRank,

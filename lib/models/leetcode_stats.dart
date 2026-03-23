@@ -1,3 +1,5 @@
+import 'submission.dart';
+
 class LeetcodeStats {
   final int totalSolved;
   final int easy;
@@ -21,7 +23,7 @@ class LeetcodeStats {
   final List<LeetCodeContestHistory>? contestHistory;
 
   // Recent Submissions
-  final List<RecentSubmission>? recentSubmissions;
+  final List<Submission>? recentSubmissions;
 
   // Tag Stats for Radar Chart
   final Map<String, int>? tagStats;
@@ -117,7 +119,7 @@ class LeetcodeStats {
           ?.map((e) => LeetCodeContestHistory.fromJson(e as Map<String, dynamic>))
           .toList(),
       recentSubmissions: (json['recentSubmissions'] as List<dynamic>?)
-          ?.map((e) => RecentSubmission.fromJson(e as Map<String, dynamic>))
+          ?.map((e) => Submission.fromJson(e as Map<String, dynamic>))
           .toList(),
       badges: (json['badges'] as List<dynamic>?)
           ?.map((e) => LeetCodeBadge.fromJson(e as Map<String, dynamic>))
@@ -167,44 +169,7 @@ class LeetCodeContestHistory {
       );
 }
 
-// ─── RecentSubmission ────────────────────────────────────────────────────────
 
-class RecentSubmission {
-  final String title;
-  final String titleSlug;
-  final String difficulty;
-  final String status;
-  final String lang;
-  final DateTime timestamp;
-
-  RecentSubmission({
-    required this.title,
-    required this.titleSlug,
-    required this.difficulty,
-    required this.status,
-    required this.lang,
-    required this.timestamp,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'title': title,
-        'titleSlug': titleSlug,
-        'difficulty': difficulty,
-        'status': status,
-        'lang': lang,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-      };
-
-  factory RecentSubmission.fromJson(Map<String, dynamic> json) =>
-      RecentSubmission(
-        title: json['title'] as String,
-        titleSlug: json['titleSlug'] as String,
-        difficulty: json['difficulty'] as String? ?? '',
-        status: json['status'] as String,
-        lang: json['lang'] as String? ?? '',
-        timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-      );
-}
 
 // ─── LeetCodeBadge ───────────────────────────────────────────────────────────
 

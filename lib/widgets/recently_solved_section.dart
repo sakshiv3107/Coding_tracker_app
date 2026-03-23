@@ -3,17 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/leetcode_stats.dart';
+import '../models/submission.dart';
 import 'modern_card.dart';
 
 class RecentlySolvedSection extends StatelessWidget {
-  final List<RecentSubmission> submissions;
+  final List<Submission> submissions;
 
   const RecentlySolvedSection({super.key, required this.submissions});
 
   @override
   Widget build(BuildContext context) {
     // Filter only accepted submissions
-    final solved = submissions.where((s) => s.status == 'ACCEPTED' || s.status == 'Accepted').take(5).toList();
+    final solved = submissions.where((s) => s.status.toUpperCase() == 'ACCEPTED' || s.status.toUpperCase() == 'AC' || s.status.toUpperCase() == 'OK').take(5).toList();
 
     if (solved.isEmpty) return const SizedBox.shrink();
 
@@ -33,7 +34,7 @@ class RecentlySolvedSection extends StatelessWidget {
     );
   }
 
-  Widget _buildProblemCard(BuildContext context, RecentSubmission sub) {
+  Widget _buildProblemCard(BuildContext context, Submission sub) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: ModernCard(
@@ -59,8 +60,8 @@ class RecentlySolvedSection extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      if (sub.difficulty.isNotEmpty) ...[
-                        _buildDifficultyTag(sub.difficulty),
+                      if (sub.difficulty != null && sub.difficulty!.isNotEmpty) ...[
+                        _buildDifficultyTag(sub.difficulty!),
                         const SizedBox(width: 10),
                       ],
                       Icon(Icons.link_rounded, size: 14, color: Colors.blue.shade400),
@@ -105,9 +106,9 @@ class RecentlySolvedSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         difficulty.toUpperCase(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/submission.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
@@ -111,7 +112,7 @@ class DashboardScreen extends StatelessWidget {
                               children: [
                                 Text('LEVEL $level', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                 const Spacer(),
-                                Text('$xp XP', style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                                  Text('$xp XP', style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -175,7 +176,7 @@ class DashboardScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.3),
+                                color: AppTheme.primary.withValues(alpha: 0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -186,7 +187,7 @@ class DashboardScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.description_rounded, color: Colors.white),
@@ -323,9 +324,9 @@ class DashboardScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withOpacity(0.1),
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: theme.colorScheme.error.withOpacity(0.2)),
+                          border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.2)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +347,7 @@ class DashboardScreen extends StatelessWidget {
                               style: TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                             const SizedBox(height: 16),
-                            ...stats.failedProblems.take(2).map((p) => ListTile(
+                            ...stats.failedProblems.take(2).map((Submission p) => ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(p.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text('Status: ${p.status}', style: TextStyle(color: theme.colorScheme.error)),
@@ -397,7 +398,7 @@ class DashboardScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+                          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.1)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +428,7 @@ class DashboardScreen extends StatelessWidget {
                                       width: 64,
                                       height: 64,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.accent.withOpacity(0.1),
+                                        color: AppTheme.accent.withValues(alpha: 0.1),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(

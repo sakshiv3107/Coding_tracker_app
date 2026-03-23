@@ -236,7 +236,7 @@ void initState() {
       ],
 
       // Topic Wise Distribution (NEW)
-      if (lc.tagStats != null && lc.tagStats!.isNotEmpty) ...[
+      if (lc.tagStats != null) ...[
         FadeSlideTransition(
           delay: const Duration(milliseconds: 340),
           child: TopicWiseSection(tagStats: lc.tagStats!),
@@ -256,7 +256,8 @@ void initState() {
       
 
       // 10. Recently solved problems (Feature 2C)
-      if (lc.recentSubmissions != null && lc.recentSubmissions!.isNotEmpty) ...[
+      // 10. Recent submissions (Includes Recently Solved logic inside if wanted)
+      if (lc.recentSubmissions != null) ...[
         FadeSlideTransition(
           delay: const Duration(milliseconds: 400),
           child: RecentlySolvedSection(
@@ -267,7 +268,7 @@ void initState() {
       ],
 
       // 11. Recent submissions (Feature 2B)
-      if (lc.recentSubmissions != null && lc.recentSubmissions!.isNotEmpty) ...[
+      if (lc.recentSubmissions != null) ...[
         FadeSlideTransition(
           delay: const Duration(milliseconds: 440),
           child: RecentSubmissionsSection(

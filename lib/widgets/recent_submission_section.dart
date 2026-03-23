@@ -4,10 +4,11 @@
 
 import 'package:flutter/material.dart';
 import '../models/leetcode_stats.dart';
+import '../models/submission.dart';
 import 'modern_card.dart';
 
 class RecentSubmissionsSection extends StatelessWidget {
-  final List<RecentSubmission> submissions;
+  final List<Submission> submissions;
   // How many to show — use 5 for stats screen, 3 for home screen
   final int limit;
   final bool showTitle;
@@ -66,8 +67,39 @@ class RecentSubmissionsSection extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final visible = submissions.take(limit).toList();
-
-    if (visible.isEmpty) return const SizedBox.shrink();
+    if (visible.isEmpty) {
+      if (showTitle) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.history_rounded, size: 20, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text('Recent Submission History', style: theme.textTheme.titleLarge?.copyWith(color: Colors.grey)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ModernCard(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox_rounded, size: 40, color: Colors.grey.withValues(alpha: 0.3)),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No recent submissions found',
+                      style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +143,7 @@ class RecentSubmissionsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(RecentSubmission sub, Color color, bool isDark) {
+  Widget _buildRow(Submission sub, Color color, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -152,8 +184,8 @@ class RecentSubmissionsSection extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    if (sub.lang.isNotEmpty) ...[
-                      _buildInfoChip(sub.lang, Colors.blue.shade400, isDark),
+                    if (sub.lang != null && sub.lang!.isNotEmpty) ...[
+                      _buildInfoChip(sub.lang!, Colors.blue.shade400, isDark),
                       const SizedBox(width: 8),
                     ],
                     Text(
@@ -179,9 +211,9 @@ class RecentSubmissionsSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: color.withOpacity(0.2), width: 1),
+                  border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
                 ),
                 child: Text(
                   _statusShort(sub.status),
@@ -193,14 +225,14 @@ class RecentSubmissionsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              if (sub.difficulty.isNotEmpty) ...[
+              if (sub.difficulty != null && sub.difficulty!.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
-                  sub.difficulty,
+                  sub.difficulty!,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: _difficultyColor(sub.difficulty),
+                    color: _difficultyColor(sub.difficulty!),
                   ),
                 ),
               ],
@@ -241,4 +273,4 @@ class RecentSubmissionsSection extends StatelessWidget {
         return Colors.grey;
     }
   }
-}
+}

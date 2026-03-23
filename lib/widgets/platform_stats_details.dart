@@ -116,6 +116,88 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                           delay: const Duration(milliseconds: 200),
                           child: _buildExtraMetrics(theme),
                         ),
+                        const SizedBox(height: 32),
+                      ],
+
+                      // 4. Recent Submissions
+                      if (stats!.recentSubmissions.isNotEmpty) ...[
+                        FadeSlideTransition(
+                          delay: const Duration(milliseconds: 250),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.history_rounded, size: 24, color: Colors.blue),
+                              const SizedBox(width: 12),
+                              Text('Recent Activity', style: theme.textTheme.titleLarge),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...stats!.recentSubmissions.map((sub) {
+                          final isAccepted = sub.status.toLowerCase().contains('accepted') || 
+                                           sub.status.toLowerCase() == 'ac' ||
+                                           sub.status.toLowerCase() == 'ok';
+                          return FadeSlideTransition(
+                            delay: const Duration(milliseconds: 300),
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: ModernCard(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: (isAccepted ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        isAccepted ? Icons.check_circle_outline : Icons.error_outline_rounded,
+                                        color: isAccepted ? Colors.green : Colors.red,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            sub.title,
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                sub.status,
+                                                style: TextStyle(
+                                                  color: isAccepted ? Colors.green : Colors.red,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              if (sub.lang != null && sub.lang!.isNotEmpty) ...[
+                                                const SizedBox(width: 8),
+                                                const Text('•', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                                const SizedBox(width: 8),
+                                                Text(sub.lang!, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatTime(sub.timestamp),
+                                      style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                       
                       const SizedBox(height: 120),
@@ -127,6 +209,14 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   Widget _buildProfileHeader(ThemeData theme) {

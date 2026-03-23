@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/leetcode_stats.dart';
+import '../models/submission.dart';
 import '../models/hackerrank_stats.dart';
 import '../models/gfg_stats.dart';
 import '../models/platform_stats.dart';
@@ -133,13 +134,13 @@ class StatsProvider extends ChangeNotifier {
   Map<String, List<String>> _topicStrengths = {};
   String _aiRecommendation = "Connecting sources...";
   Map<DateTime, int> _progressData = {};
-  List<RecentSubmission> _failedProblems = [];
+  List<Submission> _failedProblems = [];
 
   int get xpPoints => _xpPoints;
   Map<String, List<String>> get topicStrengths => _topicStrengths;
   String get aiRecommendation => _aiRecommendation;
   Map<DateTime, int> get progressData => _progressData;
-  List<RecentSubmission> get failedProblems => _failedProblems;
+  List<Submission> get failedProblems => _failedProblems;
 
   List<Contest> _upcomingContests = [];
   bool _contestsLoading = false;
