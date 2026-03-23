@@ -109,61 +109,122 @@ class LeetcodeService {
   }
 
   Future<LeetcodeStats> _fetchFresh(String username) async {
-    debugPrint("[LC] Starting parallel fetch for: $username");
+    debugPrint("[LC] 🔄 Starting multi-source assembly for: $username");
+    
+    // We run parallel 'Best Effort' jobs for each major data part
+    final results = await Future.wait([
+      _fetchPart((u) => _getProfile(u), username, "Profile"),
+      _fetchPart((u) => _getSubmissions(u), username, "Submissions"),
+    ]);
 
-    final List<Future<LeetcodeStats>> tasks = [];
+    final profileStats = results[0];
+    final subStats = results[1];
 
-    // Only add custom proxy if configured and valid
-    if (_vercelProxyBase.isNotEmpty && _vercelProxyBase.startsWith("http")) {
-      tasks.add(
-        _fetchGraphQL(
-          username,
-          "$_vercelProxyBase/api/leetcode",
-          label: "Vercel Proxy GQL",
-        ),
-      );
-      tasks.add(
-        _fetchRest(username, _vercelProxyBase, label: "Vercel Proxy REST"),
-      );
+    if (profileStats == null) {
+      throw Exception("Could not fetch profile data for '$username' from any source.");
     }
 
-    // Standard best-effort order
-    tasks.add(
-      _fetchRest(
-        username,
-        "https://alfa-leetcode-api.onrender.com",
-        label: "alfa REST",
-      ),
-    );
-    tasks.add(
-      _fetchRest(
-        username,
-        "https://leetcode-rest-api.vercel.app",
-        label: "leetcode-rest vercel",
-      ),
-    );
-    tasks.add(
-      _fetchGraphQL(
-        username,
-        "https://leetcode.com/graphql",
-        label: "leetcode.com/graphql",
-      ),
+    // Join the results
+    final combined = LeetcodeStats(
+      totalSolved: profileStats.totalSolved,
+      easy: profileStats.easy,
+      medium: profileStats.medium,
+      hard: profileStats.hard,
+      avatar: profileStats.avatar,
+      ranking: profileStats.ranking,
+      rating: profileStats.rating,
+      submissionCalendar: profileStats.submissionCalendar,
+      activeDays: profileStats.activeDays,
+      streak: profileStats.streak,
+      longestStreak: profileStats.longestStreak,
+      contestRating: profileStats.contestRating,
+      highestRating: profileStats.highestRating,
+      globalRanking: profileStats.globalRanking,
+      topPercentage: profileStats.topPercentage,
+      totalContests: profileStats.totalContests,
+      contestHistory: profileStats.contestHistory,
+      badges: profileStats.badges,
+      tagStats: profileStats.tagStats,
+      // Take missions from subStats if available, otherwise from profileStats
+      recentSubmissions: (subStats?.recentSubmissions?.isNotEmpty ?? false) 
+          ? subStats!.recentSubmissions 
+          : profileStats.recentSubmissions,
     );
 
+    _cache = combined;
+    _lastFetch = DateTime.now();
+    await _saveToDisk(username, combined);
+    
+    debugPrint("[LC] 🏁 Combined fetch successful: solved=${combined.totalSolved}, submissions=${combined.recentSubmissions?.length}");
+    return combined;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Future<LeetcodeStats?> _fetchPart(Future<LeetcodeStats> Function(String) fetcher, String username, String label) async {
     try {
-      final stats = await _race(tasks, timeout: _raceTimeout);
-      debugPrint("[LC] 🏁 RACE WINNER: $username SUCCESS");
-      _cache = stats;
-      _lastFetch = DateTime.now();
-      await _saveToDisk(username, stats);
-      return stats;
+      return await _race([fetcher(username)], timeout: _raceTimeout);
     } catch (e) {
-      debugPrint("[LC] ❌ All sources failed: $e");
-      throw Exception(
-        "All sources failed. Check your internet connection or try again later.",
-      );
+      debugPrint("[LC] ⚠️ Failed to fetch $label for $username: $e");
+      return null;
     }
   }
+
+  Future<LeetcodeStats> _getProfile(String username) async {
+    final tasks = <Future<LeetcodeStats>>[];
+    if (_vercelProxyBase.isNotEmpty) {
+      tasks.add(_fetchGraphQL(username, "$_vercelProxyBase/api/leetcode", label: "Proxy GQL Profile", query: _gqlProfileQuery));
+      tasks.add(_fetchRest(username, _vercelProxyBase, label: "Proxy REST Profile"));
+    }
+    tasks.add(_fetchGraphQL(username, "https://leetcode.com/graphql", label: "Direct GQL Profile", query: _gqlProfileQuery));
+    tasks.add(_fetchRest(username, "https://alfa-leetcode-api.onrender.com", label: "alfa REST Profile"));
+    return _race(tasks, timeout: _raceTimeout);
+  }
+
+  Future<LeetcodeStats> _getSubmissions(String username) async {
+    final tasks = <Future<LeetcodeStats>>[];
+    if (_vercelProxyBase.isNotEmpty) {
+      tasks.add(_fetchGraphQL(username, "$_vercelProxyBase/api/leetcode", label: "Proxy GQL Subs", query: _gqlSubQuery));
+    }
+    tasks.add(_fetchGraphQL(username, "https://leetcode.com/graphql", label: "Direct GQL Subs", query: _gqlSubQuery));
+    tasks.add(_fetchRest(username, "https://alfa-leetcode-api.onrender.com", label: "alfa REST Subs"));
+    return _race(tasks, timeout: _raceTimeout);
+  }
+
+  static const String _gqlProfileQuery = r"""
+    query userPublicProfile($username: String!) {
+      matchedUser(username: $username) {
+        profile { ranking userAvatar }
+        submissionCalendar
+        submitStatsGlobal { acSubmissionNum { difficulty count } }
+        badges { name icon hoverText creationDate }
+        tagProblemCounts {
+          advanced { tagName problemsSolved }
+          intermediate { tagName problemsSolved }
+          fundamental { tagName problemsSolved }
+        }
+      }
+      userContestRanking(username: $username) {
+        rating globalRanking topPercentage attendedContestsCount
+      }
+      userContestRankingHistory(username: $username) {
+        attended rating rank problemsSolved totalProblems
+        contest { title startTime }
+      }
+    }
+  """;
+
+  static const String _gqlSubQuery = r"""
+    query getRecentSubmissions($username: String!) {
+      recentSubmissionList(username: $username, limit: 20) {
+        title
+        titleSlug
+        statusDisplay
+        lang
+        timestamp
+      }
+    }
+  """;
 
   /// Returns the result of the first future that completes successfully.
   Future<T> _race<T>(List<Future<T>> futures, {required Duration timeout}) {
@@ -202,110 +263,19 @@ class LeetcodeService {
   // SOURCE A — Vercel Proxy (GET /?username=xxx)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Future<LeetcodeStats> _fetchViaVercelProxy(String username) async {
-    final url = Uri.parse(
-      "$_vercelProxyBase/api/leetcode",
-    ).replace(queryParameters: {'username': username});
 
-    debugPrint(
-      "[LC] Source A → $_vercelProxyBase/api/leetcode?username=$username",
-    );
 
-    final res = await http
-        .get(url, headers: {"Content-Type": "application/json"})
-        .timeout(_singleSourceTimeout);
-
-    if (res.statusCode != 200) {
-      throw Exception("[Source A] HTTP ${res.statusCode}");
-    }
-
-    final json = jsonDecode(res.body) as Map<String, dynamic>;
-    if (json["errors"] != null) {
-      throw Exception(
-        "[Source A] GraphQL error: ${json["errors"][0]["message"]}",
-      );
-    }
-
-    debugPrint("[LC] ✅ Source A (Vercel proxy) succeeded");
-    return _parseGraphQLResponse(json, username);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SOURCE B — Direct LeetCode GraphQL (POST)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Full query: profile + calendar + contest ranking + contest history
-  //             + recent submissions + badges + tag counts
-  static const String _gqlQuery = r"""
-    query userPublicProfile($username: String!) {
-      matchedUser(username: $username) {
-        profile {
-          ranking
-          userAvatar
-        }
-        submissionCalendar
-        submitStats: submitStatsGlobal {
-          acSubmissionNum {
-            difficulty
-            count
-          }
-        }
-        badges {
-          name
-          icon
-          hoverText
-          creationDate
-        }
-        tagProblemCounts {
-          advanced {
-            tagName
-            problemsSolved
-          }
-          intermediate {
-            tagName
-            problemsSolved
-          }
-          fundamental {
-            tagName
-            problemsSolved
-          }
-        }
-      }
-      userContestRanking(username: $username) {
-        rating
-        globalRanking
-        topPercentage
-        attendedContestsCount
-      }
-      userContestRankingHistory(username: $username) {
-        attended
-        rating
-        rank
-        problemsSolved
-        totalProblems
-        contest {
-          title
-          startTime
-        }
-      }
-      recentSubmissionList(username: $username, limit: 20) {
-        title
-        titleSlug
-        timestamp
-        statusDisplay
-        lang
-      }
-    }
-  """;
+  static const String _userAgent =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
   Future<LeetcodeStats> _fetchGraphQL(
     String username,
     String url, {
     required String label,
     int maxRetries = 1,
+    String? query,
   }) async {
-    debugPrint("[LC] Source B → $label");
-
+    final finalQuery = query ?? _gqlProfileQuery;
     for (var attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         final res = await http
@@ -313,16 +283,14 @@ class LeetcodeService {
               Uri.parse(url),
               headers: {
                 "Content-Type": "application/json",
-                "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Referer": "https://leetcode.com/",
                 "Origin": "https://leetcode.com",
                 "x-csrftoken": "dummy",
                 "Cookie": "csrftoken=dummy",
               },
               body: jsonEncode({
-                "operationName": "userPublicProfile",
-                "query": _gqlQuery,
+                "query": finalQuery,
                 "variables": {"username": username},
               }),
             )
