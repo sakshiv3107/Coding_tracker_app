@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'modern_card.dart';
 import '../theme/app_theme.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProfileSummaryCard extends StatelessWidget {
   final String name;
@@ -21,63 +22,86 @@ class ProfileSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return ModernCard(
-      padding: const EdgeInsets.all(24),
-      child: Row(
+      padding: EdgeInsets.zero,
+      showShadow: true,
+      borderRadius: 28,
+      isGlass: true,
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.primary.withOpacity(0.5), width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 35,
-              backgroundColor: AppTheme.primary.withOpacity(0.1),
-              backgroundImage: (profilePicUrl != null && profilePicUrl!.isNotEmpty) 
-                  ? NetworkImage(profilePicUrl!) 
-                  : null,
-              child: (profilePicUrl == null || profilePicUrl!.isEmpty)
-                  ? const Icon(Icons.person_rounded, color: AppTheme.primary, size: 40)
-                  : null,
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              FontAwesomeIcons.solidUserCircle,
+              size: 100,
+              color: AppTheme.primary.withValues(alpha: 0.05),
             ),
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
               children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    name,
-                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                // Premium Avatar Ring
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 38,
+                    backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                    backgroundImage: (profilePicUrl != null && profilePicUrl!.isNotEmpty) 
+                        ? NetworkImage(profilePicUrl!) 
+                        : null,
+                    child: (profilePicUrl == null || profilePicUrl!.isEmpty)
+                        ? const Icon(Icons.person_rounded, color: AppTheme.primary, size: 40)
+                        : null,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  leetcodeUser.isNotEmpty ? '@$leetcodeUser' : 'Setup Profile',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    fontFamily: 'monospace',
-                    fontSize: 12,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          letterSpacing: -0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        leetcodeUser.isNotEmpty ? '@$leetcodeUser' : 'Setup Developer ID',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _smallBadge(FontAwesomeIcons.cube, '$totalPlatforms Nodes', AppTheme.primary),
+                          const SizedBox(width: 8),
+                          _smallBadge(FontAwesomeIcons.circleCheck, 'Verified', Colors.green),
+                        ],
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    _smallBadge(Icons.hub_rounded, '$totalPlatforms Platforms', Colors.indigo),
-                    _smallBadge(Icons.verified_user_rounded, 'Verified', Colors.green),
-                  ],
                 ),
               ],
             ),
@@ -89,19 +113,25 @@ class ProfileSummaryCard extends StatelessWidget {
 
   Widget _smallBadge(IconData icon, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 10, 
+              fontWeight: FontWeight.w800, 
+              color: color,
+              letterSpacing: 0.2,
+            ),
           ),
         ],
       ),

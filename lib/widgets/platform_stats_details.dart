@@ -6,6 +6,7 @@ import '../widgets/responsive_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/not_connected_widget.dart';
+import '../widgets/app_drawer.dart';
 
 class PlatformStatsDetailsScreen extends StatelessWidget {
   final PlatformStats? stats;
@@ -36,6 +37,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => onRefresh(),
@@ -49,8 +51,13 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       _buildBackButton(context, isDark),
+                      const SizedBox(width: 12),
+                      _buildMenuButton(context, isDark),
                       const SizedBox(width: 16),
-                      Text(platformName, style: theme.textTheme.headlineMedium),
+                      Text(platformName, style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      )),
                       const Spacer(),
                       _buildRefreshButton(isLoading, onRefresh),
                     ],
@@ -345,5 +352,31 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
           : const Icon(Icons.refresh_rounded, size: 20),
     );
+  }
+
+  Widget _buildMenuButton(BuildContext context, bool isDark) {
+    return Builder(builder: (context) {
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.surfaceDark : Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: IconButton(
+          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: Icon(
+            Icons.menu_rounded,
+            size: 18,
+            color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          ),
+        ),
+      );
+    });
   }
 }

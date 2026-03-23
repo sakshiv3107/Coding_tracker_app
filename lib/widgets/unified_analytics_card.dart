@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../widgets/modern_card.dart';
 import '../theme/app_theme.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UnifiedAnalyticsCard extends StatelessWidget {
   final int leetcode;
@@ -32,9 +33,12 @@ class UnifiedAnalyticsCard extends StatelessWidget {
 
     return ModernCard(
       padding: EdgeInsets.zero,
+      isGlass: true,
+      showShadow: true,
+      borderRadius: 32,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(
@@ -47,12 +51,11 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'TOTAL PROBLEMS SOLVED',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        'CUMULATIVE PROGRESS',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -61,39 +64,58 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                         style: theme.textTheme.headlineLarge?.copyWith(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.w900,
-                          fontSize: 42,
+                          fontSize: 48,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      Text(
+                        'Total Problems Decimated',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                   SizedBox(
-                    height: 90,
-                    width: 90,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 28,
-                        startDegreeOffset: 270,
-                        sections: _buildPieSections(),
-                      ),
+                    height: 100,
+                    width: 100,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PieChart(
+                          PieChartData(
+                            sectionsSpace: 2,
+                            centerSpaceRadius: 32,
+                            startDegreeOffset: 270,
+                            sections: _buildPieSections(),
+                          ),
+                        ),
+                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withValues(alpha: 0.3), size: 24),
+                      ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurface.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppTheme.surfaceDarkLighter.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
                 ),
                 child: Column(
                   children: [
                     _buildPlatformRow('LeetCode', leetcode, AppTheme.leetCodeYellow),
+                    _divider(),
                     _buildPlatformRow('Codeforces', codeforces, Colors.blueAccent),
-                    _buildPlatformRow('CodeChef', codechef, const Color(0xFF5B4638)),
-                    _buildPlatformRow('GeeksforGeeks', gfg, const Color(0xFF2F8D46)),
-                    _buildPlatformRow('HackerRank', hackerrank, const Color(0xFF2EC866)),
+                    _divider(),
+                    _buildPlatformRow('CodeChef', codechef, const Color(0xFF8B4513)),
+                    _divider(),
+                    _buildPlatformRow('GeeksforGeeks', gfg, const Color(0xFF2F8946)),
+                    _divider(),
+                    _buildPlatformRow('HackerRank', hackerrank, const Color(0xFF2EC366)),
                   ],
                 ),
               ),
@@ -101,11 +123,11 @@ class UnifiedAnalyticsCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildQuickStat('PLATFORMS', _countConnected(), Icons.hub_rounded, Colors.indigo),
+                    child: _buildQuickStat('NODES', _countConnected(), FontAwesomeIcons.networkWired, AppTheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildQuickStat('REPOSITORIES', githubRepos, Icons.folder_copy_rounded, AppTheme.githubGrey),
+                    child: _buildQuickStat('REPOS', githubRepos, FontAwesomeIcons.folderOpen, AppTheme.githubGrey),
                   ),
                 ],
               ),
@@ -115,6 +137,8 @@ class UnifiedAnalyticsCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _divider() => Divider(height: 16, color: Colors.white.withValues(alpha: 0.05));
 
   int _countConnected() {
     int count = 0;
@@ -128,73 +152,61 @@ class UnifiedAnalyticsCard extends StatelessWidget {
   }
 
   Widget _buildPlatformRow(String name, int count, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color.withOpacity(0.4), blurRadius: 4, spreadRadius: 1),
-                  ],
-                ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 1),
+                ],
               ),
-              const SizedBox(width: 12),
-              Text(
-                name,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          Text(
-            count.toString(),
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace'),
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              name,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+            ),
+          ],
+        ),
+        Text(
+          count.toString(),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, fontFamily: 'monospace'),
+        ),
+      ],
     );
   }
 
   Widget _buildQuickStat(String label, int value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.1), width: 1),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
+          Icon(icon, color: color, size: 14),
           const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value.toString(),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 8, color: color.withOpacity(0.7), fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                ),
-              ],
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value.toString(),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+              ),
+              Text(
+                label,
+                style: TextStyle(fontSize: 8, color: color.withValues(alpha: 0.6), fontWeight: FontWeight.w900, letterSpacing: 1),
+              ),
+            ],
           ),
         ],
       ),
@@ -203,19 +215,19 @@ class UnifiedAnalyticsCard extends StatelessWidget {
 
   List<PieChartSectionData> _buildPieSections() {
     final total = leetcode + codeforces + codechef + gfg + hackerrank;
-    if (total == 0) return [PieChartSectionData(color: Colors.grey.withOpacity(0.2), value: 1, radius: 10, showTitle: false)];
+    if (total == 0) return [PieChartSectionData(color: Colors.white.withValues(alpha: 0.1), value: 1, radius: 12, showTitle: false)];
 
     return [
       if (leetcode > 0)
-        PieChartSectionData(color: AppTheme.leetCodeYellow, value: leetcode.toDouble(), radius: 10, showTitle: false),
+        PieChartSectionData(color: AppTheme.leetCodeYellow, value: leetcode.toDouble(), radius: 12, showTitle: false),
       if (codeforces > 0)
-        PieChartSectionData(color: Colors.blueAccent, value: codeforces.toDouble(), radius: 10, showTitle: false),
+        PieChartSectionData(color: Colors.blueAccent, value: codeforces.toDouble(), radius: 12, showTitle: false),
       if (codechef > 0)
-        PieChartSectionData(color: const Color(0xFF5B4638), value: codechef.toDouble(), radius: 10, showTitle: false),
+        PieChartSectionData(color: const Color(0xFF8B4513), value: codechef.toDouble(), radius: 12, showTitle: false),
       if (gfg > 0)
-        PieChartSectionData(color: const Color(0xFF2F8D46), value: gfg.toDouble(), radius: 10, showTitle: false),
+        PieChartSectionData(color: const Color(0xFF2F8946), value: gfg.toDouble(), radius: 12, showTitle: false),
       if (hackerrank > 0)
-        PieChartSectionData(color: const Color(0xFF2EC866), value: hackerrank.toDouble(), radius: 10, showTitle: false),
+        PieChartSectionData(color: const Color(0xFF2EC366), value: hackerrank.toDouble(), radius: 12, showTitle: false),
     ];
   }
 }

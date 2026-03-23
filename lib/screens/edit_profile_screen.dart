@@ -4,6 +4,8 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
+import '../widgets/premium_widgets.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -81,199 +83,255 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (profileProvider.error == null) {
       authProvider.updateName(name);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: AppTheme.secondary,
-          ),
-        );
+        _showFeedback(context, 'Identity Sync Successful', isError: false);
         Navigator.pop(context);
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${profileProvider.error}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        _showFeedback(context, profileProvider.error!, isError: true);
       }
     }
+  }
+
+  void _showFeedback(BuildContext context, String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(20),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isLoading = context.watch<ProfileProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-        centerTitle: true,
-      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Personal Information',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ModernCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildTextField(
-                        controller: _nameController,
-                        label: 'Full Name',
-                        hint: 'Enter your name',
-                        icon: Icons.person_outline,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _picController,
-                        label: 'Profile Picture URL',
-                        hint: 'https://example.com/photo.jpg',
-                        icon: Icons.image_outlined,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Platform Usernames',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ModernCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildTextField(
-                        controller: _leetcodeController,
-                        label: 'LeetCode Username',
-                        hint: 'e.g. user_123',
-                        icon: Icons.code,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _githubController,
-                        label: 'GitHub Username',
-                        hint: 'e.g. github_user',
-                        icon: Icons.alternate_email,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _codechefController,
-                        label: 'CodeChef Username',
-                        hint: 'e.g. chef_45',
-                        icon: Icons.restaurant_menu,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _codeforcesController,
-                        label: 'CodeForces Username',
-                        hint: 'e.g. cf_grandmaster',
-                        icon: Icons.trending_up,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _hackerrankController,
-                        label: 'HackerRank Username',
-                        hint: 'e.g. hr_coding',
-                        icon: Icons.terminal,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _gfgController,
-                        label: 'GFG Username',
-                        hint: 'e.g. gfg_sol',
-                        icon: Icons.school,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+        child: CustomScrollView(
+          slivers: [
+            // ── Premium Top Bar ──────────────────────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    _buildBackButton(context, isDark),
+                    const SizedBox(width: 20),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Refine Identity',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
                           ),
+                        ),
+                        Text(
+                          'Updating your global persona',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Form Content ─────────────────────────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.all(24),
+              sliver: SliverToBoxAdapter(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // 🏠 Personal Info Section
+                      const PremiumSectionHeader(
+                        title: 'Personal Attributes',
+                        subtitle: 'Core identity details across the platform',
+                        icon: Icons.face_retouching_natural_rounded,
+                      ),
+                      const SizedBox(height: 16),
+                      ModernCard(
+                        padding: const EdgeInsets.all(12),
+                        isGlass: true,
+                        borderRadius: 28,
+                        child: Column(
+                          children: [
+                            _buildModernField(
+                              controller: _nameController,
+                              label: 'FULL NAME',
+                              icon: Icons.badge_rounded,
+                              hint: 'Developer Name',
+                              validator: (v) => v!.isEmpty ? 'Name required' : null,
+                            ),
+                            _buildModernField(
+                              controller: _picController,
+                              label: 'AVATAR SOURCE (URL)',
+                              icon: Icons.link_rounded,
+                              hint: 'https://cdn.example.com/avatar.png',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // 🌐 Platform Nodes Section
+                      const PremiumSectionHeader(
+                        title: 'Platform Logic',
+                        subtitle: 'Connect your developer nodes for data sync',
+                        icon: Icons.hub_rounded,
+                      ),
+                      const SizedBox(height: 16),
+                      ModernCard(
+                        padding: const EdgeInsets.all(12),
+                        isGlass: true,
+                        borderRadius: 28,
+                        child: Column(
+                          children: [
+                            _buildModernField(
+                              controller: _leetcodeController,
+                              label: 'LEETCODE UID',
+                              icon: FontAwesomeIcons.code,
+                              hint: 'leetcode_username',
+                            ),
+                            _buildModernField(
+                              controller: _githubController,
+                              label: 'GITHUB NODE',
+                              icon: FontAwesomeIcons.github,
+                              hint: 'github_handle',
+                            ),
+                            _buildModernField(
+                              controller: _hackerrankController,
+                              label: 'HACKERRANK ID',
+                              icon: FontAwesomeIcons.hackerrank,
+                              hint: 'hr_nick',
+                            ),
+                            _buildModernField(
+                              controller: _gfgController,
+                              label: 'GEEKSFORGEEKS',
+                              icon: Icons.school_rounded,
+                              hint: 'gfg_username',
+                            ),
+                            _buildModernField(
+                              controller: _codeforcesController,
+                              label: 'CODEFORCES',
+                              icon: Icons.trending_up,
+                              hint: 'handle_cf',
+                            ),
+                            _buildModernField(
+                              controller: _codechefController,
+                              label: 'CODECHEF',
+                              icon: Icons.restaurant_menu,
+                              hint: 'chef_pro',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      // 💾 Save Button
+                      PremiumGradientButton(
+                        text: isLoading ? 'SYNCING...' : 'PERSIST CHANGES',
+                        onPressed: isLoading ? () {} : () => _saveProfile(),
+                        icon: isLoading ? null : Icons.security_update_good_rounded,
+                      ),
+                      
+                      const SizedBox(height: 120),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildBackButton(BuildContext context, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 16,
+          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernField({
     required TextEditingController controller,
     required String label,
     required String hint,
     required IconData icon,
     String? Function(String?)? validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 12),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, size: 20),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          TextFormField(
+            controller: controller,
+            validator: validator,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+                fontWeight: FontWeight.w600,
+              ),
+              prefixIcon: Icon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6)),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
           ),
-        ),
-      ],
+          Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.02)),
+        ],
+      ),
     );
   }
 }

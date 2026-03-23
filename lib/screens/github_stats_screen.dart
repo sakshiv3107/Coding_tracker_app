@@ -7,13 +7,15 @@ import '../widgets/modern_card.dart';
 import '../widgets/submission_heatmap.dart';
 import '../models/github_stats.dart';
 import '../widgets/animations/fade_slide_transition.dart';
-import '../widgets/animations/animated_stat_counter.dart';
+//import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/skeleton_loading.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/not_connected_widget.dart';
 import '../providers/stats_provider.dart';
 import '../widgets/weekly_activity_chart.dart';
+import '../widgets/premium_widgets.dart';
+import '../widgets/app_drawer.dart';
 
 class GitHubStatsScreen extends StatefulWidget {
   const GitHubStatsScreen({super.key});
@@ -50,26 +52,48 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
     final theme = Theme.of(context);
     final profile = context.watch<ProfileProvider>();
     final github = context.watch<GithubProvider>();
-    final stats = context.watch<StatsProvider>(); // Added this line
+    final stats = context.watch<StatsProvider>();
     final username = profile.profile?["github"] ?? "";
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => _refreshStats(),
-          color: AppTheme.githubBlack,
+          color: AppTheme.githubGrey,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
+              // Modern Top Bar
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
                 sliver: SliverToBoxAdapter(
                   child: Row(
                     children: [
                       _buildBackButton(context),
-                      const SizedBox(width: 16),
-                      Text('GitHub', style: theme.textTheme.headlineMedium),
+                      const SizedBox(width: 12),
+                      _buildMenuButton(context),
+                      const SizedBox(width: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'GitHub Intelligence',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Text(
+                            'Active Node: $username',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                       const Spacer(),
                       _buildRefreshButton(github.isLoading),
                     ],
@@ -81,107 +105,132 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 const NotConnectedWidget(
                   platformName: 'GitHub',
                   icon: FontAwesomeIcons.github,
-                  color: AppTheme.githubBlack,
+                  color: AppTheme.githubGrey,
                 )
               else if (github.error != null)
                 _buildErrorState(github.error!)
               else if (github.isLoading && github.githubStats == null)
-                SliverPadding(
-                  padding: const EdgeInsets.all(24),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      const SkeletonLoading(width: double.infinity, height: 120, borderRadius: 24),
-                      const SizedBox(height: 16),
-                      const Row(
-                        children: [
-                          Expanded(child: SkeletonLoading(width: double.infinity, height: 100, borderRadius: 24)),
-                          SizedBox(width: 12),
-                          Expanded(child: SkeletonLoading(width: double.infinity, height: 100, borderRadius: 24)),
-                          SizedBox(width: 12),
-                          Expanded(child: SkeletonLoading(width: double.infinity, height: 100, borderRadius: 24)),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const SkeletonLoading(width: double.infinity, height: 200, borderRadius: 24),
-                    ]),
-                  ),
-                )
+                _buildLoadingState()
               else if (github.githubStats != null)
                 SliverPadding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      // 1. Profile Hero
                       FadeSlideTransition(
                         child: _buildProfileHero(github.githubStats!, theme),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       
+                      // 2. Overview Section
+                      const PremiumSectionHeader(
+                        title: 'Repository Ecosystem',
+                        subtitle: 'Overview of your contributions',
+                        icon: FontAwesomeIcons.layerGroup,
+                      ),
+                      const SizedBox(height: 12),
                       FadeSlideTransition(
                         delay: const Duration(milliseconds: 100),
                         child: _buildOverallStats(github.githubStats!),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
+                      // 3. Activity Section
+                      const PremiumSectionHeader(
+                        title: 'Contribution Flux',
+                        subtitle: 'Spacetime activity pattern',
+                        icon: FontAwesomeIcons.waveSquare,
+                      ),
+                      const SizedBox(height: 12),
                       FadeSlideTransition(
                         delay: const Duration(milliseconds: 200),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Contribution Activity', style: theme.textTheme.titleLarge),
-                            const SizedBox(height: 16),
                             SubmissionHeatmap(
                               datasets: github.githubStats!.contributionCalendar,
                               baseColor: const Color(0xFF2EA44F),
                             ),
                             const SizedBox(height: 16),
-                              WeeklyActivityChart(
-                                leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
-                                githubCalendar: github.githubStats!.contributionCalendar,
-                                hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
-                              ),
+                            WeeklyActivityChart(
+                              leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
+                              githubCalendar: github.githubStats!.contributionCalendar,
+                              hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 32),
 
+                      // 4. Languages Section
+                      const PremiumSectionHeader(
+                        title: 'Language Matrix',
+                        subtitle: 'Technology stack distribution',
+                        icon: FontAwesomeIcons.microchip,
+                      ),
+                      const SizedBox(height: 12),
                       FadeSlideTransition(
                         delay: const Duration(milliseconds: 300),
-                        child: Text('Most Used Languages', style: theme.textTheme.titleLarge),
-                      ),
-                      const SizedBox(height: 16),
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 350),
                         child: _buildLanguagesSection(github.githubStats!),
                       ),
                       const SizedBox(height: 32),
 
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 400),
-                        child: Text('Starred Repositories', style: theme.textTheme.titleLarge),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildStarredRepos(github.starredRepos, theme),
-                      const SizedBox(height: 32),
+                      // 5. Starred Section
+                      if (github.starredRepos.isNotEmpty) ...[
+                        const PremiumSectionHeader(
+                          title: 'Curated Nodes',
+                          subtitle: 'Top starred repositories',
+                          icon: FontAwesomeIcons.solidStar,
+                          iconColor: Colors.amber,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildStarredRepos(github.starredRepos, theme),
+                        const SizedBox(height: 32),
+                      ],
 
-                      FadeSlideTransition(
-                        delay: const Duration(milliseconds: 450),
-                        child: Text('Latest Repositories', style: theme.textTheme.titleLarge),
+                      // 6. Latest Repos
+                      const PremiumSectionHeader(
+                        title: 'Recently Initialized',
+                        subtitle: 'Latest repository activity',
+                        icon: FontAwesomeIcons.codeBranch,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       ...github.latestRepos.asMap().entries.map((entry) {
                         return FadeSlideTransition(
-                          delay: Duration(milliseconds: 500 + (entry.key * 100)),
+                          delay: Duration(milliseconds: 400 + (entry.key * 100)),
                           child: _buildRepoCard(entry.value, theme),
                         );
                       }),
                       
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 120),
                     ]),
                   ),
                 ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return SliverPadding(
+      padding: const EdgeInsets.all(24),
+      sliver: SliverList(
+        delegate: SliverChildListDelegate([
+          const SkeletonLoading(width: double.infinity, height: 120, borderRadius: 28),
+          const SizedBox(height: 32),
+          const Row(
+            children: [
+              Expanded(child: SkeletonLoading(width: double.infinity, height: 110, borderRadius: 24)),
+              SizedBox(width: 12),
+              Expanded(child: SkeletonLoading(width: double.infinity, height: 110, borderRadius: 24)),
+              SizedBox(width: 12),
+              Expanded(child: SkeletonLoading(width: double.infinity, height: 110, borderRadius: 24)),
+            ],
+          ),
+          const SizedBox(height: 32),
+          const SkeletonLoading(width: double.infinity, height: 220, borderRadius: 28),
+        ]),
       ),
     );
   }
@@ -198,7 +247,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: isDark ? Colors.white : AppTheme.textPrimaryLight),
+        icon: Icon(FontAwesomeIcons.chevronLeft, size: 14, color: isDark ? Colors.white : AppTheme.textPrimaryLight),
       ),
     );
   }
@@ -208,42 +257,40 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
       onPressed: isLoading ? null : _refreshStats,
       icon: isLoading
           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
-          : const Icon(Icons.refresh_rounded, size: 20),
+          : const Icon(FontAwesomeIcons.rotate, size: 16),
       style: IconButton.styleFrom(
         backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
         foregroundColor: AppTheme.primary,
+        padding: const EdgeInsets.all(12),
       ),
     );
   }
 
-  Widget _buildMissingUsername(ThemeData theme) {
-    return SliverFillRemaining(
-      hasScrollBody: false,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FaIcon(FontAwesomeIcons.github, size: 80, color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-              const SizedBox(height: 24),
-              Text('GitHub Not Connected', style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 12),
-              Text(
-                'Add your GitHub username in profile settings to track your repositories and activity.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {},
-                child: const Text('Go to Profile'),
-              ),
-            ],
+  Widget _buildMenuButton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Builder(builder: (context) {
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.surfaceDark : Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: IconButton(
+          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: Icon(
+            Icons.menu_rounded,
+            size: 18,
+            color: isDark ? Colors.white : AppTheme.textPrimaryLight,
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildErrorState(String error) {
@@ -252,23 +299,19 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
-            ),
+          child: ModernCard(
+            isGlass: true,
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                const Text('Something went wrong', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 8),
-                Text(error, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
-                const SizedBox(height: 24),
-                ElevatedButton(onPressed: _refreshStats, child: const Text('Try Again')),
+                const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.orange, size: 48),
+                const SizedBox(height: 20),
+                Text('Uplink Interrupted', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                const SizedBox(height: 12),
+                Text(error, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.5))),
+                const SizedBox(height: 32),
+                PremiumGradientButton(text: 'Reconnect', onPressed: _refreshStats),
               ],
             ),
           ),
@@ -278,42 +321,74 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   }
 
   Widget _buildProfileHero(GithubStats stats, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return ModernCard(
-      padding: const EdgeInsets.all(24),
-      showShadow: true,
-      showBorder: false,
-      child: Row(
+      padding: EdgeInsets.zero,
+      isGlass: true,
+      borderRadius: 32,
+      child: Stack(
         children: [
-          Hero(
-            tag: 'github_avatar',
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.secondary]),
-              ),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundImage: NetworkImage(stats.avatarUrl),
-              ),
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Icon(
+              FontAwesomeIcons.github,
+              size: 140,
+              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.03),
             ),
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
               children: [
-                Text(stats.name, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                Text('@${stats.login}', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-                if (stats.bio != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    stats.bio!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.accent]),
                   ),
-                ],
+                  child: CircleAvatar(
+                    radius: 44,
+                    backgroundColor: theme.cardTheme.color,
+                    backgroundImage: NetworkImage(stats.avatarUrl),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        stats.name, 
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        )
+                      ),
+                      Text(
+                        '@${stats.login}', 
+                        style: TextStyle(
+                          color: AppTheme.primary, 
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        )
+                      ),
+                      if (stats.bio != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          stats.bio!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -325,45 +400,46 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   Widget _buildOverallStats(GithubStats stats) {
     return Row(
       children: [
-        Expanded(child: _buildSmallStatCard('REPOS', stats.publicRepos, Icons.folder_copy_rounded, Colors.blue)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildSmallStatCard('STARRED', stats.totalStarredRepos, Icons.star_border_rounded, Colors.purple)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildSmallStatCard('STARS', stats.totalStars, Icons.star_rounded, Colors.amber)),
-      ],
-    );
-  }
-
-  Widget _buildSmallStatCard(String label, int value, IconData icon, Color color) {
-    return ModernCard(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-      showShadow: true,
-      showBorder: false,
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 12),
-          AnimatedStatCounter(
-            value: value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        Expanded(
+          child: PremiumStatCard(
+            label: 'REPOS', 
+            value: stats.publicRepos.toString(), 
+            icon: FontAwesomeIcons.bookBookmark, 
+            color: Colors.blue
           ),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1.1)),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: PremiumStatCard(
+            label: 'STARRED', 
+            value: stats.totalStarredRepos.toString(), 
+            icon: FontAwesomeIcons.starHalfStroke, 
+            color: Colors.purple
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: PremiumStatCard(
+            label: 'STARS', 
+            value: stats.totalStars.toString(), 
+            icon: FontAwesomeIcons.solidStar, 
+            color: Colors.amber
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildLanguagesSection(GithubStats stats) {
     return ModernCard(
       padding: const EdgeInsets.all(24),
-      showShadow: true,
-      showBorder: false,
+      isGlass: true,
+      borderRadius: 28,
       child: Column(
         children: stats.topLanguages.entries.map((entry) {
           final color = _getLanguageColor(entry.key);
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 20),
             child: Column(
               children: [
                 Row(
@@ -373,10 +449,10 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                         const SizedBox(width: 12),
-                        Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                       ],
                     ),
-                    Text('${(entry.value * 100).toStringAsFixed(1)}%', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
+                    Text('${(entry.value * 100).toStringAsFixed(1)}%', style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.4), fontWeight: FontWeight.w900, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -403,36 +479,28 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   }
 
   Widget _buildStarredRepos(List<GithubStarredRepository> starred, ThemeData theme) {
-    if (starred.isEmpty) {
-      return ModernCard(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Text('No starred repositories', style: TextStyle(color: Colors.grey.shade500)),
-        ),
-      );
-    }
-
     return Column(
       children: starred.take(3).map((repo) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: ModernCard(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
+          isGlass: true,
           child: Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(repo.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text('by ${repo.owner}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text(repo.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                    Text('by ${repo.owner}', style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryDark.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
               Row(
                 children: [
-                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                  const SizedBox(width: 4),
-                  Text(repo.stars.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  const Icon(FontAwesomeIcons.solidStar, color: Colors.amber, size: 12),
+                  const SizedBox(width: 6),
+                  Text(repo.stars.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
                 ],
               ),
             ],
@@ -447,8 +515,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: ModernCard(
         padding: const EdgeInsets.all(24),
-        showShadow: true,
-        showBorder: false,
+        isGlass: true,
         onTap: () {},
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,10 +525,10 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 Expanded(
                   child: Text(
                     repo.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -0.5),
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                Icon(FontAwesomeIcons.chevronRight, size: 12, color: AppTheme.textSecondaryDark.withValues(alpha: 0.2)),
               ],
             ),
             if (repo.description != null) ...[
@@ -470,7 +537,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 repo.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13),
+                style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.5), fontSize: 13, fontWeight: FontWeight.w500),
               ),
             ],
             const SizedBox(height: 24),
@@ -481,18 +548,18 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                     children: [
                       Container(width: 6, height: 6, decoration: BoxDecoration(color: _getLanguageColor(repo.language!), shape: BoxShape.circle)),
                       const SizedBox(width: 8),
-                      Text(repo.language!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text(repo.language!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                     ],
                   ),
                   const SizedBox(width: 20),
                 ],
-                _repoStat(Icons.star_rounded, repo.stars.toString(), Colors.amber),
+                _repoStat(FontAwesomeIcons.solidStar, repo.stars.toString(), Colors.amber),
                 const SizedBox(width: 20),
-                _repoStat(Icons.fork_right_rounded, repo.forks.toString(), Colors.grey),
+                _repoStat(FontAwesomeIcons.codeFork, repo.forks.toString(), Colors.grey),
                 const Spacer(),
                 Text(
                   'Updated ${DateFormat('MMM d').format(repo.updatedAt)}',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w900),
                 ),
               ],
             ),
@@ -505,9 +572,9 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   Widget _repoStat(IconData icon, String val, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(val, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        Icon(icon, size: 10, color: color),
+        const SizedBox(width: 6),
+        Text(val, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
       ],
     );
   }

@@ -194,17 +194,6 @@ class _CodeChefStatsScreenState extends State<CodeChefStatsScreen> {
       ),
       const SizedBox(height: 24),
 
-      // 5. Activity heatmap section
-      FadeSlideTransition(
-        delay: const Duration(milliseconds: 260),
-        child: _SectionHeader(title: 'Activity Heatmap'),
-      ),
-      const SizedBox(height: 12),
-      FadeSlideTransition(
-        delay: const Duration(milliseconds: 280),
-        child: _ActivityHeatmap(stats: cc),
-      ),
-      const SizedBox(height: 24),
 
       // 6. Extra metrics grid (globalRank, countryRank, division, country)
       if (cc.extraMetrics.isNotEmpty) ...[

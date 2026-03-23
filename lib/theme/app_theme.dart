@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Brand Colors - Premium Palette
   static const Color primary = Color(0xFF6366F1); // Indigo
+  static const Color primaryLight = Color(0xFF818CF8);
   static const Color secondary = Color(0xFF10B981); // Emerald
   static const Color accent = Color(0xFFF59E0B); // Amber
   
@@ -17,6 +18,7 @@ class AppTheme {
   
   static const Color surfaceLight = Colors.white;
   static const Color surfaceDark = Color(0xFF0F172A); // Slower dark
+  static const Color surfaceDarkLighter = Color(0xFF1E293B);
   
   static const Color textPrimaryLight = Color(0xFF1E293B);
   static const Color textSecondaryLight = Color(0xFF64748B);
@@ -41,15 +43,15 @@ class AppTheme {
       textTheme: GoogleFonts.outfitTextTheme().copyWith(
         headlineLarge: GoogleFonts.outfit(
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
           color: textPrimaryLight,
-          letterSpacing: -0.5,
+          letterSpacing: -1,
         ),
         headlineMedium: GoogleFonts.outfit(
           fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           color: textPrimaryLight,
-          letterSpacing: -0.3,
+          letterSpacing: -0.5,
         ),
         titleLarge: GoogleFonts.outfit(
           fontSize: 20,
@@ -59,10 +61,12 @@ class AppTheme {
         bodyLarge: GoogleFonts.outfit(
           fontSize: 16,
           color: textPrimaryLight,
+          height: 1.5,
         ),
         bodyMedium: GoogleFonts.outfit(
           fontSize: 14,
           color: textSecondaryLight,
+          height: 1.5,
         ),
       ),
       cardTheme: CardThemeData(
@@ -70,7 +74,7 @@ class AppTheme {
         color: surfaceLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.black.withOpacity(0.05), width: 1),
+          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
@@ -97,7 +101,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: const Color.fromARGB(255, 99, 135, 241),
+        primary: primary,
         secondary: secondary,
         tertiary: accent,
         surface: surfaceDark,
@@ -109,44 +113,55 @@ class AppTheme {
       textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
         headlineLarge: GoogleFonts.outfit(
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
+          color: textPrimaryDark,
+          letterSpacing: -1,
+        ),
+        headlineMedium: GoogleFonts.outfit(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
           color: textPrimaryDark,
           letterSpacing: -0.5,
         ),
-        headlineMedium: GoogleFonts.outfit(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
+        titleLarge: GoogleFonts.outfit(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
           color: textPrimaryDark,
-          letterSpacing: -0.3,
         ),
-        titleLarge: GoogleFonts.jetBrainsMono( // Terminal vibe
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+        titleMedium: GoogleFonts.outfit(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: textSecondaryDark,
         ),
         bodyLarge: GoogleFonts.outfit(
           fontSize: 16,
           color: textPrimaryDark,
+          height: 1.5,
         ),
         bodyMedium: GoogleFonts.outfit(
           fontSize: 14,
           color: textSecondaryDark,
+          height: 1.5,
         ),
-
         labelLarge: GoogleFonts.jetBrainsMono(
-           color: primary,
-           fontWeight: FontWeight.bold,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: primaryLight,
+          letterSpacing: 1,
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 10,
+        elevation: 0,
         color: surfaceDark,
-        shadowColor: primary.withOpacity(0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
+          side: BorderSide(color: Colors.white.withOpacity(0.08), width: 1),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.white.withOpacity(0.08),
+        thickness: 1,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -156,8 +171,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 8,
-          shadowColor: primary.withOpacity(0.5),
+          elevation: 12,
+          shadowColor: primary.withOpacity(0.3),
           textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -166,7 +181,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceDark,
+        fillColor: surfaceDarkLighter,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

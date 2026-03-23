@@ -41,17 +41,15 @@ class PlatformQuickStatsGrid extends StatelessWidget {
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 1.15, // Better aspect ratio for mobile
+      childAspectRatio: 1.1, // Better for premium look
       children: [
         _platformCard(
           context,
           'LeetCode',
           FontAwesomeIcons.code,
           AppTheme.leetCodeYellow,
-          [
-            '${leetcode['solved'] ?? 0} Solved',
-            'E: ${leetcode['easy'] ?? 0} M: ${leetcode['medium'] ?? 0}',
-          ],
+          '${leetcode['solved'] ?? 0} Solved',
+          '${leetcode['easy'] ?? 0}E • ${leetcode['medium'] ?? 0}M',
           onLeetCodeTap,
         ),
         _platformCard(
@@ -59,43 +57,35 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           'GitHub',
           FontAwesomeIcons.github,
           AppTheme.githubGrey,
-          [
-            '${github['repos'] ?? 0} Repos',
-            '${github['commits'] ?? 0} Contributions', // Fixed: more precise label
-          ],
+          '${github['repos'] ?? 0} Repos',
+          '${github['commits'] ?? 0} Activity',
           onGitHubTap,
         ),
         _platformCard(
           context,
           'Codeforces',
-          Icons.trending_up,
+          FontAwesomeIcons.chartSimple,
           Colors.blueAccent,
-          [
-            'Rating: ${codeforces['rating'] ?? 'N/A'}',
-            'Rank: ${codeforces['rank'] ?? 'N/A'}',
-          ],
+          'Rating: ${codeforces['rating'] ?? 'N/A'}',
+          'Rank: ${codeforces['rank'] ?? 'N/A'}',
           onCodeforcesTap,
         ),
         _platformCard(
           context,
           'CodeChef',
-          Icons.restaurant_menu,
+          FontAwesomeIcons.terminal,
           Colors.brown,
-          [
-            'Rating: ${codechef['rating'] ?? 'N/A'}',
-            'Global: ${codechef['rank'] ?? 'N/A'}',
-          ],
+          'Rating: ${codechef['rating'] ?? 'N/A'}',
+          'Rank: ${codechef['rank'] ?? 'N/A'}',
           onCodeChefTap,
         ),
         _platformCard(
           context,
           'GeeksforGeeks',
-          Icons.school,
+          FontAwesomeIcons.graduationCap,
           Colors.green,
-          [
-            'Solved: ${gfg['solved'] ?? 0}',
-            'Score: ${gfg['score'] ?? 0}',
-          ],
+          'Solved: ${gfg['solved'] ?? 0}',
+          'Score: ${gfg['score'] ?? 0}',
           onGfgTap,
         ),
         _platformCard(
@@ -103,10 +93,8 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           'HackerRank',
           FontAwesomeIcons.hackerrank,
           const Color(0xFF2EC866),
-          [
-            'Solved: ${hackerrank['solved'] ?? 0}',
-            'Rank: ${hackerrank['rank'] ?? 'N/A'}',
-          ],
+          'Solved: ${hackerrank['solved'] ?? 0}',
+          'Rank: ${hackerrank['rank'] ?? 'N/A'}',
           onHackerRankTap,
         ),
       ],
@@ -118,60 +106,79 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     String title,
     IconData icon,
     Color color,
-    List<String> stats,
+    String mainStat,
+    String subStat,
     VoidCallback? onTap,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ModernCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.all(16), // Slightly reduced padding for grid
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: FaIcon(icon, color: color, size: (constraints.maxHeight * 0.18).clamp(16, 20)),
-                      ),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
-                    ],
+      isGlass: true,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
+                  child: FaIcon(icon, color: color, size: 18),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded, 
+                  size: 10, 
+                  color: AppTheme.textSecondaryDark.withValues(alpha: 0.3)
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    letterSpacing: -0.2,
                   ),
-                  const SizedBox(height: 4),
-                  ...stats.map((s) => Flexible(
-                    child: Text(
-                      s,
-                      style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  )),
-                ],
-              );
-            }
-          ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  mainStat,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textPrimaryDark.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  subStat,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

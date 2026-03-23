@@ -6,6 +6,7 @@ import 'edit_profile_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
+import '../widgets/premium_widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -16,8 +17,9 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    final userName = auth.user?["name"] ?? "Developer";
+    final userName = auth.user?["name"] ?? "Standard Developer";
     final userEmail = auth.user?["email"] ?? "developer@codesphere.com";
 
     return Scaffold(
@@ -32,7 +34,13 @@ class ProfileScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Profile', style: theme.textTheme.headlineMedium),
+                    Text(
+                      'Account Settings',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
                     IconButton.filledTonal(
                       onPressed: () {
                         Navigator.push(
@@ -40,9 +48,9 @@ class ProfileScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => const EditProfileScreen()),
                         );
                       },
-                      icon: const Icon(Icons.edit_rounded, size: 20),
+                      icon: const Icon(FontAwesomeIcons.penToSquare, size: 16),
                       style: IconButton.styleFrom(
-                        backgroundColor: AppTheme.primary.withOpacity(0.1),
+                        backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
                         foregroundColor: AppTheme.primary,
                       ),
                     ),
@@ -54,49 +62,64 @@ class ProfileScreen extends StatelessWidget {
               // User Profile Section
               FadeSlideTransition(
                 delay: const Duration(milliseconds: 100),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Hero(
-                        tag: 'profile_avatar',
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.primary, width: 2),
-                          ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: AppTheme.primary.withOpacity(0.1),
-                            child: Text(
-                              userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
-                              style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primary,
+                child: ModernCard(
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                  isGlass: true,
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Hero(
+                          tag: 'profile_avatar',
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [AppTheme.primary, AppTheme.accent],
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 54,
+                              backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                              child: Text(
+                                userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.primary,
+                                  letterSpacing: -1,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(userName, style: theme.textTheme.titleLarge?.copyWith(fontSize: 24)),
-                      Text(
-                        userEmail,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 20),
+                        Text(
+                          userName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          userEmail,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 40),
 
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 200),
-                child: Text('Connected Platforms', style: theme.textTheme.titleLarge),
+              const PremiumSectionHeader(
+                title: 'Data Nodes',
+                subtitle: 'Manage your connected platforms',
+                icon: FontAwesomeIcons.networkWired,
               ),
               const SizedBox(height: 16),
 
@@ -105,7 +128,7 @@ class ProfileScreen extends StatelessWidget {
                 child: _PlatformTileSmall(
                   icon: FontAwesomeIcons.code,
                   platform: 'LeetCode',
-                  username: profile.profile?["leetcode"] ?? "Not set",
+                  username: profile.profile?["leetcode"] ?? "Node Inactive",
                   color: AppTheme.leetCodeYellow,
                 ),
               ),
@@ -115,16 +138,17 @@ class ProfileScreen extends StatelessWidget {
                 child: _PlatformTileSmall(
                   icon: FontAwesomeIcons.github,
                   platform: 'GitHub',
-                  username: profile.profile?["github"] ?? "Not set",
-                  color: AppTheme.githubBlack,
+                  username: profile.profile?["github"] ?? "Node Inactive",
+                  color: AppTheme.githubGrey,
                 ),
               ),
 
               const SizedBox(height: 40),
               
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 400),
-                child: Text('App Settings', style: theme.textTheme.titleLarge),
+              const PremiumSectionHeader(
+                title: 'Configuration',
+                subtitle: 'Personalize your experience',
+                icon: FontAwesomeIcons.sliders,
               ),
               const SizedBox(height: 16),
               
@@ -132,28 +156,27 @@ class ProfileScreen extends StatelessWidget {
                 delay: const Duration(milliseconds: 450),
                 child: ModernCard(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  showShadow: true,
-                  showBorder: false,
+                  isGlass: true,
                   child: Column(
                     children: [
                       _SettingsTile(
-                        icon: Icons.notifications_none_rounded,
+                        icon: FontAwesomeIcons.bell,
                         title: 'Notifications',
-                        subtitle: 'Manage your alerts',
+                        subtitle: 'Alert nodes and sync cycles',
                         onTap: () {},
                       ),
-                      const Divider(height: 1, indent: 48),
+                      const Divider(height: 1, indent: 48, color: Colors.white10),
                       _SettingsTile(
-                        icon: Icons.security_rounded,
+                        icon: FontAwesomeIcons.shieldHalved,
                         title: 'Privacy & Security',
-                        subtitle: 'Change your password',
+                        subtitle: 'Multi-factor and key management',
                         onTap: () {},
                       ),
-                      const Divider(height: 1, indent: 48),
+                      const Divider(height: 1, indent: 48, color: Colors.white10),
                       _SettingsTile(
-                        icon: Icons.help_outline_rounded,
-                        title: 'Help & Support',
-                        subtitle: 'Get assistance',
+                        icon: FontAwesomeIcons.circleQuestion,
+                        title: 'Help & Knowledge Base',
+                        subtitle: 'Documentation and support',
                         onTap: () {},
                       ),
                     ],
@@ -161,28 +184,22 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
 
               FadeSlideTransition(
                 delay: const Duration(milliseconds: 500),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.read<AuthProvider>().logout();
-                      context.read<ProfileProvider>().clearProfile();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent.withOpacity(0.1),
-                      foregroundColor: Colors.redAccent,
-                      elevation: 0,
-                    ),
-                    child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                child: PremiumGradientButton(
+                  text: 'Deactivate Session',
+                  onPressed: () {
+                    context.read<AuthProvider>().logout();
+                    context.read<ProfileProvider>().clearProfile();
+                  },
+                  icon: FontAwesomeIcons.powerOff,
+                  gradient: const [Colors.redAccent, Color(0xFF991B1B)],
                 ),
               ),
               
-              const SizedBox(height: 100),
+              const SizedBox(height: 120),
             ],
           ),
         ),
@@ -206,38 +223,47 @@ class _PlatformTileSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isGitHub = platform == 'GitHub';
+    final theme = Theme.of(context);
+    final isInactive = username == "Node Inactive";
+
     return ModernCard(
-      padding: const EdgeInsets.all(16),
-      showShadow: true,
-      showBorder: false,
+      padding: const EdgeInsets.all(18),
+      isGlass: true,
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: FaIcon(icon, color: isGitHub && Theme.of(context).brightness == Brightness.dark ? Colors.white : color, size: 20),
+            child: FaIcon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(platform, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  platform, 
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.2)
+                ),
                 Text(
                   username,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
                     fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.check_circle_rounded, color: AppTheme.secondary, size: 18),
+          Icon(
+            isInactive ? FontAwesomeIcons.circleExclamation : FontAwesomeIcons.solidCircleCheck, 
+            color: isInactive ? Colors.orange.withValues(alpha: 0.5) : AppTheme.secondary, 
+            size: 16
+          ),
         ],
       ),
     );
@@ -259,19 +285,34 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          color: AppTheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+        child: Icon(icon, color: AppTheme.primary, size: 18),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      subtitle: Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12)),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+      title: Text(
+        title, 
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.2)
+      ),
+      subtitle: Text(
+        subtitle, 
+        style: TextStyle(
+          color: AppTheme.textSecondaryDark.withValues(alpha: 0.4), 
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        )
+      ),
+      trailing: Icon(
+        FontAwesomeIcons.chevronRight, 
+        size: 12, 
+        color: AppTheme.textSecondaryDark.withValues(alpha: 0.2)
+      ),
       onTap: onTap,
     );
   }
