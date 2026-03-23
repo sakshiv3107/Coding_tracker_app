@@ -5,27 +5,218 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/leetcode_stats.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LeetcodeService
+// Strategy (mobile/desktop):
+//   1. In-memory cache (5 min) → return instantly
+//   2. Disk cache (24 hr)      → return + background-refresh
+//   3. Parallel race across 4 sources, first success wins:
+//        A. Self-hosted Vercel proxy  (most reliable, no CORS issues)
+//        B. leetcode.com/graphql      (direct, works on Android/iOS)
+//        C. alfa-leetcode-api REST    (fallback, warm instance only)
+//        D. leetcode-rest-api Vercel  (last resort)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 class LeetcodeService {
-  // ─── In-memory cache ───────────────────────────────────────────────────────
+  // ── In-memory cache ─────────────────────────────────────────────────────────
   LeetcodeStats? _cache;
   DateTime? _lastFetch;
-  final Duration _cacheDuration = const Duration(minutes: 5);
+  static const Duration _memCacheDuration = Duration(minutes: 5);
+  static const Duration _diskCacheDuration = Duration(hours: 24);
 
-  // ─── Stale-while-revalidate controller ────────────────────────────────────
+  // ── In-flight dedup ──────────────────────────────────────────────────────────
   final Map<String, Completer<LeetcodeStats>> _inFlight = {};
 
-  static const String _cacheKeyPrefix = 'lc_cache_';
+  // ── Shared prefs keys ────────────────────────────────────────────────────────
+  static const String _cacheKeyPrefix  = 'lc_cache_';
   static const String _cacheTimePrefix = 'lc_cache_time_';
 
-  // ─── Proxy URL ─────────────────────────────────────────────────────────────
-  // Replace with your actual Vercel deployment URL after deploying the proxy.
-  static const String _proxyUrl =
-      "https://<YOUR-PROJECT>.vercel.app/api/leetcode";
+  // ── !! REPLACE with your Vercel project URL after deploying api/leetcode.js ──
+  // !! If you haven't deployed yet, leave as empty string and the source will
+  // !! be skipped automatically.
+  static const String _vercelProxyBase = "";
+  // Example: "https://my-lc-proxy.vercel.app"
 
-  // ─── GraphQL query ─────────────────────────────────────────────────────────
-  final String _query = """
-    query userPublicProfile(\$username: String!) {
-      matchedUser(username: \$username) {
+  // ── Timeouts ─────────────────────────────────────────────────────────────────
+  static const Duration _singleSourceTimeout = Duration(seconds: 20);
+  static const Duration _raceTimeout         = Duration(seconds: 30);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PUBLIC API
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<LeetcodeStats> fetchData(
+    String username, {
+    bool forceRefresh = false,
+    void Function(LeetcodeStats)? onBackgroundRefresh,
+  }) async {
+    if (username.isEmpty) throw Exception("Username cannot be empty");
+
+    // 1 ── Memory cache
+    if (!forceRefresh && _isCacheFresh()) {
+      debugPrint("[LC] ✅ memory cache hit");
+      return _cache!;
+    }
+
+    // 2 ── Disk cache → return + SWR
+    if (!forceRefresh) {
+      final disk = await _loadFromDisk(username);
+      if (disk != null) {
+        debugPrint("[LC] ✅ disk cache hit — refreshing in background");
+        _cache     = disk;
+        _lastFetch = DateTime.now();
+        _backgroundRefresh(username, onBackgroundRefresh);
+        return disk;
+      }
+    }
+
+    // 3 ── Full fetch
+    return _fetchFresh(username);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTERNAL FETCH ORCHESTRATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  bool _isCacheFresh() =>
+      _cache != null &&
+      _lastFetch != null &&
+      DateTime.now().difference(_lastFetch!) < _memCacheDuration;
+
+  void _backgroundRefresh(
+    String username,
+    void Function(LeetcodeStats)? onRefresh,
+  ) {
+    if (_inFlight.containsKey(username)) return;
+    final completer = Completer<LeetcodeStats>();
+    _inFlight[username] = completer;
+
+    _fetchFresh(username).then((stats) {
+      _cache     = stats;
+      _lastFetch = DateTime.now();
+      _saveToDisk(username, stats);
+      onRefresh?.call(stats);
+      completer.complete(stats);
+    }).catchError((e) {
+      debugPrint("[LC] ❌ background refresh failed: $e");
+      completer.completeError(e);
+    }).whenComplete(() => _inFlight.remove(username));
+  }
+
+  Future<LeetcodeStats> _fetchFresh(String username) async {
+    debugPrint("[LC] Starting parallel fetch for: $username");
+
+    final tasks = <Future<LeetcodeStats>>[];
+
+    // Source A: Vercel proxy (skip if not configured)
+    if (_vercelProxyBase.isNotEmpty) {
+      tasks.add(_fetchViaVercelProxy(username));
+    }
+
+    // Source B: Direct LeetCode GraphQL (works on Android/iOS, no CORS)
+    tasks.add(_fetchGraphQL(
+      username,
+      "https://leetcode.com/graphql",
+      label: "leetcode.com/graphql",
+    ));
+
+    // Source C: alfa-leetcode-api REST (Render free — may cold-start)
+    tasks.add(_fetchRest(
+      username,
+      "https://alfa-leetcode-api.onrender.com",
+      label: "alfa REST",
+    ));
+
+    // Source D: leetcode-rest-api Vercel
+    tasks.add(_fetchRest(
+      username,
+      "https://leetcode-rest-api.vercel.app",
+      label: "leetcode-rest vercel",
+    ));
+
+    try {
+      final stats = await _race(tasks, timeout: _raceTimeout);
+      _cache     = stats;
+      _lastFetch = DateTime.now();
+      await _saveToDisk(username, stats);
+      return stats;
+    } catch (e) {
+      debugPrint("[LC] ❌ All sources failed: $e");
+      throw Exception(
+        "All sources failed. Check your internet connection or try again later.",
+      );
+    }
+  }
+
+  /// Returns the result of the first future that completes successfully.
+  Future<T> _race<T>(
+    List<Future<T>> futures, {
+    required Duration timeout,
+  }) {
+    if (futures.isEmpty) throw Exception("No sources configured");
+
+    final completer = Completer<T>();
+    var errorCount  = 0;
+    final errors    = <dynamic>[];
+
+    for (final f in futures) {
+      f.then((value) {
+        if (!completer.isCompleted) completer.complete(value);
+      }).catchError((e) {
+        errors.add(e);
+        errorCount++;
+        if (errorCount == futures.length && !completer.isCompleted) {
+          completer.completeError(
+            Exception("All ${futures.length} sources failed:\n${errors.join('\n')}"),
+          );
+        }
+      });
+    }
+
+    return completer.future.timeout(
+      timeout,
+      onTimeout: () => throw TimeoutException(
+        "Race timed out after ${timeout.inSeconds}s",
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOURCE A — Vercel Proxy (GET /?username=xxx)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<LeetcodeStats> _fetchViaVercelProxy(String username) async {
+    final url = Uri.parse("$_vercelProxyBase/api/leetcode")
+        .replace(queryParameters: {'username': username});
+
+    debugPrint("[LC] Source A → $_vercelProxyBase/api/leetcode?username=$username");
+
+    final res = await http
+        .get(url, headers: {"Content-Type": "application/json"})
+        .timeout(_singleSourceTimeout);
+
+    if (res.statusCode != 200) {
+      throw Exception("[Source A] HTTP ${res.statusCode}");
+    }
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (json["errors"] != null) {
+      throw Exception("[Source A] GraphQL error: ${json["errors"][0]["message"]}");
+    }
+
+    debugPrint("[LC] ✅ Source A (Vercel proxy) succeeded");
+    return _parseGraphQLResponse(json, username);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOURCE B — Direct LeetCode GraphQL (POST)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Full query: profile + calendar + contest ranking + contest history
+  //             + recent submissions + badges + tag counts
+  static const String _gqlQuery = r"""
+    query userPublicProfile($username: String!) {
+      matchedUser(username: $username) {
         profile {
           ranking
           userAvatar
@@ -44,29 +235,31 @@ class LeetcodeService {
           creationDate
         }
       }
-      userContestRanking(username: \$username) {
+      userContestRanking(username: $username) {
         rating
         globalRanking
         topPercentage
         attendedContestsCount
       }
-      userContestRankingHistory(username: \$username) {
+      userContestRankingHistory(username: $username) {
         attended
         rating
         rank
+        problemsSolved
+        totalProblems
         contest {
           title
           startTime
         }
       }
-      recentSubmissionList(username: \$username, limit: 10) {
+      recentSubmissionList(username: $username, limit: 10) {
         title
         titleSlug
         timestamp
         statusDisplay
         lang
       }
-      tagProblemCounts(username: \$username) {
+      tagProblemCounts(username: $username) {
         advanced {
           tagName
           problemsSolved
@@ -81,302 +274,444 @@ class LeetcodeService {
         }
       }
     }
-    """;
+  """;
 
-  // ─── Public entry point ────────────────────────────────────────────────────
-  Future<LeetcodeStats> fetchData(
-    String username, {
-    bool forceRefresh = false,
-    void Function(LeetcodeStats)? onBackgroundRefresh,
+  Future<LeetcodeStats> _fetchGraphQL(
+    String username,
+    String url, {
+    required String label,
+    int maxRetries = 1,
   }) async {
-    if (username.isEmpty) throw Exception("Username cannot be empty");
+    debugPrint("[LC] Source B → $label");
 
-    // 1. In-memory cache hit (fresh)
-    if (!forceRefresh &&
-        _cache != null &&
-        _lastFetch != null &&
-        DateTime.now().difference(_lastFetch!) < _cacheDuration) {
-      debugPrint("LeetCode: returning fresh in-memory cache");
-      return _cache!;
+    for (var attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        final res = await http
+            .post(
+              Uri.parse(url),
+              headers: {
+                "Content-Type":  "application/json",
+                "Referer":       "https://leetcode.com",
+                "Origin":        "https://leetcode.com",
+                "User-Agent":
+                    "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Mobile Safari/537.36",
+                // A dummy csrf token satisfies LeetCode's CSRF middleware
+                // for public-profile queries without a real session cookie.
+                "x-csrftoken": "dummy",
+                "Cookie":       "csrftoken=dummy",
+              },
+              body: jsonEncode({
+                "query":     _gqlQuery,
+                "variables": {"username": username},
+              }),
+            )
+            .timeout(_singleSourceTimeout);
+
+        if (res.statusCode == 429 && attempt < maxRetries) {
+          await Future.delayed(Duration(seconds: 1 << attempt));
+          continue;
+        }
+        if (res.statusCode != 200) {
+          throw Exception("[$label] HTTP ${res.statusCode}");
+        }
+
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        if (json["errors"] != null) {
+          throw Exception("[$label] GQL: ${json["errors"][0]["message"]}");
+        }
+
+        debugPrint("[LC] ✅ $label succeeded");
+        return _parseGraphQLResponse(json, username);
+      } catch (e) {
+        if (attempt >= maxRetries) {
+          debugPrint("[LC] ❌ $label failed: $e");
+          rethrow;
+        }
+      }
     }
+    throw Exception("[$label] exhausted retries");
+  }
 
-    // 2. Disk cache hit → return immediately, refresh in background (SWR)
-    if (!forceRefresh) {
-      final diskData = await _loadFromDisk(username);
-      if (diskData != null) {
-        debugPrint("LeetCode: returning disk cache, refreshing in background");
-        _cache = diskData;
-        _lastFetch = DateTime.now();
-        _backgroundRefresh(username, onBackgroundRefresh);
-        return diskData;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOURCE C/D — REST Fallback
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // alfa-leetcode-api endpoint map (confirmed working as of Mar 2025):
+  //   GET /userProfile/:username          → profile stats
+  //   GET /:username/calendar             → submissionCalendar
+  //   GET /:username/contest              → { contestRanking, contestRankingInfo }
+  //   GET /submission?username=x&limit=10 → { submission: [...] }   ← NOT /acSubmission
+  //
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<LeetcodeStats> _fetchRest(
+    String username,
+    String baseUrl, {
+    required String label,
+  }) async {
+    debugPrint("[LC] Source $label → $baseUrl");
+
+    Future<Map<String, dynamic>?> tryGet(String path) async {
+      try {
+        final res = await http
+            .get(Uri.parse("$baseUrl/$path"))
+            .timeout(_singleSourceTimeout);
+
+        if (res.statusCode == 200) {
+          return jsonDecode(res.body) as Map<String, dynamic>;
+        }
+        debugPrint("[LC]   $label/$path → HTTP ${res.statusCode}");
+        return null;
+      } catch (e) {
+        debugPrint("[LC]   $label/$path → error: $e");
+        return null;
       }
     }
 
-    // 3. No cache or forced → fetch fresh
-    return _fetchFresh(username);
-  }
+    // Fire all four endpoints in parallel for speed
+    final results = await Future.wait([
+      tryGet("userProfile/$username"),
+      tryGet("$username/calendar"),
+      tryGet("$username/contest"),
+      tryGet("submission?username=$username&limit=10"),
+    ]);
 
-  // ─── Background refresh ────────────────────────────────────────────────────
-  void _backgroundRefresh(
-    String username,
-    void Function(LeetcodeStats)? onRefresh,
-  ) {
-    if (_inFlight.containsKey(username)) return;
+    final profileData  = results[0];
+    final calBody      = results[1];
+    final contestBody  = results[2];
+    final submitBody   = results[3];
 
-    final completer = Completer<LeetcodeStats>();
-    _inFlight[username] = completer;
-
-    _fetchFresh(username).then((stats) {
-      _cache = stats;
-      _lastFetch = DateTime.now();
-      _saveToDisk(username, stats);
-      onRefresh?.call(stats);
-      completer.complete(stats);
-    }).catchError((e) {
-      debugPrint("LeetCode: background refresh failed → $e");
-      completer.completeError(e);
-    }).whenComplete(() {
-      _inFlight.remove(username);
-    });
-  }
-
-  // ─── Parallel strategy ────────────────────────────────────────────────────
-  Future<LeetcodeStats> _fetchFresh(String username) async {
-    debugPrint("LeetCode: starting parallel fetch for $username");
-
-    final List<Future<LeetcodeStats>> tasks = [];
-
-    if (kIsWeb) {
-      // Proxy is the primary CORS-safe source — runs server-side on Vercel.
-      tasks.add(_fetchGraphQL(username, _proxyUrl));
-      // alfa-leetcode-api sets Access-Control-Allow-Origin: * but cold-starts
-      // on Render's free tier, so give it a longer timeout via REST.
-      tasks.add(_fetchRest(
-        username,
-        "https://alfa-leetcode-api.onrender.com",
-        timeout: const Duration(seconds: 35),
-      ));
-    } else {
-      // Mobile/desktop: no CORS restriction, hit leetcode.com directly.
-      tasks.add(_fetchGraphQL(username, "https://leetcode.com/graphql"));
-      tasks.add(_fetchGraphQL(
-          username, "https://alfa-leetcode-api.onrender.com/graphql"));
-      tasks.add(_fetchGraphQL(
-          username, "https://leetcode-api-f6df.onrender.com/graphql"));
-      tasks.add(_fetchRest(username, "https://alfa-leetcode-api.onrender.com"));
-      tasks.add(_fetchRest(username, "https://leetcode-rest-api.vercel.app"));
+    if (profileData == null) {
+      throw Exception("[$label] profile endpoint returned null/error");
     }
 
-    try {
-      final stats = await _firstSuccess(
-        tasks,
-        timeout: kIsWeb
-            ? const Duration(seconds: 40)
-            : const Duration(seconds: 15),
-      );
-
-      _cache = stats;
-      _lastFetch = DateTime.now();
-      _saveToDisk(username, stats);
-
-      return stats;
-    } catch (e) {
-      debugPrint("LeetCode: all sources failed: $e");
-      final hint = kIsWeb
-          ? "All sources failed on web. Check your proxy URL or network."
-          : "All sources failed. Check your connection or try again later.";
-      throw Exception(hint);
-    }
-  }
-
-  // ─── Helper: first success ────────────────────────────────────────────────
-  Future<T> _firstSuccess<T>(
-    List<Future<T>> futures, {
-    Duration timeout = const Duration(seconds: 15),
-  }) async {
-    final completer = Completer<T>();
-    int errorCount = 0;
-    final List<dynamic> errors = [];
-
-    for (final f in futures) {
-      f.then((value) {
-        if (!completer.isCompleted) completer.complete(value);
-      }).catchError((e) {
-        errors.add(e);
-        errorCount++;
-        if (errorCount == futures.length && !completer.isCompleted) {
-          completer.completeError(Exception(errors.join(", ")));
+    // ── Submission calendar ──────────────────────────────────────────────────
+    final Map<DateTime, int> calendar = {};
+    final rawCal = calBody?["submissionCalendar"];
+    if (rawCal != null) {
+      final Map<String, dynamic> calMap =
+          rawCal is String
+              ? jsonDecode(rawCal) as Map<String, dynamic>
+              : rawCal as Map<String, dynamic>;
+      calMap.forEach((key, val) {
+        final ts = int.tryParse(key);
+        if (ts != null) {
+          final d = DateTime.fromMillisecondsSinceEpoch(ts * 1000);
+          calendar[DateTime(d.year, d.month, d.day)] = val is int ? val : 0;
         }
       });
     }
 
-    return completer.future.timeout(
-      timeout,
-      onTimeout: () => throw TimeoutException(
-        "Fetching LeetCode data timed out after ${timeout.inSeconds}s.",
-      ),
+    // ── Recent submissions ───────────────────────────────────────────────────
+    final List<RecentSubmission> recentSubmissions = [];
+    final rawSubs = submitBody?["submission"];
+    if (rawSubs is List) {
+      for (final s in rawSubs) {
+        try {
+          // Safe timestamp parse — never force-unwrap tryParse
+          final tsMs =
+              (int.tryParse(s["timestamp"]?.toString() ?? '') ?? 0) * 1000;
+          recentSubmissions.add(RecentSubmission(
+            title:      s["title"]?.toString()         ?? "",
+            titleSlug:  s["titleSlug"]?.toString()     ?? "",
+            difficulty: s["difficulty"]?.toString()    ?? "",
+            status:     s["statusDisplay"]?.toString()
+                        ?? s["status"]?.toString()     ?? "",
+            lang:       s["lang"]?.toString()          ?? "",
+            timestamp:  DateTime.fromMillisecondsSinceEpoch(tsMs),
+          ));
+        } catch (e) {
+          debugPrint("[LC] $label: skipped malformed submission: $e");
+        }
+      }
+    }
+
+    // ── Contest history ──────────────────────────────────────────────────────
+    // alfa-leetcode-api shape (confirmed):
+    //   contestBody = {
+    //     contestRanking: { ... },
+    //     contestRankingInfo: {
+    //       contestParticipation: [ { contest: { title, startTime }, rating, rank, ... } ]
+    //     }
+    //   }
+    final List<LeetCodeContestHistory> contestHistory = [];
+
+    // Support both nested (new) and flat (old) layout
+    final rankingInfo      = contestBody?["contestRankingInfo"]   as Map<String, dynamic>?;
+    final participationRaw = rankingInfo?["contestParticipation"]
+                             ?? contestBody?["contestParticipation"];
+    final participation    = participationRaw as List?;
+
+    if (participation != null) {
+      for (final item in participation) {
+        try {
+          final i         = item as Map<String, dynamic>;
+          final contest   = i["contest"] as Map<String, dynamic>?;
+          final stRaw     = contest?["startTime"];
+          if (stRaw == null) continue;
+
+          final startMs = (stRaw is int
+              ? stRaw
+              : int.tryParse(stRaw.toString()) ?? 0) * 1000;
+
+          contestHistory.add(LeetCodeContestHistory(
+            contestTitle:  contest?["title"]?.toString() ?? "Contest",
+            rating:        ((i["rating"] ?? i["newRating"] ?? 0) as num).toDouble(),
+            rank:          (i["rank"] ?? i["ranking"] ?? 0) as int,
+            solved:        i["problemsSolved"] as int?,
+            totalProblems: i["totalProblems"]  as int?,
+            date:          DateTime.fromMillisecondsSinceEpoch(startMs),
+          ));
+        } catch (e) {
+          debugPrint("[LC] $label: skipped malformed contest entry: $e");
+        }
+      }
+    }
+
+    // ── Contest ranking summary ──────────────────────────────────────────────
+    // May live at top level or inside contestRankingInfo
+    final summary = rankingInfo ?? contestBody;
+
+    final streaks = _calculateStreaks(calendar);
+
+    debugPrint(
+      "[LC] ✅ $label succeeded — "
+      "solved=${profileData["totalSolved"]} "
+      "contests=${contestHistory.length} "
+      "submissions=${recentSubmissions.length}",
+    );
+
+    return LeetcodeStats(
+      totalSolved:    _toInt(profileData["totalSolved"]),
+      easy:           _toInt(profileData["easySolved"]),
+      medium:         _toInt(profileData["mediumSolved"]),
+      hard:           _toInt(profileData["hardSolved"]),
+      avatar:         profileData["avatar"]?.toString() ?? "",
+      ranking:        _toInt(profileData["ranking"]),
+      rating:         _toDouble(summary?["contestRating"]),
+      submissionCalendar: calendar,
+      activeDays:     calendar.length,
+      streak:         streaks['streak']        ?? 0,
+      longestStreak:  streaks['longestStreak'] ?? 0,
+      contestRating:  summary?["contestRating"] != null
+                          ? _toDouble(summary!["contestRating"])
+                          : null,
+      highestRating:  summary?["contestHighestRating"] != null
+                          ? _toDouble(summary!["contestHighestRating"])
+                          : null,
+      globalRanking:  summary?["contestGlobalRanking"] as int?,
+      topPercentage:  summary?["contestTopPercentage"] != null
+                          ? _toDouble(summary!["contestTopPercentage"])
+                          : null,
+      totalContests:  summary?["contestAttend"] as int?,
+      contestHistory: contestHistory,
+      recentSubmissions: recentSubmissions,
     );
   }
 
-  // ─── GraphQL fetch ────────────────────────────────────────────────────────
-  Future<LeetcodeStats> _fetchGraphQL(
-    String username,
-    String url, {
-    int retries = 1,
-  }) async {
-    final attemptTimeout =
-        kIsWeb ? const Duration(seconds: 30) : const Duration(seconds: 10);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GraphQL Response Parser (Sources A + B)
+  // ═══════════════════════════════════════════════════════════════════════════
 
-    int attempt = 0;
-    while (attempt <= retries) {
+  LeetcodeStats _parseGraphQLResponse(
+    Map<String, dynamic> json,
+    String username,
+  ) {
+    final data = (json["data"] ?? json) as Map<String, dynamic>;
+    final matchedUser = data["matchedUser"] as Map<String, dynamic>?;
+
+    if (matchedUser == null) {
+      throw Exception("User '$username' not found on LeetCode");
+    }
+
+    final profile   = (matchedUser["profile"] ?? <String, dynamic>{}) as Map<String, dynamic>;
+    final statsData = matchedUser["submitStats"] ?? matchedUser["submitStatsGlobal"];
+    final submitStats = (statsData?["acSubmissionNum"] as List?) ?? [];
+    final contestRanking = data["userContestRanking"] as Map<String, dynamic>?;
+
+    // ── Submission calendar ──────────────────────────────────────────────────
+    final Map<DateTime, int> calendar = {};
+    final rawCal = matchedUser["submissionCalendar"];
+    if (rawCal != null && rawCal.toString().isNotEmpty) {
       try {
-        final response = await http
-            .post(
-              Uri.parse(url),
-              headers: {
-                "Content-Type": "application/json",
-                "Referer": "https://leetcode.com",
-                if (!kIsWeb) "User-Agent": "Mozilla/5.0",
-              },
-              body: jsonEncode({
-                'query': _query,
-                'variables': {'username': username},
-              }),
-            )
-            .timeout(attemptTimeout);
-
-        if (response.statusCode == 429 && attempt < retries) {
-          await Future.delayed(Duration(seconds: 1 << attempt));
-          attempt++;
-          continue;
-        }
-
-        if (response.statusCode != 200) {
-          throw Exception("HTTP ${response.statusCode}");
-        }
-
-        final jsonResponse =
-            jsonDecode(response.body) as Map<String, dynamic>;
-        if (jsonResponse["errors"] != null) {
-          throw Exception(jsonResponse["errors"][0]["message"]);
-        }
-
-        return _parseGraphQLResponse(jsonResponse, username);
-      } catch (e) {
-        if (attempt >= retries) rethrow;
-        attempt++;
-      }
-    }
-    throw Exception("GraphQL failed after $retries retries");
-  }
-
-  // ─── REST fallback fetch ──────────────────────────────────────────────────
-  Future<LeetcodeStats> _fetchRest(
-    String username,
-    String baseUrl, {
-    Duration timeout = const Duration(seconds: 8),
-  }) async {
-    Future<http.Response> getWithRetry(String endpoint) async {
-      int attempt = 0;
-      while (attempt <= 1) {
-        try {
-          final res = await http
-              .get(Uri.parse("$baseUrl/$endpoint"))
-              .timeout(timeout);
-          if (res.statusCode == 429 && attempt < 1) {
-            await Future.delayed(const Duration(seconds: 2));
-            attempt++;
-            continue;
-          }
-          return res;
-        } catch (e) {
-          if (attempt >= 1) rethrow;
-          attempt++;
-        }
-      }
-      throw Exception("REST retry failed");
-    }
-
-    try {
-      final results = await Future.wait([
-        getWithRetry("userProfile/$username"),
-        getWithRetry("$username/calendar"),
-        getWithRetry("$username/contest"),
-      ]);
-
-      if (results[0].statusCode != 200) throw Exception("REST profile failed");
-
-      final profileData =
-          jsonDecode(results[0].body) as Map<String, dynamic>;
-      final calendarBody =
-          results[1].statusCode == 200 ? jsonDecode(results[1].body) : null;
-      final contestBody =
-          results[2].statusCode == 200 ? jsonDecode(results[2].body) : null;
-
-      final Map<DateTime, int> cal = {};
-      final rawCal = calendarBody?["submissionCalendar"];
-      if (rawCal != null) {
-        final Map<String, dynamic> calMap =
-            rawCal is String ? jsonDecode(rawCal) : rawCal;
-        calMap.forEach((key, val) {
+        final calMap = rawCal is String
+            ? jsonDecode(rawCal) as Map<String, dynamic>
+            : rawCal as Map<String, dynamic>;
+        calMap.forEach((key, value) {
           final ts = int.tryParse(key);
           if (ts != null) {
-            final d = DateTime.fromMillisecondsSinceEpoch(ts * 1000);
-            cal[DateTime(d.year, d.month, d.day)] = val is int ? val : 0;
+            final d = DateTime.fromMillisecondsSinceEpoch(ts * 1000, isUtc: true);
+            calendar[DateTime(d.year, d.month, d.day)] = value as int;
           }
         });
+      } catch (e) {
+        debugPrint("[LC] calendar parse error: $e");
       }
-
-      return LeetcodeStats(
-        totalSolved: (profileData["totalSolved"] ?? 0) as int,
-        easy: (profileData["easySolved"] ?? 0) as int,
-        medium: (profileData["mediumSolved"] ?? 0) as int,
-        hard: (profileData["hardSolved"] ?? 0) as int,
-        avatar: profileData["avatar"]?.toString() ?? "",
-        ranking: (profileData["ranking"] ?? 0) as int,
-        rating: ((contestBody?["contestRating"] ?? 0) as num).toDouble(),
-        submissionCalendar: cal,
-        activeDays: cal.length,
-        streak: 0,
-        longestStreak: 0,
-        contestRating: contestBody?["contestRating"] != null
-            ? (contestBody!["contestRating"] as num).toDouble()
-            : null,
-        highestRating: contestBody?["contestHighestRating"] != null
-            ? (contestBody!["contestHighestRating"] as num).toDouble()
-            : null,
-        globalRanking: contestBody?["contestGlobalRanking"],
-        topPercentage: contestBody?["contestTopPercentage"] != null
-            ? (contestBody!["contestTopPercentage"] as num).toDouble()
-            : null,
-        totalContests: contestBody?["contestAttend"],
-        contestHistory: [],
-        recentSubmissions: [],
-      );
-    } catch (e) {
-      throw Exception("REST fallback failed: $e");
     }
-  } // ← _fetchRest closes here
 
-  // ─── Disk cache ────────────────────────────────────────────────────────────
+    // ── Solve counts ─────────────────────────────────────────────────────────
+    int total = 0, easy = 0, medium = 0, hard = 0;
+    for (final stat in submitStats) {
+      final s = stat as Map<String, dynamic>;
+      switch (s["difficulty"]) {
+        case "All":    total  = _toInt(s["count"]); break;
+        case "Easy":   easy   = _toInt(s["count"]); break;
+        case "Medium": medium = _toInt(s["count"]); break;
+        case "Hard":   hard   = _toInt(s["count"]); break;
+      }
+    }
+
+    // ── Contest history ──────────────────────────────────────────────────────
+    final List<LeetCodeContestHistory> contestHistory = [];
+    final historyList = data["userContestRankingHistory"] as List?;
+    if (historyList != null) {
+      for (final item in historyList) {
+        try {
+          final i       = item as Map<String, dynamic>;
+          final contest = i["contest"] as Map<String, dynamic>?;
+          if (i["rating"] == null || contest?["startTime"] == null) continue;
+
+          contestHistory.add(LeetCodeContestHistory(
+            contestTitle:  contest?["title"]?.toString() ?? "Contest",
+            rating:        _toDouble(i["rating"]),
+            rank:          _toInt(i["rank"]),
+            solved:        i["problemsSolved"] as int?,
+            totalProblems: i["totalProblems"]  as int?,
+            date: DateTime.fromMillisecondsSinceEpoch(
+              _toInt(contest!["startTime"]) * 1000,
+            ),
+          ));
+        } catch (e) {
+          debugPrint("[LC] skipped contest history entry: $e");
+        }
+      }
+    }
+
+    // ── Recent submissions ───────────────────────────────────────────────────
+    final List<RecentSubmission> recentSubmissions = [];
+    final recentList = data["recentSubmissionList"] as List?;
+    if (recentList != null) {
+      for (final item in recentList) {
+        try {
+          final i   = item as Map<String, dynamic>;
+          // Safe parse — never force-unwrap
+          final tsMs =
+              (int.tryParse(i["timestamp"]?.toString() ?? '') ?? 0) * 1000;
+          recentSubmissions.add(RecentSubmission(
+            title:      i["title"]?.toString()         ?? "",
+            titleSlug:  i["titleSlug"]?.toString()     ?? "",
+            difficulty: "",
+            status:     i["statusDisplay"]?.toString() ?? "",
+            lang:       i["lang"]?.toString()          ?? "",
+            timestamp:  DateTime.fromMillisecondsSinceEpoch(tsMs),
+          ));
+        } catch (e) {
+          debugPrint("[LC] skipped recent submission entry: $e");
+        }
+      }
+    }
+
+    // ── Badges ───────────────────────────────────────────────────────────────
+    final List<LeetCodeBadge> badges = [];
+    final badgesList = matchedUser["badges"] as List?;
+    if (badgesList != null) {
+      for (final b in badgesList) {
+        final badge = b as Map<String, dynamic>;
+        var icon = badge["icon"]?.toString() ?? "";
+        if (icon.isNotEmpty && !icon.startsWith("http")) {
+          icon = "https://leetcode.com$icon";
+        }
+        badges.add(LeetCodeBadge(
+          name:        badge["name"]?.toString()        ?? "",
+          icon:        icon,
+          description: badge["hoverText"]?.toString(),
+          earnedDate:  badge["creationDate"]?.toString(),
+        ));
+      }
+    }
+
+    // ── Tag stats ─────────────────────────────────────────────────────────────
+    final Map<String, int> tagStats = {};
+    final tagData = data["tagProblemCounts"] as Map<String, dynamic>?;
+    if (tagData != null) {
+      for (final level in ["fundamental", "intermediate", "advanced"]) {
+        final cats = tagData[level] as List?;
+        if (cats != null) {
+          for (final item in cats) {
+            final i    = item as Map<String, dynamic>;
+            final name = i["tagName"]?.toString() ?? "";
+            if (name.isNotEmpty) {
+              tagStats[name] =
+                  (tagStats[name] ?? 0) + _toInt(i["problemsSolved"]);
+            }
+          }
+        }
+      }
+    }
+
+    final double rating = _toDouble(contestRanking?["rating"]);
+    double? highestRating;
+    if (contestHistory.isNotEmpty) {
+      highestRating =
+          contestHistory.map((h) => h.rating).reduce((a, b) => a > b ? a : b);
+    }
+
+    final streaks = _calculateStreaks(calendar);
+
+    debugPrint(
+      "[LC] ✅ GraphQL parse done — "
+      "solved=$total easy=$easy medium=$medium hard=$hard "
+      "contests=${contestHistory.length} "
+      "submissions=${recentSubmissions.length} "
+      "badges=${badges.length}",
+    );
+
+    return LeetcodeStats(
+      totalSolved:    total,
+      easy:           easy,
+      medium:         medium,
+      hard:           hard,
+      avatar:         profile["userAvatar"]?.toString() ?? "",
+      ranking:        _toInt(profile["ranking"]),
+      rating:         rating,
+      submissionCalendar: calendar,
+      streak:         streaks['streak']        ?? 0,
+      longestStreak:  streaks['longestStreak'] ?? 0,
+      activeDays:     calendar.length,
+      contestRating:  rating > 0 ? rating : null,
+      highestRating:  highestRating,
+      globalRanking:  contestRanking?["globalRanking"] as int?,
+      topPercentage:  contestRanking?["topPercentage"] != null
+                          ? _toDouble(contestRanking!["topPercentage"])
+                          : null,
+      totalContests:  contestRanking?["attendedContestsCount"] as int?,
+      contestHistory: contestHistory,
+      recentSubmissions: recentSubmissions,
+      badges:         badges,
+      tagStats:       tagStats,
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISK CACHE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   Future<LeetcodeStats?> _loadFromDisk(String username) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final json = prefs.getString('$_cacheKeyPrefix$username');
+      final prefs  = await SharedPreferences.getInstance();
+      final raw    = prefs.getString('$_cacheKeyPrefix$username');
       final timeMs = prefs.getInt('$_cacheTimePrefix$username');
+      if (raw == null || timeMs == null) return null;
 
-      if (json == null || timeMs == null) return null;
+      final age = DateTime.now()
+          .difference(DateTime.fromMillisecondsSinceEpoch(timeMs));
+      if (age > _diskCacheDuration) return null;
 
-      final cacheAge = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(timeMs),
-      );
-
-      if (cacheAge > const Duration(hours: 24)) return null;
-
-      return LeetcodeStats.fromJson(
-          jsonDecode(json) as Map<String, dynamic>);
+      return LeetcodeStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (e) {
-      debugPrint("LeetCode: disk cache read failed → $e");
+      debugPrint("[LC] disk cache read error: $e");
       return null;
     }
   }
@@ -393,12 +728,12 @@ class LeetcodeService {
         DateTime.now().millisecondsSinceEpoch,
       );
     } catch (e) {
-      debugPrint("LeetCode: disk cache write failed → $e");
+      debugPrint("[LC] disk cache write error: $e");
     }
   }
 
   Future<void> clearCache(String username) async {
-    _cache = null;
+    _cache     = null;
     _lastFetch = null;
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -407,169 +742,68 @@ class LeetcodeService {
     } catch (_) {}
   }
 
-  // ─── GraphQL response parser ───────────────────────────────────────────────
-  LeetcodeStats _parseGraphQLResponse(
-    Map<String, dynamic> jsonResponse,
-    String username,
-  ) {
-    final data = jsonResponse.containsKey("data")
-        ? jsonResponse["data"] as Map<String, dynamic>
-        : jsonResponse;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAK CALCULATION
+  // ═══════════════════════════════════════════════════════════════════════════
 
-    final matchedUser =
-        (data["matchedUser"] ?? data) as Map<String, dynamic>?;
+  static Map<String, int> _calculateStreaks(Map<DateTime, int> calendar) {
+    if (calendar.isEmpty) return {'streak': 0, 'longestStreak': 0};
 
-    if (matchedUser == null || matchedUser.isEmpty) {
-      throw Exception("User '$username' not found");
-    }
+    final sorted = calendar.keys
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .toList()
+      ..sort();
 
-    final profile = (matchedUser["profile"] ?? {}) as Map<String, dynamic>;
-    final submissionStatsData =
-        matchedUser["submitStats"] ?? matchedUser["submitStatsGlobal"];
-    final submitStats = submissionStatsData != null
-        ? (submissionStatsData["acSubmissionNum"] as List?)
-        : null;
-    final contestRanking =
-        data["userContestRanking"] as Map<String, dynamic>?;
-
-    // Submission calendar
-    final Map<DateTime, int> submissionCalendar = {};
-    final calendarRaw = matchedUser["submissionCalendar"];
-    if (calendarRaw != null && calendarRaw.toString().isNotEmpty) {
-      try {
-        final Map<String, dynamic> rawCalendar = calendarRaw is String
-            ? jsonDecode(calendarRaw)
-            : calendarRaw as Map<String, dynamic>;
-        rawCalendar.forEach((key, value) {
-          final ts = int.tryParse(key);
-          if (ts != null) {
-            final date = DateTime.fromMillisecondsSinceEpoch(
-                ts * 1000, isUtc: true);
-            submissionCalendar[DateTime(date.year, date.month, date.day)] =
-                value as int;
-          }
-        });
-      } catch (_) {}
-    }
-
-    // Solve counts
-    int total = 0, easy = 0, medium = 0, hard = 0;
-    if (submitStats != null) {
-      for (final stat in submitStats) {
-        final s = stat as Map<String, dynamic>;
-        if (s["difficulty"] == "All") total = s["count"] as int;
-        if (s["difficulty"] == "Easy") easy = s["count"] as int;
-        if (s["difficulty"] == "Medium") medium = s["count"] as int;
-        if (s["difficulty"] == "Hard") hard = s["count"] as int;
+    // Longest streak
+    int maxStreak  = 1;
+    int tempStreak = 1;
+    for (var i = 1; i < sorted.length; i++) {
+      final diff = sorted[i].difference(sorted[i - 1]).inDays;
+      if (diff == 1) {
+        tempStreak++;
+        if (tempStreak > maxStreak) maxStreak = tempStreak;
+      } else if (diff > 1) {
+        tempStreak = 1;
       }
     }
 
-    // Contest history
-    final List<LeetCodeContestHistory> contestHistory = [];
-    final historyData = data["userContestRankingHistory"] as List?;
-    if (historyData != null) {
-      for (final item in historyData) {
-        try {
-          final i = item as Map<String, dynamic>;
-          if (i["rating"] != null && i["contest"]?["startTime"] != null) {
-            contestHistory.add(LeetCodeContestHistory(
-              contestTitle: i["contest"]["title"] ?? "Contest",
-              rating: (i["rating"] as num).toDouble(),
-              rank: i["rank"] ?? 0,
-              date: DateTime.fromMillisecondsSinceEpoch(
-                (i["contest"]["startTime"] as int) * 1000,
-              ),
-            ));
-          }
-        } catch (_) {}
-      }
-    }
+    // Current streak
+    final today     = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final yest      = todayDate.subtract(const Duration(days: 1));
 
-    // Recent submissions
-    final List<RecentSubmission> recentSubmissions = [];
-    final recentData = data["recentSubmissionList"] as List?;
-    if (recentData != null) {
-      for (final item in recentData) {
-        try {
-          final i = item as Map<String, dynamic>;
-          recentSubmissions.add(RecentSubmission(
-            title: i["title"] ?? "",
-            titleSlug: i["titleSlug"] ?? "",
-            difficulty: "",
-            status: i["statusDisplay"] ?? "",
-            timestamp: DateTime.fromMillisecondsSinceEpoch(
-              int.parse(i["timestamp"].toString()) * 1000,
-            ),
-          ));
-        } catch (_) {}
-      }
-    }
-
-    // Badges
-    final List<LeetCodeBadge> badges = [];
-    final badgesData = matchedUser["badges"] as List?;
-    if (badgesData != null) {
-      for (final badge in badgesData) {
-        final b = badge as Map<String, dynamic>;
-        String icon = b["icon"] ?? "";
-        if (icon.isNotEmpty && !icon.startsWith("http")) {
-          icon = "https://leetcode.com$icon";
-        }
-        badges.add(LeetCodeBadge(
-          name: b["name"] ?? "",
-          icon: icon,
-          description: b["hoverText"],
-          earnedDate: b["creationDate"],
-        ));
-      }
-    }
-
-    // Tag stats
-    final Map<String, int> tagStats = {};
-    final tagData = data["tagProblemCounts"] as Map<String, dynamic>?;
-    if (tagData != null) {
-      for (final level in ["fundamental", "intermediate", "advanced"]) {
-        final categories = tagData[level] as List?;
-        if (categories != null) {
-          for (final item in categories) {
-            final i = item as Map<String, dynamic>;
-            final name = i["tagName"] ?? "";
-            final count = (i["problemsSolved"] ?? 0) as int;
-            if (name.isNotEmpty) {
-              tagStats[name] = (tagStats[name] ?? 0) + count;
-            }
-          }
+    int current = 0;
+    if (calendar.containsKey(todayDate) || calendar.containsKey(yest)) {
+      current = 1;
+      var check = calendar.containsKey(todayDate) ? todayDate : yest;
+      while (true) {
+        check = check.subtract(const Duration(days: 1));
+        if (calendar.containsKey(DateTime(check.year, check.month, check.day))) {
+          current++;
+        } else {
+          break;
         }
       }
     }
 
-    final double rating = contestRanking?["rating"] != null
-        ? (contestRanking!["rating"] as num).toDouble()
-        : 0;
+    return {'streak': current, 'longestStreak': maxStreak};
+  }
 
-    return LeetcodeStats(
-      totalSolved: total,
-      easy: easy,
-      medium: medium,
-      hard: hard,
-      avatar: profile["userAvatar"] ?? "",
-      ranking: profile["ranking"] ?? 0,
-      rating: rating,
-      submissionCalendar: submissionCalendar,
-      streak: 0,
-      longestStreak: 0,
-      activeDays: submissionCalendar.length,
-      contestRating: rating > 0 ? rating : null,
-      highestRating: null,
-      globalRanking: contestRanking?["globalRanking"],
-      topPercentage: contestRanking?["topPercentage"] != null
-          ? (contestRanking!["topPercentage"] as num).toDouble()
-          : null,
-      totalContests: contestRanking?["attendedContestsCount"],
-      contestHistory: contestHistory,
-      recentSubmissions: recentSubmissions,
-      badges: badges,
-      tagStats: tagStats,
-    );
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static double _toDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
   }
 }

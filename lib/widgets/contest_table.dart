@@ -36,20 +36,25 @@ class ContestTable extends StatelessWidget {
               columns: const [
                 DataColumn(label: Text('CONTEST', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
                 DataColumn(label: Text('DATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
+                DataColumn(label: Text('SOLVED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
                 DataColumn(label: Text('RANK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
                 DataColumn(label: Text('RATING', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
               ],
               rows: sortedHistory.map((h) {
+                final solvedText = (h.solved != null && h.totalProblems != null)
+                    ? '${h.solved}/${h.totalProblems}'
+                    : (h.solved?.toString() ?? '-');
                 return DataRow(
                   cells: [
                     DataCell(Text(h.contestTitle, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                    DataCell(Text(DateFormat('MMM dd, yyyy').format(h.date), style: const TextStyle(fontSize: 11, color: Colors.grey))),
+                    DataCell(Text(DateFormat('MMM dd').format(h.date), style: const TextStyle(fontSize: 11, color: Colors.grey))),
+                    DataCell(Text(solvedText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
                     DataCell(Text('#${h.rank}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
                     DataCell(
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

@@ -134,12 +134,16 @@ class LeetCodeContestHistory {
   final String contestTitle;
   final double rating;
   final int rank;
+  final int? solved;
+  final int? totalProblems;
   final DateTime date;
 
   LeetCodeContestHistory({
     required this.contestTitle,
     required this.rating,
     required this.rank,
+    this.solved,
+    this.totalProblems,
     required this.date,
   });
 
@@ -147,6 +151,8 @@ class LeetCodeContestHistory {
         'contestTitle': contestTitle,
         'rating': rating,
         'rank': rank,
+        'solved': solved,
+        'totalProblems': totalProblems,
         'date': date.millisecondsSinceEpoch,
       };
 
@@ -155,6 +161,8 @@ class LeetCodeContestHistory {
         contestTitle: json['contestTitle'] as String,
         rating: (json['rating'] as num).toDouble(),
         rank: json['rank'] as int,
+        solved: json['solved'] as int?,
+        totalProblems: json['totalProblems'] as int?,
         date: DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
       );
 }
@@ -166,6 +174,7 @@ class RecentSubmission {
   final String titleSlug;
   final String difficulty;
   final String status;
+  final String lang;
   final DateTime timestamp;
 
   RecentSubmission({
@@ -173,6 +182,7 @@ class RecentSubmission {
     required this.titleSlug,
     required this.difficulty,
     required this.status,
+    required this.lang,
     required this.timestamp,
   });
 
@@ -181,6 +191,7 @@ class RecentSubmission {
         'titleSlug': titleSlug,
         'difficulty': difficulty,
         'status': status,
+        'lang': lang,
         'timestamp': timestamp.millisecondsSinceEpoch,
       };
 
@@ -190,6 +201,7 @@ class RecentSubmission {
         titleSlug: json['titleSlug'] as String,
         difficulty: json['difficulty'] as String? ?? '',
         status: json['status'] as String,
+        lang: json['lang'] as String? ?? '',
         timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
       );
 }

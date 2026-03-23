@@ -97,7 +97,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: primary,
+        primary: const Color.fromARGB(255, 99, 135, 241),
         secondary: secondary,
         tertiary: accent,
         surface: surfaceDark,

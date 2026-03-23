@@ -260,7 +260,6 @@ class DashboardScreen extends StatelessWidget {
                       hackerrank: stats.hackerrankStats?.totalSolved ?? 0,
                       githubStars: github.githubStats?.totalStars ?? 0,
                       githubRepos: github.githubStats?.publicRepos ?? 0,
-                      onTap: () => Navigator.pushNamed(context, '/leetcode_stats'),
                     ),
                   ),
                 ),

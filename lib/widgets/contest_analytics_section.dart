@@ -119,26 +119,62 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
             runSpacing: 12,
             crossAxisAlignment: WrapCrossAlignment.start,
             children: [
-              // Large rating
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Current and Max Ratings
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Contest Rating',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade500,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Rating',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        ratingText,
+                        style: const TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -1.5,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    ratingText,
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -1.5,
-                    ),
+                  const SizedBox(width: 32),
+                  if (stats.highestRating != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Max Rating',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          stats.highestRating!.toStringAsFixed(0),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

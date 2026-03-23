@@ -22,6 +22,8 @@ import '../widgets/difficulty_bar_chart.dart';
 import '../widgets/contest_analytics_section.dart' ;
 import '../widgets/badges_section.dart';
 import '../widgets/not_connected_widget.dart';
+import '../widgets/topic_wise_section.dart';
+import '../widgets/recently_solved_section.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -233,6 +235,15 @@ void initState() {
         const SizedBox(height: 32),
       ],
 
+      // Topic Wise Distribution (NEW)
+      if (lc.tagStats != null && lc.tagStats!.isNotEmpty) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 340),
+          child: TopicWiseSection(tagStats: lc.tagStats!),
+        ),
+        const SizedBox(height: 32),
+      ],
+
       // 9. Problem solving trend
       FadeSlideTransition(
         delay: const Duration(milliseconds: 360),
@@ -244,7 +255,18 @@ void initState() {
 
       
 
-      // 10. Recent submissions
+      // 10. Recently solved problems (Feature 2C)
+      if (lc.recentSubmissions != null && lc.recentSubmissions!.isNotEmpty) ...[
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 400),
+          child: RecentlySolvedSection(
+            submissions: lc.recentSubmissions!,
+          ),
+        ),
+        const SizedBox(height: 32),
+      ],
+
+      // 11. Recent submissions (Feature 2B)
       if (lc.recentSubmissions != null && lc.recentSubmissions!.isNotEmpty) ...[
         FadeSlideTransition(
           delay: const Duration(milliseconds: 440),
@@ -339,58 +361,7 @@ void initState() {
     );
   }
 
-  Widget _buildRecentSubmissions(List<RecentSubmission> submissions) {
-    return Column(
-      children: submissions.take(5).map((sub) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ModernCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: (sub.status == 'Accepted' ? Colors.green : Colors.red)
-                        .withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    sub.status == 'Accepted' ? Icons.check_rounded : Icons.close_rounded,
-                    color: sub.status == 'Accepted' ? Colors.green : Colors.red,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(sub.title,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text(
-                        DateFormat('MMM dd, yyyy HH:mm').format(sub.timestamp),
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  sub.status,
-                  style: TextStyle(
-                    color: sub.status == 'Accepted' ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+
 
   Widget _buildProfileHeader(StatsProvider stats, ProfileProvider profile) {
     return ModernCard(

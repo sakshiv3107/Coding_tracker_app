@@ -27,7 +27,7 @@ class RecentSubmissionsSection extends StatelessWidget {
     if (status.contains('Time')) return const Color(0xFFFFA552);
     if (status.contains('Memory')) return const Color(0xFF6C63FF);
     if (status.contains('Runtime')) return const Color(0xFFFF6B7A);
-    return Colors.grey;
+    return Colors.grey.shade600;
   }
 
   IconData _statusIcon(String status) {
@@ -39,13 +39,13 @@ class RecentSubmissionsSection extends StatelessWidget {
   }
 
   String _statusShort(String status) {
-    if (status == 'Accepted') return 'AC';
-    if (status.contains('Wrong Answer')) return 'WA';
+    if (status == 'Accepted') return 'ACCEPTED';
+    if (status.contains('Wrong Answer')) return 'WRONG';
     if (status.contains('Time Limit')) return 'TLE';
     if (status.contains('Memory Limit')) return 'MLE';
-    if (status.contains('Runtime')) return 'RE';
-    if (status.contains('Compile')) return 'CE';
-    return status.substring(0, status.length.clamp(0, 3)).toUpperCase();
+    if (status.contains('Runtime')) return 'ERROR';
+    if (status.contains('Compile')) return 'COMPILE';
+    return status.toUpperCase();
   }
 
   String _timeAgo(DateTime dt) {
@@ -75,9 +75,9 @@ class RecentSubmissionsSection extends StatelessWidget {
         if (showTitle) ...[
           Row(
             children: [
-              const Icon(Icons.history_rounded, size: 20),
+              const Icon(Icons.history_rounded, size: 20, color: Colors.blue),
               const SizedBox(width: 8),
-              Text('Recent Submissions', style: theme.textTheme.titleLarge),
+              Text('Recent Submission History', style: theme.textTheme.titleLarge),
             ],
           ),
           const SizedBox(height: 16),
@@ -115,25 +115,27 @@ class RecentSubmissionsSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Status icon circle
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(top: 2),
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               _statusIcon(sub.status),
               color: color,
-              size: 18,
+              size: 20,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
-          // Title + time
+          // Title + details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,61 +145,86 @@ class RecentSubmissionsSection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Row(
                   children: [
+                    if (sub.lang.isNotEmpty) ...[
+                      _buildInfoChip(sub.lang, Colors.blue.shade400, isDark),
+                      const SizedBox(width: 8),
+                    ],
                     Text(
                       _timeAgo(sub.timestamp),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    if (sub.difficulty.isNotEmpty) ...[
-                      Text(
-                        ' · ',
-                        style:
-                            TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                      ),
-                      Text(
-                        sub.difficulty,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: _difficultyColor(sub.difficulty),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],
             ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
-          // Status badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _statusShort(sub.status),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: color,
-                letterSpacing: 0.5,
+          // Status Badge
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: color.withOpacity(0.2), width: 1),
+                ),
+                child: Text(
+                  _statusShort(sub.status),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-            ),
+              if (sub.difficulty.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  sub.difficulty,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _difficultyColor(sub.difficulty),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String label, Color color, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
       ),
     );
   }
@@ -214,4 +241,4 @@ class RecentSubmissionsSection extends StatelessWidget {
         return Colors.grey;
     }
   }
-}
+}
