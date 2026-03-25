@@ -27,6 +27,7 @@ import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/premium_widgets.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/platform_error_card.dart';
 
 class CodingStatsScreen extends StatefulWidget {
   const CodingStatsScreen({super.key});
@@ -130,9 +131,11 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
-                      child: _buildErrorBanner(
-                        stats.leetcodeError!,
-                        _refreshStats,
+                      child: PlatformErrorCard(
+                        platformName: 'LeetCode',
+                        message: stats.leetcodeError!,
+                        onRetry: _refreshStats,
+                        isUserNotFound: stats.leetcodeUserNotFound,
                       ),
                     ),
                   ),
@@ -183,10 +186,10 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                     ]),
                   ),
                 )
-              // ── Loaded Content ────────────────────────────────────────
+              // ── Main Content ──────────────────────────────────────────
               else if (stats.leetcodeStats != null)
                 SliverPadding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate(
                       _buildContent(stats, profile, github),
@@ -205,7 +208,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     ProfileProvider profile,
     GithubProvider github,
   ) {
-    final lc = stats.leetcodeStats!;
+    final lc = stats.leetcodeStats;
+    if (lc == null) return [const SizedBox.shrink()];
 
     return [
       // 1. Profile header
@@ -434,7 +438,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
   }
 
   Widget _buildProfileHeader(StatsProvider stats, ProfileProvider profile) {
-    final lc = stats.leetcodeStats!;
+    final lc = stats.leetcodeStats;
+    if (lc == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final username = profile.profile?["leetcode"] ?? "";
 
@@ -451,7 +456,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             child: Icon(
               FontAwesomeIcons.code,
               size: 140,
-              color: AppTheme.leetCodeYellow.withValues(alpha: 0.04),
+              color: AppTheme.leetCodeYellow.withOpacity(0.04),
             ),
           ),
           Padding(
@@ -486,9 +491,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.leetCodeYellow.withValues(
-                            alpha: 0.15,
-                          ),
+                          color: AppTheme.leetCodeYellow.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -524,18 +527,14 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                           Icon(
                             FontAwesomeIcons.at,
                             size: 12,
-                            color: AppTheme.textSecondaryDark.withValues(
-                              alpha: 0.4,
-                            ),
+                            color: AppTheme.textSecondaryDark.withOpacity(0.4),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             username,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondaryDark.withValues(
-                                alpha: 0.7,
-                              ),
+                              color: AppTheme.textSecondaryDark.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -559,7 +558,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -590,7 +589,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             )
           : const Icon(Icons.refresh_rounded, size: 20),
       style: IconButton.styleFrom(
-        backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+        backgroundColor: AppTheme.primary.withOpacity(0.1),
         foregroundColor: AppTheme.primary,
       ),
     );
@@ -606,7 +605,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -680,44 +679,4 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 
-  Widget _buildErrorBanner(String message, VoidCallback onRetry) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.cloud_off_rounded, color: Colors.red, size: 48),
-          const SizedBox(height: 16),
-          const Text(
-            'Connection Error',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Try Again'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

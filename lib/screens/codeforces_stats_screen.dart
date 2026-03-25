@@ -21,6 +21,7 @@ class CodeforcesStatsScreen extends StatelessWidget {
       username: username,
       isLoading: stats.codeforcesLoading,
       errorMessage: stats.codeforcesError,
+      isUserNotFound: stats.codeforcesUserNotFound,
       onRefresh: () {
         if (username.isNotEmpty) {
           stats.fetchCodeforcesStats(username);

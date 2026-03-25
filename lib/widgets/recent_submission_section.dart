@@ -85,7 +85,7 @@ class RecentSubmissionsSection extends StatelessWidget {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.inbox_rounded, size: 40, color: Colors.grey.withValues(alpha: 0.3)),
+                    Icon(Icons.inbox_rounded, size: 40, color: Colors.grey.withOpacity(0.3)),
                     const SizedBox(height: 12),
                     Text(
                       'No recent submissions found',
@@ -211,9 +211,9 @@ class RecentSubmissionsSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+                  border: Border.all(color: color.withOpacity(0.2), width: 1),
                 ),
                 child: Text(
                   _statusShort(sub.status),

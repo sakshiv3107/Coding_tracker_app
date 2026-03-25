@@ -37,7 +37,7 @@ class ProfileSummaryCard extends StatelessWidget {
             child: Icon(
               FontAwesomeIcons.solidUserCircle,
               size: 100,
-              color: AppTheme.primary.withValues(alpha: 0.05),
+              color: AppTheme.primary.withOpacity(0.05),
             ),
           ),
           Padding(
@@ -50,7 +50,7 @@ class ProfileSummaryCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.5)],
+                      colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.5)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -86,7 +86,7 @@ class ProfileSummaryCard extends StatelessWidget {
                       Text(
                         leetcodeUser.isNotEmpty ? '@$leetcodeUser' : 'Setup Developer ID',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          color: AppTheme.textSecondaryDark.withOpacity(0.6),
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -115,9 +115,9 @@ class ProfileSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.1)),
+        border: Border.all(color: color.withOpacity(0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

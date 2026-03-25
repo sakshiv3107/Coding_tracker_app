@@ -21,9 +21,9 @@ class AnalyticsEngine {
     });
 
     return {
-      'Weak': weak..sort((a, b) => tagStats[a]!.compareTo(tagStats[b]!)),
-      'Intermediate': intermediate..sort((a, b) => tagStats[b]!.compareTo(tagStats[a]!)),
-      'Strong': strong..sort((a, b) => tagStats[b]!.compareTo(tagStats[a]!)),
+      'Weak': weak..sort((a, b) => (tagStats[a] ?? 0).compareTo(tagStats[b] ?? 0)),
+      'Intermediate': intermediate..sort((a, b) => (tagStats[b] ?? 0).compareTo(tagStats[a] ?? 0)),
+      'Strong': strong..sort((a, b) => (tagStats[b] ?? 0).compareTo(tagStats[a] ?? 0)),
     };
   }
 

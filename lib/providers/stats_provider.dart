@@ -12,6 +12,7 @@ import '../services/gfg_service.dart';
 import '../services/hackerrank_service.dart';
 import '../services/contest_service.dart';
 import '../core/analytics_engine.dart';
+import '../core/exceptions.dart';
 
 class StatsProvider extends ChangeNotifier {
   // ── Stats data ────────────────────────────────────────────────────────
@@ -22,9 +23,6 @@ class StatsProvider extends ChangeNotifier {
   HackerRankStats? _hackerrankStats;
 
   // ── Per-platform loading flags ─────────────────────────────────────────
-  // Using per-platform flags instead of one global _isLoading means:
-  // - Each platform's card can show its own spinner independently
-  // - One slow/failing platform doesn't block the others from displaying
   bool _leetcodeLoading = false;
   bool _codeforcesLoading = false;
   bool _codechefLoading = false;
@@ -38,15 +36,20 @@ class StatsProvider extends ChangeNotifier {
   String? _gfgError;
   String? _hackerrankError;
 
+  // ── Error types (for UI differentiation) ──────────────────────────────
+  bool _leetcodeUserNotFound = false;
+  bool _codeforcesUserNotFound = false;
+  bool _codechefUserNotFound = false;
+  bool _gfgUserNotFound = false;
+  bool _hackerrankUserNotFound = false;
+
   // ── Cache timestamps ──────────────────────────────────────────────────
-  // Prevents refetching on every screen visit / hot restart
   DateTime? _leetcodeLastFetch;
   DateTime? _codeforcesLastFetch;
   DateTime? _codechefLastFetch;
   DateTime? _gfgLastFetch;
   DateTime? _hackerrankLastFetch;
 
-  // 10 minutes for LeetCode (rate-limited proxy), 5 min for others
   static const _leetcodeCacheDuration = Duration(minutes: 10);
   static const _otherCacheDuration = Duration(minutes: 5);
 
@@ -65,8 +68,6 @@ class StatsProvider extends ChangeNotifier {
   HackerRankStats? get hackerrankStats => _hackerrankStats;
 
   // ── Public getters — loading ───────────────────────────────────────────
-  // Global isLoading = true only while ALL platforms are still loading
-  // (used by screens that don't care which platform is loading)
   bool get isLoading =>
       _leetcodeLoading || _codeforcesLoading || _codechefLoading || _gfgLoading || _hackerrankLoading;
 
@@ -78,7 +79,6 @@ class StatsProvider extends ChangeNotifier {
 
 
   // ── Public getters — errors ────────────────────────────────────────────
-  // Legacy single error getter — returns the first non-null error
   String? get error => _leetcodeError ?? _codeforcesError ?? _codechefError ?? _gfgError ?? _hackerrankError;
 
   String? get leetcodeError => _leetcodeError;
@@ -86,6 +86,13 @@ class StatsProvider extends ChangeNotifier {
   String? get codechefError => _codechefError;
   String? get gfgError => _gfgError;
   String? get hackerrankError => _hackerrankError;
+
+  // ── Public getters — error types ──────────────────────────────────────
+  bool get leetcodeUserNotFound => _leetcodeUserNotFound;
+  bool get codeforcesUserNotFound => _codeforcesUserNotFound;
+  bool get codechefUserNotFound => _codechefUserNotFound;
+  bool get gfgUserNotFound => _gfgUserNotFound;
+  bool get hackerrankUserNotFound => _hackerrankUserNotFound;
 
   int get totalSolved =>
       (_leetcodeStats?.totalSolved ?? 0) +
@@ -122,7 +129,7 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Legacy setError (kept for compatibility with CodingStatsScreen) ────
+  // ── Legacy setError ────────────────────────────────────────────────────
   void setError(String message) {
     _leetcodeError = message;
     _leetcodeLoading = false;
@@ -160,61 +167,87 @@ class StatsProvider extends ChangeNotifier {
   }
 
   void _calculateAnalytics() {
-    if (_leetcodeStats != null) {
-      _topicStrengths = AnalyticsEngine.analyzeTopicStrengths(_leetcodeStats!.tagStats);
-      _aiRecommendation = AnalyticsEngine.getDailyRecommendation(_leetcodeStats);
-      
-      _xpPoints = AnalyticsEngine.calculateXP(
-        totalSolved: _leetcodeStats!.totalSolved + 
-                     (_codeforcesStats?.totalSolved ?? 0) +
-                     (_codechefStats?.totalSolved ?? 0) +
-                     (_gfgStats?.totalSolved ?? 0) +
-                     (_hackerrankStats?.totalSolved ?? 0),
-        streak: _leetcodeStats!.streak,
-        rating: _leetcodeStats!.rating,
-        contestsAttended: _leetcodeStats!.totalContests,
-      );
+    if (_leetcodeStats == null) return;
 
-      _progressData = AnalyticsEngine.aggregateProgress(_leetcodeStats!.submissionCalendar);
-      
-      // Auto-fetch contests if not already loading
-      if (_upcomingContests.isEmpty && !_contestsLoading) {
-        fetchUpcomingContests();
-      }
+    _topicStrengths = AnalyticsEngine.analyzeTopicStrengths(_leetcodeStats!.tagStats);
+    _aiRecommendation = AnalyticsEngine.getDailyRecommendation(_leetcodeStats);
 
-      // Track failed problems from recent submissions
-      if (_leetcodeStats!.recentSubmissions != null) {
-        _failedProblems = _leetcodeStats!.recentSubmissions!
-            .where((s) => s.status != 'Accepted')
-            .toList();
-      }
+    _xpPoints = AnalyticsEngine.calculateXP(
+      totalSolved: totalSolved,
+      streak: _leetcodeStats!.streak,
+      rating: _leetcodeStats!.rating,
+      contestsAttended: _leetcodeStats!.totalContests,
+    );
+
+    _progressData = AnalyticsEngine.aggregateProgress(_leetcodeStats!.submissionCalendar);
+
+    // Fetch contests lazily — do NOT call notifyListeners inside _calculateAnalytics
+    if (_upcomingContests.isEmpty && !_contestsLoading) {
+      Future.microtask(() => fetchUpcomingContests());
     }
-    notifyListeners();
+
+    if (_leetcodeStats!.recentSubmissions != null) {
+      _failedProblems = _leetcodeStats!.recentSubmissions!
+          .where((s) => s.status != 'Accepted')
+          .toList();
+    }
+    // Caller is responsible for calling notifyListeners after this
+  }
+
+  // ── Common Error Handler ───────────────────────────────────────────────
+  String _handleError(dynamic e, String platform, {required Function(bool) setUserNotFound}) {
+    debugPrint("$platform fetch error: $e");
+    
+    if (e is ValidationException) {
+      return e.message;
+    }
+    
+    if (e is UserNotFoundException) {
+      setUserNotFound(true);
+      return e.message;
+    }
+
+    final msg = e.toString().replaceAll('Exception: ', '');
+    if (msg.contains('TimeoutException') || msg.contains('TIMEOUT_ERROR')) {
+      return "Server is taking too long to respond. Please try again later.";
+    }
+    
+    return msg;
+  }
+
+  // ── Validations ────────────────────────────────────────────────────────
+  bool _validateUsername(String? username, String platform, Function(String) setError) {
+    if (username == null || username.trim().isEmpty) {
+      setError("$platform username required");
+      return false;
+    }
+    return true;
   }
 
   // ─── LeetCode ───────────────────────────────────────────────────────────
-  Future<void> fetchLeetCodeStats(String username, {bool forceRefresh = false}) async {
+  Future<void> fetchLeetCodeStats(String? username, {bool forceRefresh = false}) async {
+    if (!_validateUsername(username, "LeetCode", (err) => _leetcodeError = err)) {
+      notifyListeners();
+      return;
+    }
+
     if (!forceRefresh &&
         _isFresh(_leetcodeLastFetch, _leetcodeCacheDuration) &&
         _leetcodeStats != null) {
-      debugPrint("LeetCode: serving from cache");
       return;
     }
 
     _leetcodeLoading = true;
     _leetcodeError = null;
+    _leetcodeUserNotFound = false;
     notifyListeners();
 
     try {
-      _leetcodeStats = await LeetcodeService().fetchData(username);
+      _leetcodeStats = await LeetcodeService().fetchData(username!);
       _leetcodeLastFetch = DateTime.now();
       _calculateAnalytics();
     } catch (e) {
-      final msg = e.toString().replaceAll('Exception: ', '');
-      _leetcodeError = (msg.contains('TimeoutException') || msg.contains('TIMEOUT_ERROR'))
-          ? "Server is taking too long to respond. Please try again later."
-          : msg;
-      debugPrint("LeetCode fetch error: $e");
+      _leetcodeError = _handleError(e, "LeetCode", setUserNotFound: (val) => _leetcodeUserNotFound = val);
     }
 
     _leetcodeLoading = false;
@@ -222,24 +255,28 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── Codeforces ─────────────────────────────────────────────────────────
-  Future<void> fetchCodeforcesStats(String username, {bool forceRefresh = false}) async {
+  Future<void> fetchCodeforcesStats(String? username, {bool forceRefresh = false}) async {
+    if (!_validateUsername(username, "Codeforces", (err) => _codeforcesError = err)) {
+      notifyListeners();
+      return;
+    }
+
     if (!forceRefresh &&
         _isFresh(_codeforcesLastFetch, _otherCacheDuration) &&
         _codeforcesStats != null) {
-      debugPrint("Codeforces: serving from cache");
       return;
     }
 
     _codeforcesLoading = true;
     _codeforcesError = null;
+    _codeforcesUserNotFound = false;
     notifyListeners();
 
     try {
-      _codeforcesStats = await CodeforcesService().fetchData(username);
+      _codeforcesStats = await CodeforcesService().fetchData(username!);
       _codeforcesLastFetch = DateTime.now();
     } catch (e) {
-      _codeforcesError = e.toString().replaceAll('Exception: ', '');
-      debugPrint("Codeforces fetch error: $e");
+      _codeforcesError = _handleError(e, "Codeforces", setUserNotFound: (val) => _codeforcesUserNotFound = val);
     }
 
     _codeforcesLoading = false;
@@ -247,24 +284,28 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── CodeChef ───────────────────────────────────────────────────────────
-  Future<void> fetchCodeChefStats(String username, {bool forceRefresh = false}) async {
+  Future<void> fetchCodeChefStats(String? username, {bool forceRefresh = false}) async {
+    if (!_validateUsername(username, "CodeChef", (err) => _codechefError = err)) {
+      notifyListeners();
+      return;
+    }
+
     if (!forceRefresh &&
         _isFresh(_codechefLastFetch, _otherCacheDuration) &&
         _codechefStats != null) {
-      debugPrint("CodeChef: serving from cache");
       return;
     }
 
     _codechefLoading = true;
     _codechefError = null;
+    _codechefUserNotFound = false;
     notifyListeners();
 
     try {
-      _codechefStats = await CodeChefService().fetchData(username);
+      _codechefStats = await CodeChefService().fetchData(username!);
       _codechefLastFetch = DateTime.now();
     } catch (e) {
-      _codechefError = e.toString().replaceAll('Exception: ', '');
-      debugPrint("CodeChef fetch error: $e");
+      _codechefError = _handleError(e, "CodeChef", setUserNotFound: (val) => _codechefUserNotFound = val);
     }
 
     _codechefLoading = false;
@@ -272,24 +313,28 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── GFG ────────────────────────────────────────────────────────────────
-  Future<void> fetchGfgStats(String username, {bool forceRefresh = false}) async {
+  Future<void> fetchGfgStats(String? username, {bool forceRefresh = false}) async {
+    if (!_validateUsername(username, "GeeksforGeeks", (err) => _gfgError = err)) {
+      notifyListeners();
+      return;
+    }
+
     if (!forceRefresh &&
         _isFresh(_gfgLastFetch, _otherCacheDuration) &&
         _gfgStats != null) {
-      debugPrint("GFG: serving from cache");
       return;
     }
 
     _gfgLoading = true;
     _gfgError = null;
+    _gfgUserNotFound = false;
     notifyListeners();
 
     try {
-      _gfgStats = await GfgService().fetchData(username);
+      _gfgStats = await GfgService().fetchData(username!);
       _gfgLastFetch = DateTime.now();
     } catch (e) {
-      _gfgError = e.toString().replaceAll('Exception: ', '');
-      debugPrint("GFG fetch error: $e");
+      _gfgError = _handleError(e, "GFG", setUserNotFound: (val) => _gfgUserNotFound = val);
     }
 
     _gfgLoading = false;
@@ -297,34 +342,34 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── HackerRank ────────────────────────────────────────────────────────
-  Future<void> fetchHackerRankStats(String username, {bool forceRefresh = false}) async {
+  Future<void> fetchHackerRankStats(String? username, {bool forceRefresh = false}) async {
+    if (!_validateUsername(username, "HackerRank", (err) => _hackerrankError = err)) {
+      notifyListeners();
+      return;
+    }
+
     if (!forceRefresh &&
         _isFresh(_hackerrankLastFetch, _otherCacheDuration) &&
         _hackerrankStats != null) {
-      debugPrint("HackerRank: serving from cache");
       return;
     }
 
     _hackerrankLoading = true;
     _hackerrankError = null;
+    _hackerrankUserNotFound = false;
     notifyListeners();
 
     try {
-      _hackerrankStats = await HackerRankService().fetchData(username);
+      _hackerrankStats = await HackerRankService().fetchData(username!);
       _hackerrankLastFetch = DateTime.now();
     } catch (e) {
-      _hackerrankError = e.toString().replaceAll('Exception: ', '');
-      debugPrint("HackerRank fetch error: $e");
+      _hackerrankError = _handleError(e, "HackerRank", setUserNotFound: (val) => _hackerrankUserNotFound = val);
     }
 
     _hackerrankLoading = false;
     notifyListeners();
   }
 
-  // ── fetchAllStats ──────────────────────────────────────────────────────
-  // Fires all platforms in parallel — each updates independently as it
-  // completes, so the UI shows data platform by platform instead of waiting
-  // for the slowest one.
   Future<void> fetchAllStats({
     String? leetcode,
     String? codeforces,
@@ -335,41 +380,36 @@ class StatsProvider extends ChangeNotifier {
   }) async {
     final futures = <Future>[];
 
-    if (leetcode != null && leetcode.isNotEmpty) {
-      futures.add(fetchLeetCodeStats(leetcode, forceRefresh: forceRefresh));
-    }
-    if (codeforces != null && codeforces.isNotEmpty) {
-      futures.add(fetchCodeforcesStats(codeforces, forceRefresh: forceRefresh));
-    }
-    if (codechef != null && codechef.isNotEmpty) {
-      futures.add(fetchCodeChefStats(codechef, forceRefresh: forceRefresh));
-    }
-    if (gfg != null && gfg.isNotEmpty) {
-      futures.add(fetchGfgStats(gfg, forceRefresh: forceRefresh));
-    }
-    if (hackerrank != null && hackerrank.isNotEmpty) {
-      futures.add(fetchHackerRankStats(hackerrank, forceRefresh: forceRefresh));
-    }
+    futures.add(fetchLeetCodeStats(leetcode, forceRefresh: forceRefresh));
+    futures.add(fetchCodeforcesStats(codeforces, forceRefresh: forceRefresh));
+    futures.add(fetchCodeChefStats(codechef, forceRefresh: forceRefresh));
+    futures.add(fetchGfgStats(gfg, forceRefresh: forceRefresh));
+    futures.add(fetchHackerRankStats(hackerrank, forceRefresh: forceRefresh));
 
-    // Run all in parallel — don't await sequentially
     await Future.wait(futures, eagerError: false);
   }
 
-  // ── Cache invalidation (call on logout / profile change) ───────────────
   void clearAllCache() {
     _leetcodeStats = null;
     _codeforcesStats = null;
     _codechefStats = null;
     _gfgStats = null;
+    _hackerrankStats = null;
     _leetcodeLastFetch = null;
     _codeforcesLastFetch = null;
     _codechefLastFetch = null;
     _gfgLastFetch = null;
+    _hackerrankLastFetch = null;
     _leetcodeError = null;
     _codeforcesError = null;
     _codechefError = null;
     _gfgError = null;
     _hackerrankError = null;
+    _leetcodeUserNotFound = false;
+    _codeforcesUserNotFound = false;
+    _codechefUserNotFound = false;
+    _gfgUserNotFound = false;
+    _hackerrankUserNotFound = false;
     notifyListeners();
   }
 }

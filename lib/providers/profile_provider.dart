@@ -17,15 +17,20 @@ class ProfileProvider extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      final codingProfile = await _profileService.getCodingProfile();
+      // Basic timeout to prevent black screen hang if firestore is offline/DNS fail
+      final codingProfile = await _profileService.getCodingProfile()
+          .timeout(const Duration(seconds: 10));
+      
       if (codingProfile != null) {
         profile = codingProfile;
       }
     } catch (e) {
+      debugPrint("Profile init error: $e");
       error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   // Save profile to Firestore

@@ -21,6 +21,7 @@ class GfgStatsScreen extends StatelessWidget {
       username: username,
       isLoading: stats.gfgLoading,
       errorMessage: stats.gfgError,
+      isUserNotFound: stats.gfgUserNotFound,
       onRefresh: () {
         if (username.isNotEmpty) {
           stats.fetchGfgStats(username);

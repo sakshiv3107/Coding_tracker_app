@@ -147,13 +147,13 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                         child: Column(
                           children: [
                             SubmissionHeatmap(
-                              datasets: github.githubStats!.contributionCalendar,
+                              datasets: github.githubStats?.contributionCalendar ?? {},
                               baseColor: const Color(0xFF2EA44F),
                             ),
                             const SizedBox(height: 16),
                             WeeklyActivityChart(
                               leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
-                              githubCalendar: github.githubStats!.contributionCalendar,
+                              githubCalendar: github.githubStats?.contributionCalendar ?? {},
                               hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
                             ),
                           ],

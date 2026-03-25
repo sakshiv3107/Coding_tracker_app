@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/hackerrank_stats.dart';
+import '../core/exceptions.dart';
 
 class HackerRankService {
   Future<HackerRankStats> fetchData(String username) async {
-    if (username.isEmpty) {
-      throw Exception("HackerRank username is empty");
+    if (username.trim().isEmpty) {
+      throw ValidationException("HackerRank username required");
     }
 
     // Stable REST endpoints identified via network analysis
@@ -15,23 +16,30 @@ class HackerRankService {
     final scoresUrl = "https://www.hackerrank.com/rest/hackers/$username/scores_elo";
     final historyUrl = "https://www.hackerrank.com/rest/hackers/$username/submission_histories";
 
-    Future<dynamic> fetchJson(String url) async {
+    Future<dynamic> fetchJson(String url, {bool isProfile = false}) async {
       String finalUrl = url;
       if (kIsWeb) {
         finalUrl = "https://corsproxy.io/?${Uri.encodeComponent(url)}";
       }
       
-      final response = await http.get(Uri.parse(finalUrl)).timeout(const Duration(seconds: 15));
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception("Status ${response.statusCode}");
+      try {
+        final response = await http.get(Uri.parse(finalUrl)).timeout(const Duration(seconds: 15));
+        if (response.statusCode == 200) {
+          return jsonDecode(response.body);
+        } else if (response.statusCode == 404 && isProfile) {
+          throw UserNotFoundException("User '$username' not found on HackerRank.");
+        } else {
+          throw Exception("Status ${response.statusCode}");
+        }
+      } catch (e) {
+        if (e is UserNotFoundException) rethrow;
+        rethrow;
       }
     }
 
     try {
       final results = await Future.wait([
-        fetchJson(profileUrl),
+        fetchJson(profileUrl, isProfile: true),
         fetchJson(badgesUrl),
         fetchJson(scoresUrl),
         fetchJson(historyUrl),
@@ -61,6 +69,9 @@ class HackerRankService {
         history: historyMap,
       );
     } catch (e) {
+      if (e is UserNotFoundException || e is ValidationException) {
+        rethrow;
+      }
       if (e.toString().contains("TimeoutException")) {
         throw Exception("HackerRank request timed out. Please try again.");
       }

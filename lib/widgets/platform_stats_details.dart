@@ -7,6 +7,7 @@ import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/not_connected_widget.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/platform_error_card.dart';
 
 class PlatformStatsDetailsScreen extends StatelessWidget {
   final PlatformStats? stats;
@@ -16,6 +17,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
   final String username;
   final bool isLoading;
   final String? errorMessage;
+  final bool isUserNotFound;
   final VoidCallback onRefresh;
 
   const PlatformStatsDetailsScreen({
@@ -27,6 +29,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
     required this.username,
     required this.isLoading,
     this.errorMessage,
+    this.isUserNotFound = false,
     required this.onRefresh,
   });
 
@@ -76,21 +79,17 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (stats == null)
-                 SliverFillRemaining(
+                SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline_rounded, size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          errorMessage ?? 'No data found for $username',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(onPressed: onRefresh, child: const Text('Try Again')),
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: PlatformErrorCard(
+                        platformName: platformName,
+                        message: errorMessage ?? 'No data found for $username',
+                        onRetry: onRefresh,
+                        isUserNotFound: isUserNotFound,
+                      ),
                     ),
                   ),
                 )
@@ -154,7 +153,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: (isAccepted ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                                        color: (isAccepted ? Colors.green : Colors.red).withOpacity(0.1),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -234,7 +233,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(icon, color: color, size: 32),
@@ -332,7 +331,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -362,7 +361,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

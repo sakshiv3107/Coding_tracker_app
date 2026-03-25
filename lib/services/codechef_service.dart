@@ -3,10 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/platform_stats.dart';
 import '../models/submission.dart';
+import '../core/exceptions.dart';
 
 class CodeChefService {
   Future<PlatformStats> fetchData(String username) async {
-    // Community API proxy for CodeChef - updated to a working variant
+    if (username.trim().isEmpty) throw ValidationException("CodeChef username required");
+
+    // Community API proxy for CodeChef
     String urlStr = "https://codechefapi.vercel.app/handle/$username";
     
     if (kIsWeb) {
@@ -18,21 +21,29 @@ class CodeChefService {
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 20));
       
+      if (response.statusCode == 404) {
+        throw UserNotFoundException("User '$username' not found on CodeChef");
+      }
+
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        if (json["success"] == true || json["name"] != null) {
-          // Parse submissions
+        
+        // Some APIs return 200 but with an error field
+        if (json["status"] == "Failed" || json["success"] == false) {
+          throw UserNotFoundException("User '$username' not found on CodeChef");
+        }
+
+        if (json["name"] != null || json["success"] == true) {
           final List<Submission> submissions = [];
           final rawSubs = json['recentSubmissions'] ?? json['submissions'];
           if (rawSubs is List) {
             for (var s in rawSubs) {
               try {
+                final ts = (s['timestamp'] is int ? s['timestamp'] : int.tryParse(s['timestamp'].toString()) ?? 0);
                 submissions.add(Submission(
                   title: s['problemName'] ?? s['title'] ?? 'Problem',
                   status: s['result'] ?? s['status'] ?? 'Success',
-                  timestamp: DateTime.fromMillisecondsSinceEpoch(
-                    (s['timestamp'] is int ? s['timestamp'] : int.tryParse(s['timestamp'].toString()) ?? 0) * 1000,
-                  ),
+                  timestamp: DateTime.fromMillisecondsSinceEpoch(ts * 1000),
                 ));
               } catch (_) {}
             }
@@ -41,22 +52,25 @@ class CodeChefService {
           return PlatformStats(
             platform: "CodeChef",
             username: username,
-            avatarUrl: json["profile"],
-            totalSolved: json["numberOfProblemsSolved"] ?? 0,
-            rating: json["currentRating"],
-            maxRating: json["highestRating"],
-            rank: json["stars"] ?? "N/A",
+            avatarUrl: json["profile"] ?? json["profilePic"],
+            totalSolved: json["numberOfProblemsSolved"] ?? json["problemsSolved"] ?? 0,
+            rating: json["currentRating"] ?? json["rating"],
+            maxRating: json["highestRating"] ?? json["maxRating"],
+            rank: json["stars"]?.toString() ?? "N/A",
             recentSubmissions: submissions,
             extraMetrics: {
-              "globalRank": json["globalRank"],
-              "countryRank": json["countryRank"],
+              "globalRank": json["globalRank"] ?? "N/A",
+              "countryRank": json["countryRank"] ?? "N/A",
             },
           );
         }
       }
-      throw Exception("CodeChef user '$username' not found");
+      throw Exception("CodeChef: HTTP ${response.statusCode}");
+    } on UserNotFoundException {
+      rethrow;
     } catch (e) {
-      throw Exception("Failed to fetch CodeChef data: $e");
+      if (e.toString().contains('TimeoutException')) rethrow;
+      throw Exception("CodeChef connectivity error: $e");
     }
   }
 }

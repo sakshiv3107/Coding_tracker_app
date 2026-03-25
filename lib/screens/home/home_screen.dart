@@ -27,18 +27,44 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProfileScreen(),
   ];
 
-  String? _lastGhUser;
+  // Track last-known usernames to detect changes
   String? _lastLcUser;
+  String? _lastGhUser;
+  // Guard against re-entrant refresh during the first-load lifecycle
+  bool _initialRefreshDone = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialRefreshDone = true;
       _refreshAllData();
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Only run after the initial post-frame refresh has been scheduled
+    if (!_initialRefreshDone) return;
+
+    final profile = context.read<ProfileProvider>();
+    final lcUser = profile.profile?["leetcode"] ?? "";
+    final ghUser = profile.profile?["github"] ?? "";
+
+    // Only refresh when usernames actually change (e.g. after edit-profile)
+    if (lcUser != _lastLcUser || ghUser != _lastGhUser) {
+      _lastLcUser = lcUser;
+      _lastGhUser = ghUser;
+      // Schedule outside of the current build/dependency phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _refreshAllData();
+      });
+    }
+  }
+
   void _refreshAllData() {
+    if (!mounted) return;
     final profile = context.read<ProfileProvider>();
     final stats = context.read<StatsProvider>();
     final github = context.read<GithubProvider>();
@@ -50,6 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final gfgUser = profile.profile?["gfg"] ?? "";
     final hrUser = profile.profile?["hackerrank"] ?? "";
 
+    // Cache current usernames
+    _lastLcUser = lcUser;
+    _lastGhUser = ghUser;
+
     stats.fetchAllStats(
       leetcode: lcUser,
       codeforces: cfUser,
@@ -57,9 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
       gfg: gfgUser,
       hackerrank: hrUser,
     );
-    
+
     if (ghUser.isNotEmpty) {
       github.fetchGithubData(ghUser).then((_) {
+        if (!mounted) return;
         if (github.githubStats != null) {
           stats.updateGitHubData(
             commitCalendar: github.githubStats!.contributionCalendar,
@@ -73,19 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final profile = context.watch<ProfileProvider>();
-    
-    // Auto-refresh if usernames changed (e.g. after editing profile)
-    final lcUser = profile.profile?["leetcode"] ?? "";
-    final ghUser = profile.profile?["github"] ?? "";
-    
-    if (lcUser != _lastLcUser || ghUser != _lastGhUser) {
-      _lastLcUser = lcUser;
-      _lastGhUser = ghUser;
-      // Use microtask to avoid calling notifyListeners during build
-      Future.microtask(() => _refreshAllData());
-    }
     return Scaffold(
       drawer: const AppDrawer(),
       body: IndexedStack(

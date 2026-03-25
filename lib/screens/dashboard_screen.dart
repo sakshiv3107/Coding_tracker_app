@@ -59,15 +59,6 @@ class DashboardScreen extends StatelessWidget {
     _mergeHeatmapData(heatmapData, stats.hackerrankStats?.submissionHistory);
 
     final achievementProvider = context.read<AchievementProvider>();
-    if (stats.leetcodeStats != null) {
-      Future.microtask(
-        () => achievementProvider.checkAchievements(
-          stats.leetcodeStats,
-          stats.totalSolved,
-          github.githubStats?.totalStars ?? 0,
-        ),
-      );
-    }
 
     return Material(
       color: theme.scaffoldBackgroundColor,
@@ -104,10 +95,10 @@ class DashboardScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isDark ? AppTheme.surfaceDark : Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                            border: Border.all(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -137,9 +128,7 @@ class DashboardScreen extends StatelessWidget {
                           Text(
                             'Your coding journey continues...',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondaryDark.withValues(
-                                alpha: 0.5,
-                              ),
+                              color: AppTheme.textSecondaryDark.withOpacity(0.5),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -153,12 +142,10 @@ class DashboardScreen extends StatelessWidget {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.surfaceDarkLighter.withValues(
-                            alpha: 0.5,
-                          ),
+                          color: AppTheme.surfaceDarkLighter.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.05),
+                            color: Colors.white.withOpacity(0.05),
                           ),
                         ),
                         child: Row(
@@ -253,7 +240,7 @@ class DashboardScreen extends StatelessWidget {
                       borderRadius: 28,
                       gradient: [
                         AppTheme.primary,
-                        AppTheme.primary.withValues(alpha: 0.8),
+                        AppTheme.primary.withOpacity(0.8),
                       ],
                       onTap: () => Navigator.pushNamed(context, '/resume'),
                       child: Padding(
@@ -263,7 +250,7 @@ class DashboardScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Colors.white.withOpacity(0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -382,6 +369,11 @@ class DashboardScreen extends StatelessWidget {
                         'solved': stats.hackerrankStats?.totalSolved,
                         'rank': stats.hackerrankStats?.rank,
                       },
+                      leetcodeError: stats.leetcodeError,
+                      codeforcesError: stats.codeforcesError,
+                      codechefError: stats.codechefError,
+                      gfgError: stats.gfgError,
+                      hackerrankError: stats.hackerrankError,
                       onLeetCodeTap: () =>
                           Navigator.pushNamed(context, '/leetcode_stats'),
                       onGitHubTap: () =>
@@ -411,14 +403,10 @@ class DashboardScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withValues(
-                            alpha: 0.1,
-                          ),
+                          color: theme.colorScheme.errorContainer.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: theme.colorScheme.error.withValues(
-                              alpha: 0.2,
-                            ),
+                            color: theme.colorScheme.error.withOpacity(0.2),
                           ),
                         ),
                         child: Column(
@@ -517,7 +505,7 @@ class DashboardScreen extends StatelessWidget {
                           color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            color: AppTheme.primary.withOpacity(0.1),
                           ),
                         ),
                         child: Column(
@@ -557,9 +545,7 @@ class DashboardScreen extends StatelessWidget {
                                       width: 64,
                                       height: 64,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.accent.withValues(
-                                          alpha: 0.1,
-                                        ),
+                                        color: AppTheme.accent.withOpacity(0.1),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -587,23 +573,20 @@ class DashboardScreen extends StatelessWidget {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 500),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CodingHeatmap(datasets: heatmapData),
-                        const SizedBox(height: 16),
-                        WeeklyActivityChart(
-                          leetcodeCalendar:
-                              stats.leetcodeStats?.submissionCalendar ?? {},
-                          githubCalendar:
-                              github.githubStats?.contributionCalendar ?? {},
-                          hackerrankCalendar:
-                              stats.hackerrankStats?.submissionHistory ?? {},
-                        ),
-                      ],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CodingHeatmap(datasets: heatmapData),
+                      const SizedBox(height: 16),
+                      WeeklyActivityChart(
+                        leetcodeCalendar:
+                            stats.leetcodeStats?.submissionCalendar ?? {},
+                        githubCalendar:
+                            github.githubStats?.contributionCalendar ?? {},
+                        hackerrankCalendar:
+                            stats.hackerrankStats?.submissionHistory ?? {},
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -618,7 +601,7 @@ class DashboardScreen extends StatelessWidget {
                     child: FadeSlideTransition(
                       delay: const Duration(milliseconds: 600),
                       child: SkillRadarChart(
-                        tagStats: stats.leetcodeStats!.tagStats!,
+                        tagStats: stats.leetcodeStats?.tagStats ?? {},
                       ),
                     ),
                   ),

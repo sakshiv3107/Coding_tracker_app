@@ -55,7 +55,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
-                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                          color: AppTheme.textSecondaryDark.withOpacity(0.4),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -71,7 +71,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                       Text(
                         'Total Problems Decimated',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          color: AppTheme.textSecondaryDark.withOpacity(0.6),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -91,7 +91,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                             sections: _buildPieSections(),
                           ),
                         ),
-                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withValues(alpha: 0.3), size: 24),
+                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withOpacity(0.3), size: 24),
                       ],
                     ),
                   ),
@@ -101,9 +101,9 @@ class UnifiedAnalyticsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceDarkLighter.withValues(alpha: 0.3),
+                  color: AppTheme.surfaceDarkLighter.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
+                  border: Border.all(color: Colors.white.withOpacity(0.03)),
                 ),
                 child: Column(
                   children: [
@@ -138,7 +138,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     );
   }
 
-  Widget _divider() => Divider(height: 16, color: Colors.white.withValues(alpha: 0.05));
+  Widget _divider() => Divider(height: 16, color: Colors.white.withOpacity(0.05));
 
   int _countConnected() {
     int count = 0;
@@ -164,7 +164,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                 color: color,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 1),
+                  BoxShadow(color: color.withOpacity(0.4), blurRadius: 6, spreadRadius: 1),
                 ],
               ),
             ),
@@ -187,9 +187,9 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.1)),
+        border: Border.all(color: color.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -204,7 +204,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
               ),
               Text(
                 label,
-                style: TextStyle(fontSize: 8, color: color.withValues(alpha: 0.6), fontWeight: FontWeight.w900, letterSpacing: 1),
+                style: TextStyle(fontSize: 8, color: color.withOpacity(0.6), fontWeight: FontWeight.w900, letterSpacing: 1),
               ),
             ],
           ),
@@ -215,7 +215,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
 
   List<PieChartSectionData> _buildPieSections() {
     final total = leetcode + codeforces + codechef + gfg + hackerrank;
-    if (total == 0) return [PieChartSectionData(color: Colors.white.withValues(alpha: 0.1), value: 1, radius: 12, showTitle: false)];
+    if (total == 0) return [PieChartSectionData(color: Colors.white.withOpacity(0.1), value: 1, radius: 12, showTitle: false)];
 
     return [
       if (leetcode > 0)

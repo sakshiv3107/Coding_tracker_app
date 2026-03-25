@@ -151,7 +151,7 @@ class PremiumStatCard extends StatelessWidget {
                 label,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondaryDark.withValues(alpha: 0.7),
+                  color: AppTheme.textSecondaryDark.withOpacity(0.7),
                 ),
               ),
             ],

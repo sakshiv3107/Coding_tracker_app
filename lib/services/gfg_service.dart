@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/gfg_stats.dart';
+import '../core/exceptions.dart';
 
 class GfgService {
   // Try several potential API endpoints as fallbacks
@@ -12,8 +13,8 @@ class GfgService {
   ];
 
   Future<GfgStats> fetchData(String username) async {
-    if (username.isEmpty) {
-      throw Exception("GeeksforGeeks username is empty");
+    if (username.trim().isEmpty) {
+      throw ValidationException("GeeksforGeeks username required");
     }
 
     Exception? lastException;
@@ -39,6 +40,10 @@ class GfgService {
           final data = jsonDecode(response.body);
           
           if (data["error"] != null && data["error"].toString().isNotEmpty) {
+            final err = data["error"].toString().toLowerCase();
+            if (err.contains("not found") || err.contains("invalid")) {
+              throw UserNotFoundException("User '$username' not found on GeeksforGeeks.");
+            }
             debugPrint("GFG API returned error: ${data["error"]}");
             continue; // Try next endpoint
           }
@@ -47,9 +52,13 @@ class GfgService {
           if (data["info"] != null || data["totalSolved"] != null || data["userName"] != null) {
              return GfgStats.fromJson(data);
           }
+        } else if (response.statusCode == 404) {
+          throw UserNotFoundException("User '$username' not found on GeeksforGeeks.");
         } else {
           debugPrint("GFG endpoint $baseUrl failed with status: ${response.statusCode}");
         }
+      } on UserNotFoundException {
+        rethrow;
       } catch (e) {
         debugPrint("GFG endpoint $baseUrl failed: $e");
         lastException = Exception(e.toString());

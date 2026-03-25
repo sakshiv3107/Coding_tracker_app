@@ -10,6 +10,7 @@ import '../widgets/not_connected_widget.dart';
 import '../widgets/coding_heatmap.dart';
 import '../widgets/responsive_card.dart';
 import '../theme/app_theme.dart';
+import '../widgets/platform_error_card.dart';
 
 class HackerRankStatsScreen extends StatefulWidget {
   const HackerRankStatsScreen({super.key});
@@ -134,32 +135,11 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.cloud_off_rounded, size: 64, color: Colors.red),
-                        const SizedBox(height: 16),
-                        const Text("Connection Error", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        const SizedBox(height: 8),
-                        Text(
-                          statsProvider.hackerrankError!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton(
-                            onPressed: _refreshStats,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text("Try Again"),
-                          ),
-                        ),
-                      ],
+                    child: PlatformErrorCard(
+                      platformName: 'HackerRank',
+                      message: statsProvider.hackerrankError!,
+                      onRetry: _refreshStats,
+                      isUserNotFound: statsProvider.hackerrankUserNotFound,
                     ),
                   ),
                 ),

@@ -17,23 +17,34 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _profileLoaded = false;
 
   @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final profile = context.watch<ProfileProvider>();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthProvider>();
+    final profile = context.read<ProfileProvider>();
 
-    // If user is authenticated and profile hasn't been loaded yet, load it
+    // Trigger profile load when user logs in (only once per session)
     if (auth.user != null && !_profileLoaded && !profile.isLoading) {
       _profileLoaded = true;
-      Future.microtask(() {
-        profile.initializeProfile();
+      // Use addPostFrameCallback to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) profile.initializeProfile();
       });
     }
 
-    // Reset profile loaded flag when user logs out
+    // Reset when user logs out
     if (auth.user == null && _profileLoaded) {
       _profileLoaded = false;
-      profile.clearProfile();
+      // Also clear profile data
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) profile.clearProfile();
+      });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final profile = context.watch<ProfileProvider>();
 
     // Show loading screen while profile is being loaded
     if (auth.user != null && profile.isLoading) {

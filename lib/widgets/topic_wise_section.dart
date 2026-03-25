@@ -29,7 +29,7 @@ class TopicWiseSection extends StatelessWidget {
             child: Center(
               child: Column(
                 children: [
-                  Icon(Icons.bar_chart_rounded, size: 40, color: Colors.grey.withValues(alpha: 0.3)),
+                  Icon(Icons.bar_chart_rounded, size: 40, color: Colors.grey.withOpacity(0.3)),
                   const SizedBox(height: 12),
                   Text(
                     'No topic data available',
