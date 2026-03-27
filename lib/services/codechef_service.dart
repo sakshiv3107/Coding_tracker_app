@@ -49,6 +49,20 @@ class CodeChefService {
             }
           }
 
+          // ── Subscriptions Calendar (Heatmap) ────────────────────────────────
+          final Map<DateTime, int> submissionCalendar = {};
+          final rawHeat = json['heatMap'];
+          if (rawHeat is List) {
+            for (var entry in rawHeat) {
+              if (entry is Map && entry['date'] != null && entry['value'] != null) {
+                try {
+                  final d = DateTime.parse(entry['date'].toString());
+                  submissionCalendar[DateTime(d.year, d.month, d.day)] = (entry['value'] as num).toInt();
+                } catch (_) {}
+              }
+            }
+          }
+
           return PlatformStats(
             platform: "CodeChef",
             username: username,
@@ -58,6 +72,7 @@ class CodeChefService {
             maxRating: json["highestRating"] ?? json["maxRating"],
             rank: json["stars"]?.toString() ?? "N/A",
             recentSubmissions: submissions,
+            submissionCalendar: submissionCalendar,
             extraMetrics: {
               "globalRank": json["globalRank"] ?? "N/A",
               "countryRank": json["countryRank"] ?? "N/A",

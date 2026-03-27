@@ -354,12 +354,21 @@ class StatsProvider extends ChangeNotifier {
       );
       if (age > _kOtherMaxAge) return;
       final json = jsonDecode(raw) as Map<String, dynamic>;
+      final Map<DateTime, int> history = {};
+      final rawHist = json['submissionCalendar'] as Map<String, dynamic>?;
+      rawHist?.forEach((k, v) {
+        try {
+          history[DateTime.parse(k)] = (v as num).toInt();
+        } catch (_) {}
+      });
+
       _codechefStats = PlatformStats(
         platform: json['platform'] ?? 'CodeChef',
         username: json['username'] ?? '',
         totalSolved: json['totalSolved'] ?? 0,
         rating: json['rating'] as int?,
         rank: json['rank'] as String?,
+        submissionCalendar: history,
       );
       _codechefLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       debugPrint('[StatsProvider] ✅ CC disk cache loaded');
@@ -371,12 +380,18 @@ class StatsProvider extends ChangeNotifier {
   Future<void> _saveCcToDisk(PlatformStats stats) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final histMap = <String, int>{};
+      stats.submissionCalendar?.forEach((d, c) {
+        histMap[d.toIso8601String().split('T').first] = c;
+      });
+
       final data = {
         'platform': stats.platform,
         'username': stats.username,
         'totalSolved': stats.totalSolved,
         'rating': stats.rating,
         'rank': stats.rank,
+        'submissionCalendar': histMap,
       };
       await prefs.setString(_kCcPrefix, jsonEncode(data));
       await prefs.setInt(

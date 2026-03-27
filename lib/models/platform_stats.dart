@@ -10,6 +10,7 @@ class PlatformStats {
   final int? rating;
   final int? maxRating;
   final List<Submission> recentSubmissions;
+  final Map<DateTime, int>? submissionCalendar;
   final Map<String, dynamic> extraMetrics;
 
   PlatformStats({
@@ -22,6 +23,7 @@ class PlatformStats {
     this.rating,
     this.maxRating,
     this.recentSubmissions = const [],
+    this.submissionCalendar,
     this.extraMetrics = const {},
   });
 }

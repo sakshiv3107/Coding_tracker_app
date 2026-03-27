@@ -187,10 +187,21 @@ class _CodeChefStatsScreenState extends State<CodeChefStatsScreen> {
       ),
       const SizedBox(height: 20),
 
-      // 4. Stars / division card
       FadeSlideTransition(
         delay: const Duration(milliseconds: 200),
         child: _StarsCard(stats: cc),
+      ),
+      const SizedBox(height: 24),
+
+      // 5. Heatmap
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 260),
+        child: _SectionHeader(title: 'Submission Activity'),
+      ),
+      const SizedBox(height: 12),
+      FadeSlideTransition(
+        delay: const Duration(milliseconds: 280),
+        child: _ActivityHeatmap(stats: cc),
       ),
       const SizedBox(height: 24),
 
@@ -556,12 +567,8 @@ class _ActivityHeatmap extends StatelessWidget {
 
   static const _amber = Color(0xFFE08D2D);
 
-  // Build a 52-week × 7-day grid from the extraMetrics or a placeholder
   Map<DateTime, int> _buildCalendar() {
-    // If the API provides a heatmap map via extraMetrics, use it.
-    // Key convention: "heatmap" -> JSON-encoded Map<epochSec, count>
-    // (add this in codechef_service.dart if the API ever provides it)
-    return {};
+    return stats.submissionCalendar ?? {};
   }
 
   @override

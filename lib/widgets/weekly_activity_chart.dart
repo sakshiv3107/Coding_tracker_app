@@ -8,12 +8,14 @@ class WeeklyActivityChart extends StatefulWidget {
   final Map<DateTime, int> leetcodeCalendar;
   final Map<DateTime, int> githubCalendar;
   final Map<DateTime, int>? hackerrankCalendar;
+  final Map<DateTime, int>? codechefCalendar;
 
   const WeeklyActivityChart({
     super.key,
     required this.leetcodeCalendar,
     required this.githubCalendar,
     this.hackerrankCalendar,
+    this.codechefCalendar,
   });
 
   @override
@@ -29,6 +31,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
   static const _leetcodeColor = Color(0xFFFFA116); // LeetCode yellow
   static const _githubColor = Color(0xFF6C63FF);
   static const _hackerrankColor = Color(0xFF2EC866);
+  static const _codechefColor = Color(0xFFE08D2D);
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
       leetcodeCalendar: widget.leetcodeCalendar,
       githubCalendar: widget.githubCalendar,
       hackerrankCalendar: widget.hackerrankCalendar ?? {},
+      codechefCalendar: widget.codechefCalendar ?? {},
     );
     _controller = AnimationController(
       vsync: this,
@@ -53,12 +57,14 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     super.didUpdateWidget(oldWidget);
     if (widget.leetcodeCalendar != oldWidget.leetcodeCalendar ||
         widget.githubCalendar != oldWidget.githubCalendar ||
-        widget.hackerrankCalendar != oldWidget.hackerrankCalendar) {
+        widget.hackerrankCalendar != oldWidget.hackerrankCalendar ||
+        widget.codechefCalendar != oldWidget.codechefCalendar) {
       setState(() {
         _weeklyActivity = WeeklyActivity.fromData(
           leetcodeCalendar: widget.leetcodeCalendar,
           githubCalendar: widget.githubCalendar,
           hackerrankCalendar: widget.hackerrankCalendar ?? {},
+          codechefCalendar: widget.codechefCalendar ?? {},
         );
       });
       _controller.reset();
@@ -115,6 +121,8 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                   _buildLegendDot('GH', _githubColor),
                   const SizedBox(width: 8),
                   _buildLegendDot('HR', _hackerrankColor),
+                  const SizedBox(width: 8),
+                  _buildLegendDot('CC', _codechefColor),
                 ],
               ),
             ],
@@ -141,9 +149,12 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                         } else if (rodIndex == 1) {
                           label = 'GH';
                           val = day.githubCommits;
-                        } else {
+                        } else if (rodIndex == 2) {
                           label = 'HR';
                           val = day.hackerrankSubmissions;
+                        } else {
+                          label = 'CC';
+                          val = day.codechefSubmissions;
                         }
                         return BarTooltipItem(
                           '$label: $val',
@@ -191,19 +202,25 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                         BarChartRodData(
                           toY: day.leetcodeSubmissions * _animation.value,
                           color: _leetcodeColor,
-                          width: 8,
+                          width: 6,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                         BarChartRodData(
                           toY: day.githubCommits * _animation.value,
                           color: _githubColor,
-                          width: 8,
+                          width: 6,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                         BarChartRodData(
                           toY: day.hackerrankSubmissions * _animation.value,
                           color: _hackerrankColor,
-                          width: 8,
+                          width: 6,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                        ),
+                        BarChartRodData(
+                          toY: day.codechefSubmissions * _animation.value,
+                          color: _codechefColor,
+                          width: 6,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                       ],

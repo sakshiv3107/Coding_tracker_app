@@ -75,6 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _mergeMap(heatmapData, stats.leetcodeStats?.submissionCalendar);
     _mergeMap(heatmapData, github.githubStats?.contributionCalendar);
     _mergeMap(heatmapData, stats.hackerrankStats?.submissionHistory);
+    _mergeMap(heatmapData, stats.codechefStats?.submissionCalendar);
 
     final showRateLimitBanner = !_rateLimitBannerDismissed &&
         (stats.leetcodeRateLimited ||
@@ -251,6 +252,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       github.githubStats?.contributionCalendar ?? {},
                   hackerrankCalendar:
                       stats.hackerrankStats?.submissionHistory ?? {},
+                  codechefCalendar:
+                      stats.codechefStats?.submissionCalendar ?? {},
                 ),
                 const SizedBox(height: 16),
 
