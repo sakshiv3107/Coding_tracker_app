@@ -38,7 +38,7 @@ const _kCfPrefix = 'sp_cf_';
 const _kCcPrefix = 'sp_cc_';
 const _kHrPrefix = 'sp_hr_';
 
-const _kLcMaxAge = Duration(hours: 12);   // LeetCode: stricter to avoid stale
+const _kLcMaxAge = Duration(hours: 12); // LeetCode: stricter to avoid stale
 const _kOtherMaxAge = Duration(hours: 6); // Others: 6h cache
 
 // ─── Retry config ─────────────────────────────────────────────────────────────
@@ -151,13 +151,13 @@ class StatsProvider extends ChangeNotifier {
   // ── Analytics & Gamification ───────────────────────────────────────────────
   int _xpPoints = 0;
   Map<String, List<String>> _topicStrengths = {};
-  String _aiRecommendation = 'Connecting sources...';
+  String? _aiRecommendation = 'Connecting sources...';
   Map<DateTime, int> _progressData = {};
   List<Submission> _failedProblems = [];
 
   int get xpPoints => _xpPoints;
   Map<String, List<String>> get topicStrengths => _topicStrengths;
-  String get aiRecommendation => _aiRecommendation;
+  String? get aiRecommendation => _aiRecommendation;
   Map<DateTime, int> get progressData => _progressData;
   List<Submission> get failedProblems => _failedProblems;
 
@@ -209,35 +209,42 @@ class StatsProvider extends ChangeNotifier {
   // ── Analytics calculation (no notify) ─────────────────────────────────────
   void _calculateAnalytics() {
     final lc = _leetcodeStats;
-    if (lc == null) return;
-    
+    if (lc == null) {
+      _failedProblems = [];
+      _progressData = {};
+      _aiRecommendation = null;
+      return;
+    }
+
     // Defensive check for potential nulls in tagStats if partially parsed from disk
     final tags = lc.tagStats ?? {};
-    
-    _topicStrengths =
-        AnalyticsEngine.analyzeTopicStrengths(tags);
-    _aiRecommendation =
-        AnalyticsEngine.getDailyRecommendation(lc);
-    _xpPoints = AnalyticsEngine.calculateXP(
-      totalSolved: totalSolved,
-      streak: lc.streak,
-      rating: lc.rating,
-      contestsAttended: lc.totalContests,
-    );
-    _progressData =
-        AnalyticsEngine.aggregateProgress(lc.submissionCalendar);
-        
-    if (_upcomingContests.isEmpty && !_contestsLoading) {
-      Future.microtask(() => fetchUpcomingContests());
+
+    try {
+      _topicStrengths = AnalyticsEngine.analyzeTopicStrengths(tags);
+      _aiRecommendation = AnalyticsEngine.getDailyRecommendation(lc);
+      _xpPoints = AnalyticsEngine.calculateXP(
+        totalSolved: totalSolved,
+        streak: lc.streak,
+        rating: lc.rating,
+        contestsAttended: lc.totalContests,
+      );
+      _progressData = AnalyticsEngine.aggregateProgress(lc.submissionCalendar);
+
+      if (_upcomingContests.isEmpty && !_contestsLoading) {
+        Future.microtask(() => fetchUpcomingContests());
+      }
+
+      final subs = lc.recentSubmissions;
+      if (subs != null) {
+        _failedProblems = List<Submission>.from(
+          subs,
+        ).where((s) => s.status != 'Accepted').toList();
+      } else {
+        _failedProblems = [];
+      }
+    } catch (e) {
+      debugPrint("[Stats] Analytics calculation error: $e");
     }
-    
-    final subs = lc.recentSubmissions;
-    if (subs != null) {
-      _failedProblems = subs
-          .where((s) => s.status != 'Accepted')
-          .toList();
-    }
-    // Caller is responsible for calling (or delaying) notifyListeners()
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -261,14 +268,18 @@ class StatsProvider extends ChangeNotifier {
       final raw = prefs.getString(_kLcPrefix);
       final tsMs = prefs.getInt('${_kLcPrefix}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now()
-          .difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kLcMaxAge) return;
-      _leetcodeStats =
-          LeetcodeStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      _leetcodeStats = LeetcodeStats.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
       _leetcodeLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       _calculateAnalytics();
-      debugPrint('[StatsProvider] ✅ LC disk cache loaded (${age.inMinutes}m old)');
+      debugPrint(
+        '[StatsProvider] ✅ LC disk cache loaded (${age.inMinutes}m old)',
+      );
     } catch (e) {
       debugPrint('[StatsProvider] LC disk load error: $e');
     }
@@ -279,7 +290,9 @@ class StatsProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kLcPrefix, jsonEncode(stats.toJson()));
       await prefs.setInt(
-          '${_kLcPrefix}_ts', DateTime.now().millisecondsSinceEpoch);
+        '${_kLcPrefix}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
       debugPrint('[StatsProvider] LC disk save error: $e');
     }
@@ -291,8 +304,9 @@ class StatsProvider extends ChangeNotifier {
       final raw = prefs.getString(_kCfPrefix);
       final tsMs = prefs.getInt('${_kCfPrefix}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now()
-          .difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
       final json = jsonDecode(raw) as Map<String, dynamic>;
       _codeforcesStats = PlatformStats(
@@ -321,7 +335,9 @@ class StatsProvider extends ChangeNotifier {
       };
       await prefs.setString(_kCfPrefix, jsonEncode(data));
       await prefs.setInt(
-          '${_kCfPrefix}_ts', DateTime.now().millisecondsSinceEpoch);
+        '${_kCfPrefix}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
       debugPrint('[StatsProvider] CF disk save error: $e');
     }
@@ -333,8 +349,9 @@ class StatsProvider extends ChangeNotifier {
       final raw = prefs.getString(_kCcPrefix);
       final tsMs = prefs.getInt('${_kCcPrefix}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now()
-          .difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
       final json = jsonDecode(raw) as Map<String, dynamic>;
       _codechefStats = PlatformStats(
@@ -363,7 +380,9 @@ class StatsProvider extends ChangeNotifier {
       };
       await prefs.setString(_kCcPrefix, jsonEncode(data));
       await prefs.setInt(
-          '${_kCcPrefix}_ts', DateTime.now().millisecondsSinceEpoch);
+        '${_kCcPrefix}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
       debugPrint('[StatsProvider] CC disk save error: $e');
     }
@@ -375,11 +394,13 @@ class StatsProvider extends ChangeNotifier {
       final raw = prefs.getString(_kHrPrefix);
       final tsMs = prefs.getInt('${_kHrPrefix}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now()
-          .difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
       _hackerrankStats = HackerRankStats.fromJson(
-          jsonDecode(raw) as Map<String, dynamic>);
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
       _hackerrankLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       debugPrint('[StatsProvider] ✅ HR disk cache loaded');
     } catch (e) {
@@ -392,7 +413,9 @@ class StatsProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kHrPrefix, jsonEncode(stats.toJson()));
       await prefs.setInt(
-          '${_kHrPrefix}_ts', DateTime.now().millisecondsSinceEpoch);
+        '${_kHrPrefix}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
       debugPrint('[StatsProvider] HR disk save error: $e');
     }
@@ -431,8 +454,9 @@ class StatsProvider extends ChangeNotifier {
         // Rate-limited? quadruple the wait time
         final delay = _kBaseRetryDelay * (1 << attempt) * (isRateLimit ? 4 : 1);
         debugPrint(
-            '[$platform] ⚠️ Attempt ${attempt + 1} failed, retrying in '
-            '${delay.inSeconds}s: $msg');
+          '[$platform] ⚠️ Attempt ${attempt + 1} failed, retrying in '
+          '${delay.inSeconds}s: $msg',
+        );
         await Future.delayed(delay);
       }
     }
@@ -471,7 +495,8 @@ class StatsProvider extends ChangeNotifier {
       return 'Server took too long to respond. Check your connection and retry.';
     }
 
-    if (msg.contains('SocketException') || msg.contains('No address') ||
+    if (msg.contains('SocketException') ||
+        msg.contains('No address') ||
         msg.contains('Connection refused')) {
       return 'No internet connection. Cached data is shown.';
     }
@@ -499,10 +524,11 @@ class StatsProvider extends ChangeNotifier {
   // LeetCode
   // ════════════════════════════════════════════════════════════════════════════
 
-  Future<void> fetchLeetCodeStats(String? username,
-      {bool forceRefresh = false}) async {
-    if (!_validateUsername(
-        username, 'LeetCode', (e) => _leetcodeError = e)) {
+  Future<void> fetchLeetCodeStats(
+    String? username, {
+    bool forceRefresh = false,
+  }) async {
+    if (!_validateUsername(username, 'LeetCode', (e) => _leetcodeError = e)) {
       notifyListeners();
       return;
     }
@@ -528,8 +554,8 @@ class StatsProvider extends ChangeNotifier {
       // We pass forceRefresh through so the user's explicit pull-to-refresh
       // bypasses both layers.
       final stats = await _withRetry(
-        () => LeetcodeService().fetchData(username!,
-            forceRefresh: forceRefresh),
+        () =>
+            LeetcodeService().fetchData(username!, forceRefresh: forceRefresh),
         platform: 'LeetCode',
       );
       _leetcodeStats = stats;
@@ -554,10 +580,15 @@ class StatsProvider extends ChangeNotifier {
   // Codeforces
   // ════════════════════════════════════════════════════════════════════════════
 
-  Future<void> fetchCodeforcesStats(String? username,
-      {bool forceRefresh = false}) async {
+  Future<void> fetchCodeforcesStats(
+    String? username, {
+    bool forceRefresh = false,
+  }) async {
     if (!_validateUsername(
-        username, 'Codeforces', (e) => _codeforcesError = e)) {
+      username,
+      'Codeforces',
+      (e) => _codeforcesError = e,
+    )) {
       notifyListeners();
       return;
     }
@@ -600,10 +631,11 @@ class StatsProvider extends ChangeNotifier {
   // CodeChef
   // ════════════════════════════════════════════════════════════════════════════
 
-  Future<void> fetchCodeChefStats(String? username,
-      {bool forceRefresh = false}) async {
-    if (!_validateUsername(
-        username, 'CodeChef', (e) => _codechefError = e)) {
+  Future<void> fetchCodeChefStats(
+    String? username, {
+    bool forceRefresh = false,
+  }) async {
+    if (!_validateUsername(username, 'CodeChef', (e) => _codechefError = e)) {
       notifyListeners();
       return;
     }
@@ -646,10 +678,15 @@ class StatsProvider extends ChangeNotifier {
   // HackerRank
   // ════════════════════════════════════════════════════════════════════════════
 
-  Future<void> fetchHackerRankStats(String? username,
-      {bool forceRefresh = false}) async {
+  Future<void> fetchHackerRankStats(
+    String? username, {
+    bool forceRefresh = false,
+  }) async {
     if (!_validateUsername(
-        username, 'HackerRank', (e) => _hackerrankError = e)) {
+      username,
+      'HackerRank',
+      (e) => _hackerrankError = e,
+    )) {
       notifyListeners();
       return;
     }
@@ -702,11 +739,10 @@ class StatsProvider extends ChangeNotifier {
   }) async {
     // 1. Warm from disk immediately (no network, shows cached UI fast)
     await _warmFromDisk();
-    
-    // Delayed to avoid trigger während Build (post-frame callback may trigger build)
-    Future.microtask(() {
-      notifyListeners(); 
-    });
+    _calculateAnalytics(); // Recalculate based on disk data
+
+    // Delayed to avoid trigger during build
+    Future.microtask(() => notifyListeners());
 
     // 2. Kick off parallel network refresh
     await fetchAllStats(

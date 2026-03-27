@@ -32,13 +32,14 @@ class AnalyticsEngine {
     if (lc == null) return "Connect your LeetCode profile to get personalized AI suggestions.";
 
     final analysis = analyzeTopicStrengths(lc.tagStats);
+    final weakList = analysis['Weak'];
     
-    if (analysis['Weak']!.isNotEmpty) {
-      final topic = analysis['Weak']!.first;
+    if (weakList != null && weakList.isNotEmpty) {
+      final topic = weakList.first;
       return "Focus on your weak area: **$topic**. Try solving a couple of Medium problems today to build confidence.";
     }
 
-    if (lc.hard < lc.totalSolved * 0.1) {
+    if (lc.hard < (lc.totalSolved * 0.1)) {
       return "Try a Hard problem today! Your difficulty distribution is dominated by Easy/Medium questions.";
     }
 

@@ -74,27 +74,30 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                       _buildBackButton(context),
                       const SizedBox(width: 12),
                       _buildMenuButton(context),
-                      const SizedBox(width: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GitHub Intelligence',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'GitHub Intelligence',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          Text(
-                            'Active Node: $username',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
-                              fontWeight: FontWeight.w700,
+                            Text(
+                              'Active Node: $username',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       _buildRefreshButton(github.isLoading),
                     ],
                   ),

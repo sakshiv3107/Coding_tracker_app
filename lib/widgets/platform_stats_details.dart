@@ -56,12 +56,17 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                       _buildBackButton(context, isDark),
                       const SizedBox(width: 12),
                       _buildMenuButton(context, isDark),
-                      const SizedBox(width: 16),
-                      Text(platformName, style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      )),
-                      const Spacer(),
+                      Expanded(
+                        child: Text(
+                          platformName,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       _buildRefreshButton(isLoading, onRefresh),
                     ],
                   ),

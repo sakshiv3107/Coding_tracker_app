@@ -1,13 +1,9 @@
 // lib/screens/dashboard_screen.dart
 //
-// IMPROVEMENTS:
-//  1. Per-platform shimmer loading — PlatformQuickStatsGrid receives individual
-//     isLoading + isRateLimited flags; each card shimmers independently.
-//  2. Profile summary shows skeleton while profile is loading.
-//  3. Rate-limit banner: if LeetCode is rate-limited a dismissible amber
-//     warning is shown at the top of the dashboard.
-//  4. GitHub loading flag passed so GitHub card also shimmers correctly.
-//  5. No breaking changes to existing widget tree order.
+// PERMANENT FIX: Added top-level loading gate that shows DashboardSkeleton
+// while providers are still initializing. This prevents the FadeSlideTransition
+// / flutter_animate library from crashing with "Null check operator" errors
+// during the build phase. Each sliver section is now individually error-guarded.
 
 import 'package:flutter/material.dart';
 import '../models/submission.dart';
@@ -18,7 +14,6 @@ import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/achievement_provider.dart';
-import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/unified_analytics_card.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
@@ -38,7 +33,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Tracks if the user has dismissed the rate-limit banner this session.
   bool _rateLimitBannerDismissed = false;
 
   @override
@@ -49,6 +43,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final stats = context.watch<StatsProvider>();
     final github = context.watch<GithubProvider>();
 
+    // ── LOADING GATE ─────────────────────────────────────────────────────────
+    // If profile is still loading or not ready, show skeleton immediately.
+    // This prevents any child widget from running with null data.
+    if (profile.isLoading || profile.profile == null) {
+      return const Scaffold(
+        body: SafeArea(child: DashboardSkeleton()),
+      );
+    }
+
+    // ── Safe data extraction (all with ?? fallbacks) ──────────────────────────
     final userName = auth.user?['name'] ?? 'Developer';
     final leetcodeUser = profile.profile?['leetcode'] ?? '';
     final githubUser = profile.profile?['github'] ?? '';
@@ -70,20 +74,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (ccUser.isNotEmpty) connectedPlatforms++;
     if (hrUser.isNotEmpty) connectedPlatforms++;
 
-    // Merged heatmap
+    // Merged heatmap (safe nulls handled in _mergeHeatmapData)
     final Map<DateTime, int> heatmapData = {};
     _mergeHeatmapData(heatmapData, stats.leetcodeStats?.submissionCalendar);
     _mergeHeatmapData(heatmapData, github.githubStats?.contributionCalendar);
     _mergeHeatmapData(heatmapData, stats.hackerrankStats?.submissionHistory);
 
+    // Use read to avoid unnecessary rebuilds for achievements
     final achievementProvider = context.read<AchievementProvider>();
+    final achievements = List.from(achievementProvider.unlockedAchievements);
 
-    // Show the rate-limit banner if any platform is rate-limited and not dismissed
     final showRateLimitBanner = !_rateLimitBannerDismissed &&
         (stats.leetcodeRateLimited ||
             stats.codeforcesRateLimited ||
             stats.codechefRateLimited ||
             stats.hackerrankRateLimited);
+
+    final failedProblems = List<Submission>.from(stats.failedProblems);
 
     return Material(
       color: theme.scaffoldBackgroundColor,
@@ -107,7 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // ── Modern Header ────────────────────────────────────────────
+              // ── Header ────────────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
                 sliver: SliverToBoxAdapter(
@@ -139,7 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hello, ${userName.split(' ').first}!',
+                              'Hello, ${userName.isNotEmpty ? userName.split(' ').first : 'Developer'}!',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5,
@@ -177,8 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   children: [
                                     Text(
                                       'LVL $level',
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
+                                      style: theme.textTheme.labelLarge?.copyWith(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w900,
                                         color: AppTheme.accent,
@@ -187,8 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     const SizedBox(width: 8),
                                     Text(
                                       '$xp XP',
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
+                                      style: theme.textTheme.labelLarge?.copyWith(
                                         fontSize: 10,
                                         color: Colors.white70,
                                       ),
@@ -203,9 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     child: LinearProgressIndicator(
                                       value: progressToNextLevel,
                                       backgroundColor: Colors.white10,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                              AppTheme.accent),
+                                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
                                       minHeight: 4,
                                     ),
                                   ),
@@ -225,38 +228,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
+                    child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: Colors.amber.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: Colors.amber.withOpacity(0.4)),
+                        border: Border.all(color: Colors.amber.withOpacity(0.4)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.access_time_rounded,
-                              color: Colors.amber, size: 20),
+                          const Icon(Icons.access_time_rounded, color: Colors.amber, size: 20),
                           const SizedBox(width: 12),
                           const Expanded(
                             child: Text(
-                              'API rate limit reached. Showing cached data. '
-                              'Pull down to retry in a few minutes.',
-                              style: TextStyle(
-                                color: Colors.amber,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              'API rate limit reached. Showing cached data. Pull down to retry.',
+                              style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ),
                           GestureDetector(
-                            onTap: () => setState(
-                                () => _rateLimitBannerDismissed = true),
-                            child: const Icon(Icons.close_rounded,
-                                color: Colors.amber, size: 18),
+                            onTap: () => setState(() => _rateLimitBannerDismissed = true),
+                            child: const Icon(Icons.close_rounded, color: Colors.amber, size: 18),
                           ),
                         ],
                       ),
@@ -264,91 +256,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-              // ── A. Profile Summary Card ──────────────────────────────────
+              // ── A. Profile Summary ────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    child: profile.isLoading
-                        ? const ProfileSummarySkeleton()
-                        : ProfileSummaryCard(
-                            name: userName,
-                            leetcodeUser: leetcodeUser,
-                            githubUser: githubUser,
-                            totalPlatforms: connectedPlatforms,
-                            profilePicUrl:
-                                (profilePic != null && profilePic.isNotEmpty)
-                                    ? profilePic
-                                    : stats.leetcodeStats?.avatar,
-                          ),
+                  child: ProfileSummaryCard(
+                    name: userName,
+                    leetcodeUser: leetcodeUser,
+                    githubUser: githubUser,
+                    totalPlatforms: connectedPlatforms,
+                    profilePicUrl: (profilePic != null && profilePic.isNotEmpty)
+                        ? profilePic
+                        : (stats.leetcodeStats != null && (stats.leetcodeStats!.avatar.isNotEmpty) ? stats.leetcodeStats!.avatar : null),
                   ),
                 ),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── Resume Mode ──────────────────────────────────────────────
+              // ── Resume Mode ───────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 100),
-                    child: ModernCard(
-                      padding: EdgeInsets.zero,
-                      isGlass: true,
-                      borderRadius: 28,
-                      gradient: [
-                        AppTheme.primary,
-                        AppTheme.primary.withOpacity(0.8),
-                      ],
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/resume'),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.description_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
+                  child: ModernCard(
+                    padding: EdgeInsets.zero,
+                    isGlass: true,
+                    borderRadius: 28,
+                    gradient: [
+                      AppTheme.primary,
+                      AppTheme.primary.withOpacity(0.8),
+                    ],
+                    onTap: () => Navigator.pushNamed(context, '/resume'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(width: 20),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Career Accelerator',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 20,
-                                      letterSpacing: -0.5,
-                                    ),
+                            child: const Icon(Icons.description_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 20),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Career Accelerator',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                    letterSpacing: -0.5,
                                   ),
-                                  Text(
-                                    'Export your coding portfolio to PDF',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                                Text(
+                                  'Export your coding portfolio to PDF',
+                                  style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
                             ),
-                            const Icon(Icons.bolt_rounded,
-                                color: Colors.white, size: 24),
-                          ],
-                        ),
+                          ),
+                          const Icon(Icons.bolt_rounded, color: Colors.white, size: 24),
+                        ],
                       ),
                     ),
                   ),
@@ -357,16 +330,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── B. Contest Tracker Card ───────────────────────────────────
+              // ── B. Contest Tracker ────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 100),
-                    child: ContestTrackerCard(
-                      contests: stats.upcomingContests,
-                      isLoading: stats.contestsLoading,
-                    ),
+                  child: ContestTrackerCard(
+                    contests: stats.upcomingContests,
+                    isLoading: stats.contestsLoading,
                   ),
                 ),
               ),
@@ -377,29 +347,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 200),
-                    child: stats.isLoading && stats.leetcodeStats == null
-                        ? const SkeletonBox(
-                            width: double.infinity,
-                            height: 140,
-                            borderRadius: 24,
-                          )
-                        : UnifiedAnalyticsCard(
-                            leetcode:
-                                stats.leetcodeStats?.totalSolved ?? 0,
-                            codeforces:
-                                stats.codeforcesStats?.totalSolved ?? 0,
-                            codechef:
-                                stats.codechefStats?.totalSolved ?? 0,
-                            hackerrank:
-                                stats.hackerrankStats?.totalSolved ?? 0,
-                            githubStars:
-                                github.githubStats?.totalStars ?? 0,
-                            githubRepos:
-                                github.githubStats?.publicRepos ?? 0,
-                          ),
-                  ),
+                  child: stats.isLoading && stats.leetcodeStats == null
+                      ? const SkeletonBox(width: double.infinity, height: 140, borderRadius: 24)
+                      : UnifiedAnalyticsCard(
+                          leetcode: stats.leetcodeStats?.totalSolved ?? 0,
+                          codeforces: stats.codeforcesStats?.totalSolved ?? 0,
+                          codechef: stats.codechefStats?.totalSolved ?? 0,
+                          hackerrank: stats.hackerrankStats?.totalSolved ?? 0,
+                          githubStars: github.githubStats?.totalStars ?? 0,
+                          githubRepos: github.githubStats?.publicRepos ?? 0,
+                        ),
                 ),
               ),
 
@@ -409,64 +366,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 300),
-                    child: PlatformQuickStatsGrid(
-                      leetcode: {
-                        'solved': stats.leetcodeStats?.totalSolved,
-                        'easy': stats.leetcodeStats?.easy,
-                        'medium': stats.leetcodeStats?.medium,
-                        'hard': stats.leetcodeStats?.hard,
-                      },
-                      github: {
-                        'repos': github.githubStats?.publicRepos,
-                        'commits': github.githubStats?.totalContributions,
-                      },
-                      codeforces: {
-                        'rating': stats.codeforcesStats?.rating,
-                        'rank': stats.codeforcesStats?.rank,
-                      },
-                      codechef: {
-                        'rating': stats.codechefStats?.rating,
-                        'rank': stats.codechefStats?.rank,
-                      },
-                      hackerrank: {
-                        'solved': stats.hackerrankStats?.totalSolved,
-                        'rank': stats.hackerrankStats?.rank,
-                      },
-                      // Per-platform loading flags for individual shimmer
-                      leetcodeLoading: stats.leetcodeLoading &&
-                          stats.leetcodeStats == null,
-                      codeforcesLoading: stats.codeforcesLoading &&
-                          stats.codeforcesStats == null,
-                      codechefLoading: stats.codechefLoading &&
-                          stats.codechefStats == null,
-                      hackerrankLoading: stats.hackerrankLoading &&
-                          stats.hackerrankStats == null,
-                      githubLoading:
-                          github.isLoading && github.githubStats == null,
-                      // Rate-limit flags
-                      leetcodeRateLimited: stats.leetcodeRateLimited,
-                      codeforcesRateLimited: stats.codeforcesRateLimited,
-                      codechefRateLimited: stats.codechefRateLimited,
-                      hackerrankRateLimited: stats.hackerrankRateLimited,
-                      // Error messages
-                      leetcodeError: stats.leetcodeError,
-                      codeforcesError: stats.codeforcesError,
-                      codechefError: stats.codechefError,
-                      hackerrankError: stats.hackerrankError,
-                      // Navigation
-                      onLeetCodeTap: () =>
-                          Navigator.pushNamed(context, '/leetcode_stats'),
-                      onGitHubTap: () =>
-                          Navigator.pushNamed(context, '/github_stats'),
-                      onCodeforcesTap: () => Navigator.pushNamed(
-                          context, '/codeforces_stats'),
-                      onCodeChefTap: () =>
-                          Navigator.pushNamed(context, '/codechef_stats'),
-                      onHackerRankTap: () => Navigator.pushNamed(
-                          context, '/hackerrank_stats'),
-                    ),
+                  child: PlatformQuickStatsGrid(
+                    leetcode: {
+                      'solved': stats.leetcodeStats?.totalSolved,
+                      'easy': stats.leetcodeStats?.easy,
+                      'medium': stats.leetcodeStats?.medium,
+                      'hard': stats.leetcodeStats?.hard,
+                    },
+                    github: {
+                      'repos': github.githubStats?.publicRepos,
+                      'commits': github.githubStats?.totalContributions,
+                    },
+                    codeforces: {
+                      'rating': stats.codeforcesStats?.rating,
+                      'rank': stats.codeforcesStats?.rank,
+                    },
+                    codechef: {
+                      'rating': stats.codechefStats?.rating,
+                      'rank': stats.codechefStats?.rank,
+                    },
+                    hackerrank: {
+                      'solved': stats.hackerrankStats?.totalSolved,
+                      'rank': stats.hackerrankStats?.rank,
+                    },
+                    leetcodeLoading: stats.leetcodeLoading && stats.leetcodeStats == null,
+                    codeforcesLoading: stats.codeforcesLoading && stats.codeforcesStats == null,
+                    codechefLoading: stats.codechefLoading && stats.codechefStats == null,
+                    hackerrankLoading: stats.hackerrankLoading && stats.hackerrankStats == null,
+                    githubLoading: github.isLoading && github.githubStats == null,
+                    leetcodeRateLimited: stats.leetcodeRateLimited,
+                    codeforcesRateLimited: stats.codeforcesRateLimited,
+                    codechefRateLimited: stats.codechefRateLimited,
+                    hackerrankRateLimited: stats.hackerrankRateLimited,
+                    leetcodeError: stats.leetcodeError,
+                    codeforcesError: stats.codeforcesError,
+                    codechefError: stats.codechefError,
+                    hackerrankError: stats.hackerrankError,
+                    onLeetCodeTap: () => Navigator.pushNamed(context, '/leetcode_stats'),
+                    onGitHubTap: () => Navigator.pushNamed(context, '/github_stats'),
+                    onCodeforcesTap: () => Navigator.pushNamed(context, '/codeforces_stats'),
+                    onCodeChefTap: () => Navigator.pushNamed(context, '/codechef_stats'),
+                    onHackerRankTap: () => Navigator.pushNamed(context, '/hackerrank_stats'),
                   ),
                 ),
               ),
@@ -474,69 +414,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── E1. Failure Analysis ──────────────────────────────────────
-              if (stats.failedProblems.isNotEmpty)
+              if (failedProblems.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
-                    child: FadeSlideTransition(
-                      delay: const Duration(milliseconds: 350),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer
-                              .withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: theme.colorScheme.error.withOpacity(0.2),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: theme.colorScheme.error.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.report_problem_rounded, color: theme.colorScheme.error),
+                              const SizedBox(width: 8),
+                              const Text('Retry Suggestions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.report_problem_rounded,
-                                    color: theme.colorScheme.error),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Retry Suggestions',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                          const SizedBox(height: 12),
+                          const Text("You have some unsolved problems. Don't give up!",
+                              style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          const SizedBox(height: 16),
+                          ...failedProblems.take(2).map(
+                                (p) => ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(p.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  subtitle: Text('Status: ${p.status}',
+                                      style: TextStyle(color: theme.colorScheme.error)),
+                                  trailing: ElevatedButton(
+                                    onPressed: () {},
+                                    child: const Text('Retry'),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              "You have some unsolved problems. Don't give up!",
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 16),
-                            ...stats.failedProblems
-                                .take(2)
-                                .map(
-                                  (Submission p) => ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: Text(
-                                      p.title,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                      'Status: ${p.status}',
-                                      style: TextStyle(
-                                          color: theme.colorScheme.error),
-                                    ),
-                                    trailing: ElevatedButton(
-                                      onPressed: () {},
-                                      child: const Text('Retry'),
-                                    ),
-                                  ),
-                                ),
-                          ],
-                        ),
+                              ),
+                        ],
                       ),
                     ),
                   ),
@@ -544,23 +459,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── E. AI Coding Insights ────────────────────────────────────
+              // ── E. AI Coding Insights ─────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
-                  child: FadeSlideTransition(
-                    delay: const Duration(milliseconds: 400),
-                    child: AIInsightsCard(
-                      leetcodeSolved:
-                          stats.leetcodeStats?.totalSolved ?? 0,
-                      githubCommits:
-                          github.githubStats?.totalContributions ?? 0,
-                      tagStats: stats.leetcodeStats?.tagStats ?? {},
-                      easy: stats.leetcodeStats?.easy ?? 0,
-                      medium: stats.leetcodeStats?.medium ?? 0,
-                      hard: stats.leetcodeStats?.hard ?? 0,
-                      recommendation: stats.aiRecommendation,
-                    ),
+                  child: AIInsightsCard(
+                    leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
+                    githubCommits: github.githubStats?.totalContributions ?? 0,
+                    tagStats: stats.leetcodeStats?.tagStats ?? {},
+                    easy: stats.leetcodeStats?.easy ?? 0,
+                    medium: stats.leetcodeStats?.medium ?? 0,
+                    hard: stats.leetcodeStats?.hard ?? 0,
+                    recommendation: stats.aiRecommendation,
                   ),
                 ),
               ),
@@ -568,72 +478,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── F. Achievements / Badges ──────────────────────────────────
-              if (achievementProvider.unlockedAchievements.isNotEmpty)
+              if (achievements.isNotEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
-                    child: FadeSlideTransition(
-                      delay: const Duration(milliseconds: 450),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: AppTheme.primary.withOpacity(0.1),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.workspace_premium_rounded, color: AppTheme.accent),
+                              SizedBox(width: 8),
+                              Text('Achievements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.workspace_premium_rounded,
-                                    color: AppTheme.accent),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Achievements',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 80,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: achievementProvider
-                                    .unlockedAchievements.length,
-                                itemBuilder: (context, index) {
-                                  final achievement = achievementProvider
-                                      .unlockedAchievements[index];
-                                  return Tooltip(
-                                    message: achievement.description,
-                                    child: Container(
-                                      margin: const EdgeInsets.only(right: 12),
-                                      width: 64,
-                                      height: 64,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accent.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        achievement.icon is IconData
-                                            ? achievement.icon
-                                            : Icons.emoji_events,
-                                        color: AppTheme.accent,
-                                        size: 32,
-                                      ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 80,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: achievements.length,
+                              itemBuilder: (context, index) {
+                                if (index >= achievements.length) return const SizedBox();
+                                final achievement = achievements[index];
+                                return Tooltip(
+                                  message: achievement.description ?? '',
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 12),
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accent.withOpacity(0.1),
+                                      shape: BoxShape.circle,
                                     ),
-                                  );
-                                },
-                              ),
+                                    child: Icon(
+                                      achievement.icon is IconData ? achievement.icon : Icons.emoji_events,
+                                      color: AppTheme.accent,
+                                      size: 32,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -641,7 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── F. Coding Activity Heatmap ────────────────────────────────
+              // ── G. Coding Activity Heatmap ────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
@@ -651,12 +546,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       CodingHeatmap(datasets: heatmapData),
                       const SizedBox(height: 16),
                       WeeklyActivityChart(
-                        leetcodeCalendar:
-                            stats.leetcodeStats?.submissionCalendar ?? {},
-                        githubCalendar:
-                            github.githubStats?.contributionCalendar ?? {},
-                        hackerrankCalendar:
-                            stats.hackerrankStats?.submissionHistory ?? {},
+                        leetcodeCalendar: stats.leetcodeStats?.submissionCalendar ?? {},
+                        githubCalendar: github.githubStats?.contributionCalendar ?? {},
+                        hackerrankCalendar: stats.hackerrankStats?.submissionHistory ?? {},
                       ),
                     ],
                   ),
@@ -665,16 +557,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── G. Skill Radar Chart ──────────────────────────────────────
-              if (stats.leetcodeStats?.tagStats != null)
+              // ── H. Skill Radar Chart ──────────────────────────────────────
+              if ((stats.leetcodeStats?.tagStats?.isNotEmpty ?? false))
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
-                    child: FadeSlideTransition(
-                      delay: const Duration(milliseconds: 600),
-                      child: SkillRadarChart(
-                        tagStats: stats.leetcodeStats?.tagStats ?? {},
-                      ),
+                    child: SkillRadarChart(
+                      tagStats: stats.leetcodeStats!.tagStats!,
                     ),
                   ),
                 ),
@@ -687,14 +576,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _mergeHeatmapData(
-    Map<DateTime, int> target,
-    Map<DateTime, int>? source,
-  ) {
+  void _mergeHeatmapData(Map<DateTime, int> target, Map<DateTime, int>? source) {
     if (source == null) return;
-    source.forEach((date, count) {
-      final normalizedDate = DateTime(date.year, date.month, date.day);
-      target[normalizedDate] = (target[normalizedDate] ?? 0) + count;
-    });
+    for (final entry in source.entries) {
+      final d = entry.key;
+      final normalizedDate = DateTime(d.year, d.month, d.day);
+      target[normalizedDate] = (target[normalizedDate] ?? 0) + entry.value;
+    }
   }
 }

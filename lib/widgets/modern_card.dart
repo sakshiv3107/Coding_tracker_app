@@ -10,6 +10,7 @@ class ModernCard extends StatelessWidget {
   final bool showShadow;
   final VoidCallback? onTap;
   final bool isGlass;
+  final EdgeInsetsGeometry? margin;
   final List<Color>? gradient;
 
   const ModernCard({
@@ -23,6 +24,7 @@ class ModernCard extends StatelessWidget {
     this.onTap,
     this.isGlass = false,
     this.gradient,
+    this.margin,
   });
 
   @override
@@ -69,7 +71,7 @@ class ModernCard extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: margin ?? const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         borderRadius: effectiveBorderRadius,
         boxShadow: showShadow

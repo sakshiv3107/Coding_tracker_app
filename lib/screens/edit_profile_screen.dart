@@ -121,24 +121,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   children: [
                     _buildBackButton(context, isDark),
                     const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Refine Identity',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Refine Identity',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Text(
-                          'Updating your global persona',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
-                            fontWeight: FontWeight.w700,
+                          Text(
+                            'Updating your global persona',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

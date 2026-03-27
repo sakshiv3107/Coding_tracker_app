@@ -1,4 +1,10 @@
 // lib/screens/home/home_screen.dart
+//
+// FIX: Replaced IndexedStack with a simple body switcher.
+// IndexedStack builds ALL pages simultaneously (even hidden ones) causing
+// FadeSlideTransition and other animated widgets in those pages to crash
+// with "Null check operator" / "RenderBox was not laid out" errors before
+// their constraints are established. Now only the active page is built.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,10 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int _selectedIndex = 0;
-
-  // ✅ Pages built once, stored as late final to avoid remounting on rebuild
-  late final List<Widget> _pages;
+  int _selectedIndex = 0;
 
   String? _lastLcUser;
   String? _lastGhUser;
@@ -33,17 +36,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _initialFetchDone = false;
 
+  // Pages list — built lazily (only current index is rendered)
+  static const List<Widget> _pages = [
+    DashboardScreen(),
+    CodingStatsScreen(),
+    GitHubStatsScreen(),
+    GoalsScreen(),
+    ProfileScreen(),
+  ];
+
   @override
   void initState() {
     super.initState();
-    _pages = [
-      const DashboardScreen(),
-      const CodingStatsScreen(),
-      const GitHubStatsScreen(),
-      const GoalsScreen(),
-      const ProfileScreen(),
-    ];
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
     });
@@ -86,7 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     final profile = context.read<ProfileProvider>();
 
-    // ✅ Profile not ready yet — wait for it then retry
     if (profile.isLoading || profile.profile == null) {
       profile.addListener(_onProfileReady);
       return;
@@ -95,16 +98,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _doFetch();
   }
 
-  /// Listener called when ProfileProvider notifies after loading completes.
   void _onProfileReady() {
+    if (!mounted) return;
     final profile = context.read<ProfileProvider>();
-    if (!profile.isLoading && profile.profile != null) {
+    if (!profile.isLoading) {
       profile.removeListener(_onProfileReady);
-      if (mounted) _doFetch();
+      if (profile.profile != null) {
+        _doFetch();
+      }
     }
   }
 
-  /// The actual fetch once profile data is confirmed available.
   void _doFetch() {
     if (!mounted) return;
 
@@ -183,7 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // Remove listener if screen is disposed before profile ever loaded
     try {
       context.read<ProfileProvider>().removeListener(_onProfileReady);
     } catch (_) {}
@@ -194,8 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final profile = context.watch<ProfileProvider>();
 
-    // ✅ Show spinner while profile loads — prevents pages from building
-    //    with null usernames and firing empty fetches
+    // Show spinner while profile loads
     if (profile.isLoading || profile.profile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -204,9 +206,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       drawer: const AppDrawer(),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      // KEY FIX: Use _pages[_selectedIndex] instead of IndexedStack.
+      // This ensures only the active page's widget tree is built.
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.code_rounded),
+            label: 'LeetCode',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.hub_rounded),
+            label: 'GitHub',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.flag_rounded),
+            label: 'Goals',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }

@@ -90,7 +90,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
       crossAxisCount: crossAxisCount,
       crossAxisSpacing: padding,
       mainAxisSpacing: padding,
-      childAspectRatio: screenWidth > 360 ? 1.05 : 0.95,
+      childAspectRatio: screenWidth > 360 ? 1.05 : 0.9,
       children: [
         _platformCard(
           context: context,
@@ -199,10 +199,11 @@ class PlatformQuickStatsGrid extends StatelessWidget {
 
     return ModernCard(
       padding: EdgeInsets.zero,
+      margin: EdgeInsets.zero,
       isGlass: true,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

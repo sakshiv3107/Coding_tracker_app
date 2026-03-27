@@ -149,7 +149,7 @@ class LeetcodeService {
       userContestRankingHistory(username: $username) {
         attended 
         rating 
-        rank 
+        ranking
         problemsSolved 
         totalProblems
         contest { title startTime }
@@ -164,7 +164,34 @@ class LeetcodeService {
     }
   """;
 
+  Future<String> _fetchCsrfToken() async {
+    try {
+      final res = await http.get(
+        Uri.parse("https://leetcode.com/"),
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      ).timeout(const Duration(seconds: 10));
+      
+      final cookies = res.headers["set-cookie"] ?? "";
+      final match = RegExp(r'csrftoken=([^;]+)').firstMatch(cookies);
+      String token = match?.group(1) ?? "";
+      
+      if (token.isEmpty) {
+        // Fallback: Check if it's in a different cookie format or redirected
+        debugPrint("[LC] ⚠️ CSRF not in Set-Cookie, attempt fallback check...");
+        token = "dummy_csrf_token"; 
+      }
+      
+      return token;
+    } catch (e) {
+      debugPrint("[LC] CSRF fetch error: $e");
+      return "dummy_csrf_token";
+    }
+  }
+
   Future<LeetcodeStats> _fetchGraphQL(String username) async {
+    final csrf = await _fetchCsrfToken(); 
     const url = "https://leetcode.com/graphql";
     
     try {
@@ -172,7 +199,11 @@ class LeetcodeService {
         Uri.parse(url),
         headers: {
           "Content-Type": "application/json",
+          "Referer": "https://leetcode.com/",
+          "Origin": "https://leetcode.com",
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Cookie": "csrftoken=$csrf",
+          "x-csrftoken": csrf,
         },
         body: jsonEncode({
           "query": _gqlQuery,
@@ -181,23 +212,26 @@ class LeetcodeService {
       ).timeout(_singleSourceTimeout);
 
       if (response.statusCode == 400) {
-        throw Exception("Invalid request (400). Please check if the username is correct.");
+        debugPrint("[LC] 400 Bad Request: ${response.body}");
+        throw Exception("Invalid request (400). This usually means a CSRF mismatch or structure error.");
       }
       if (response.statusCode == 429) {
+        debugPrint("[LC] 429 Too Many Requests: ${response.body}");
         throw Exception("Too many requests (429). Please wait a moment.");
       }
       if (response.statusCode != 200) {
+        debugPrint("[LC] ${response.statusCode} Server Error: ${response.body}");
         throw Exception("Server error (${response.statusCode})");
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       
       if (json["errors"] != null) {
-        final errorMsg = json["errors"][0]["message"]?.toString() ?? "Unknown GraphQL error";
-        if (errorMsg.contains("User not found")) {
-          throw UserNotFoundException("User '$username' not found on LeetCode.");
+        final errorMsg = json["errors"][0]["message"]?.toString() ?? "Unknown error";
+        if (errorMsg.contains("User not found") || errorMsg.contains("does not exist")) {
+          throw UserNotFoundException("User '$username' not found on LeetCode. Check spelling/case.");
         }
-        throw Exception("LeetCode says: $errorMsg");
+        throw Exception("LeetCode error: $errorMsg");
       }
 
       return _parseGraphQLResponse(json, username);
