@@ -3,7 +3,7 @@ import 'platform_stats.dart';
 class HackerRankStats {
   final String username;
   final int totalSolved;
-  final String? rank;
+  final String? ranking;
   final String? avatarUrl;
   final int followers;
   final String? country;
@@ -13,7 +13,7 @@ class HackerRankStats {
   HackerRankStats({
     required this.username,
     required this.totalSolved,
-    this.rank,
+    this.ranking,
     this.avatarUrl,
     required this.followers,
     this.country,
@@ -72,7 +72,7 @@ class HackerRankStats {
     return HackerRankStats(
       username: model['username']?.toString() ?? '',
       totalSolved: solvedCount,
-      rank: rank ?? 'N/A',
+      ranking: rank ?? 'N/A',
       avatarUrl: model['avatar']?.toString(),
       followers: (model['followers_count'] as num? ?? 0).toInt(),
       country: model['country']?.toString(),
@@ -89,7 +89,7 @@ class HackerRankStats {
       platform: "HackerRank",
       username: username,
       totalSolved: totalSolved,
-      rank: rank,
+      ranking: ranking,
       avatarUrl: avatarUrl,
       extraMetrics: {
         'Country': country,
@@ -110,7 +110,7 @@ class HackerRankStats {
     return {
       'username': username,
       'totalSolved': totalSolved,
-      'rank': rank,
+      'ranking': ranking,
       'avatarUrl': avatarUrl,
       'followers': followers,
       'country': country,
@@ -133,7 +133,7 @@ class HackerRankStats {
     return HackerRankStats(
       username: json['username']?.toString() ?? '',
       totalSolved: (json['totalSolved'] as num? ?? 0).toInt(),
-      rank: json['rank']?.toString(),
+      ranking: json['ranking']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
       followers: (json['followers'] as num? ?? 0).toInt(),
       country: json['country']?.toString(),

@@ -255,7 +255,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                   maxLines: 1,
                 ),
                 Text(
-                  '$platformName ${stats?.rank ?? "User"}',
+                  '$platformName ${stats?.ranking ?? "User"}',
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,

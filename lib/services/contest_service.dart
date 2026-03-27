@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Contest {
   final String? id;
@@ -107,7 +109,57 @@ class ContestService {
 
     final finalContests = unique.values.toList();
     finalContests.sort((a, b) => a.startTime.compareTo(b.startTime));
+    
+    // Automatically schedule notifications for fetched contests
+    await scheduleAllContestNotifications(finalContests);
+    
     return finalContests;
+  }
+
+  Future<void> scheduleAllContestNotifications(List<Contest> contests) async {
+    final prefs = await SharedPreferences.getInstance();
+    final scheduledIds = prefs.getStringList('scheduled_contest_ids') ?? [];
+    final newScheduledIds = <String>[];
+
+    final now = DateTime.now();
+    
+    for (var contest in contests) {
+      if (contest.startTime.isBefore(now)) continue;
+
+      final contestId = contest.id ?? '${contest.platform}_${contest.startTime.millisecondsSinceEpoch}';
+      
+      // Avoid scheduling duplicates
+      if (scheduledIds.contains(contestId)) {
+        newScheduledIds.add(contestId);
+        continue;
+      }
+
+      // Unique numeric ID for local notifications
+      int baseId = contestId.hashCode.abs() % 1000000;
+
+      // Schedule 1 hour before
+      await NotificationService.scheduleContestNotification(
+        id: baseId,
+        title: contest.title,
+        platform: contest.platform,
+        startTime: contest.startTime,
+        minutesBefore: 60,
+      );
+
+      // Schedule 10 minutes before
+      await NotificationService.scheduleContestNotification(
+        id: baseId + 10,
+        title: contest.title,
+        platform: contest.platform,
+        startTime: contest.startTime,
+        minutesBefore: 10,
+      );
+
+      newScheduledIds.add(contestId);
+    }
+
+    // Filter out old contest IDs to keep the list clean
+    await prefs.setStringList('scheduled_contest_ids', newScheduledIds);
   }
 
   Future<List<Contest>> _fetchCodeforces() async {

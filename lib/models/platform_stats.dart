@@ -6,7 +6,7 @@ class PlatformStats {
   final String? profileUrl;
   final String? avatarUrl;
   final int totalSolved;
-  final String? rank;
+  final String? ranking;
   final int? rating;
   final int? maxRating;
   final List<Submission> recentSubmissions;
@@ -19,7 +19,7 @@ class PlatformStats {
     this.profileUrl,
     this.avatarUrl,
     required this.totalSolved,
-    this.rank,
+    this.ranking,
     this.rating,
     this.maxRating,
     this.recentSubmissions = const [],

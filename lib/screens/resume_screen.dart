@@ -32,7 +32,7 @@ class ResumeScreen extends StatelessWidget {
     final codingProfileData = """
     Platforms: LeetCode (Solved: $leetcodeSolved, Ranking: ${stats.leetcodeStats?.ranking ?? 'N/A'}, Contest Rating: ${stats.leetcodeStats?.contestRating ?? 'N/A'}), 
     GitHub (Contributions: $githubCommits, Stars: $githubStars), 
-    HackerRank (Solved: ${stats.hackerrankStats?.totalSolved ?? 0}, Rank: ${stats.hackerrankStats?.rank ?? 'N/A'}).
+    HackerRank (Solved: ${stats.hackerrankStats?.totalSolved ?? 0}, Rank: ${stats.hackerrankStats?.ranking ?? 'N/A'}).
     """;
 
     return Scaffold(

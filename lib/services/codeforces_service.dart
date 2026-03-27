@@ -78,7 +78,7 @@ class CodeforcesService {
           totalSolved: solvedCount,
           rating: user["rating"],
           maxRating: user["maxRating"],
-          rank: user["rank"],
+          ranking: user["rank"],
           recentSubmissions: recentSubmissions,
           extraMetrics: {
             "contribution": user["contribution"] ?? 0,

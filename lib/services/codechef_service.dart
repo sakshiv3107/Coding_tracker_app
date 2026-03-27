@@ -70,7 +70,7 @@ class CodeChefService {
             totalSolved: json["numberOfProblemsSolved"] ?? json["problemsSolved"] ?? 0,
             rating: json["currentRating"] ?? json["rating"],
             maxRating: json["highestRating"] ?? json["maxRating"],
-            rank: json["stars"]?.toString() ?? "N/A",
+            ranking: json["stars"]?.toString() ?? "N/A",
             recentSubmissions: submissions,
             submissionCalendar: submissionCalendar,
             extraMetrics: {

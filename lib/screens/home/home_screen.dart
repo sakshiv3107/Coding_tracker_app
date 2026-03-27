@@ -206,14 +206,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Scaffold(
-      // Drawer with page-switch callback
-      drawer: AppDrawer(
-        selectedIndex: _selectedIndex,
-        onNavigate: _navigateTo,
+    return PopScope(
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        if (_selectedIndex != 0) {
+          setState(() => _selectedIndex = 0);
+        }
+      },
+      child: Scaffold(
+        // Drawer with page-switch callback
+        drawer: AppDrawer(
+          selectedIndex: _selectedIndex,
+          onNavigate: _navigateTo,
+        ),
+        // Only the active page is built (no IndexedStack)
+        body: _buildPage(_selectedIndex),
       ),
-      // Only the active page is built (no IndexedStack)
-      body: _buildPage(_selectedIndex),
     );
   }
 }

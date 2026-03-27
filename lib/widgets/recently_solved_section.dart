@@ -61,19 +61,7 @@ class RecentlySolvedSection extends StatelessWidget {
                   Row(
                     children: [
                       if (sub.difficulty != null && sub.difficulty!.isNotEmpty) ...[
-                        _buildDifficultyTag(sub.difficulty!),
-                        const SizedBox(width: 10),
-                      ],
-                      Icon(Icons.link_rounded, size: 14, color: Colors.blue.shade400),
-                      const SizedBox(width: 4),
-                      Text(
-                        'View on LeetCode',
-                        style: TextStyle(
-                          fontSize: 12, 
-                          color: Colors.blue.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                        _buildDifficultyTag(sub.difficulty!),enhance the color pal
                     ],
                   ),
                 ],

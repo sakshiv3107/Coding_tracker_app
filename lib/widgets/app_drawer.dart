@@ -149,7 +149,7 @@ class AppDrawer extends StatelessWidget {
                   color: Colors.redAccent,
                   onTap: () {
                     Navigator.pop(context);
-                    auth.logout();
+                    auth.logout(context);
                   },
                 ),
               ],

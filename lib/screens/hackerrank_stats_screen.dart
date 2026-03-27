@@ -247,7 +247,7 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
       mainAxisSpacing: 16,
       children: [
         ResponsiveCard(label: 'Solved', value: stats.totalSolved.toString(), icon: Icons.check_circle_outline_rounded, color: Colors.green),
-        ResponsiveCard(label: 'Rank', value: stats.rank ?? 'N/A', icon: Icons.trending_up_rounded, color: Colors.blue),
+        ResponsiveCard(label: 'Rank', value: stats.ranking ?? 'N/A', icon: Icons.trending_up_rounded, color: Colors.blue),
         ResponsiveCard(label: 'Badges', value: stats.extraMetrics["badges_count"]?.toString() ?? '0', icon: Icons.workspace_premium_rounded, color: Colors.orange),
         ResponsiveCard(label: 'Country', value: stats.country ?? 'N/A', icon: Icons.public_rounded, color: Colors.purple),
       ],

@@ -322,7 +322,7 @@ class StatsProvider extends ChangeNotifier {
         username: json['username'] ?? '',
         totalSolved: json['totalSolved'] ?? 0,
         rating: json['rating'] as int?,
-        rank: json['rank'] as String?,
+        ranking: json['ranking'] as String?,
       );
       _codeforcesLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       debugPrint('[StatsProvider] ✅ CF disk cache loaded');
@@ -339,7 +339,7 @@ class StatsProvider extends ChangeNotifier {
         'username': stats.username,
         'totalSolved': stats.totalSolved,
         'rating': stats.rating,
-        'rank': stats.rank,
+        'ranking': stats.ranking,
       };
       await prefs.setString(_kCfPrefix, jsonEncode(data));
       await prefs.setInt(
@@ -375,7 +375,7 @@ class StatsProvider extends ChangeNotifier {
         username: json['username'] ?? '',
         totalSolved: json['totalSolved'] ?? 0,
         rating: json['rating'] as int?,
-        rank: json['rank'] as String?,
+        ranking: json['ranking'] as String?,
         submissionCalendar: history,
       );
       _codechefLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
@@ -398,7 +398,7 @@ class StatsProvider extends ChangeNotifier {
         'username': stats.username,
         'totalSolved': stats.totalSolved,
         'rating': stats.rating,
-        'rank': stats.rank,
+        'ranking': stats.ranking,
         'submissionCalendar': histMap,
       };
       await prefs.setString(_kCcPrefix, jsonEncode(data));

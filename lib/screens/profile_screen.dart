@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/stats_provider.dart';
 import 'edit_profile_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
+import '../widgets/platform_card.dart';
+import '../models/user_platform_data.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/premium_widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -16,6 +19,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
+    final stats = context.watch<StatsProvider>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -127,25 +131,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 250),
-                child: _PlatformTileSmall(
-                  icon: FontAwesomeIcons.code,
-                  platform: 'LeetCode',
-                  username: profile.profile?["leetcode"] ?? "Node Inactive",
-                  color: AppTheme.leetCodeYellow,
-                ),
-              ),
-              const SizedBox(height: 12),
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 300),
-                child: _PlatformTileSmall(
-                  icon: FontAwesomeIcons.github,
-                  platform: 'GitHub',
-                  username: profile.profile?["github"] ?? "Node Inactive",
-                  color: AppTheme.githubGrey,
-                ),
-              ),
+              _buildPlatformGrid(context, profile, stats),
 
               const SizedBox(height: 40),
               
@@ -167,7 +153,7 @@ class ProfileScreen extends StatelessWidget {
                         icon: FontAwesomeIcons.bell,
                         title: 'Notifications',
                         subtitle: 'Alert nodes and sync cycles',
-                        onTap: () {},
+                        onTap: () => Navigator.pushNamed(context, '/settings'),
                       ),
                       const Divider(height: 1, indent: 48, color: Colors.white10),
                       _SettingsTile(
@@ -194,10 +180,7 @@ class ProfileScreen extends StatelessWidget {
                 delay: const Duration(milliseconds: 500),
                 child: PremiumGradientButton(
                   text: 'Deactivate Session',
-                  onPressed: () {
-                    context.read<AuthProvider>().logout();
-                    context.read<ProfileProvider>().clearProfile();
-                  },
+                  onPressed: () => _showLogoutConfirmation(context),
                   icon: FontAwesomeIcons.powerOff,
                   gradient: const [Colors.redAccent, Color(0xFF991B1B)],
                 ),
@@ -210,63 +193,113 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _PlatformTileSmall extends StatelessWidget {
-  final IconData icon;
-  final String platform;
-  final String username;
-  final Color color;
+  Widget _buildPlatformGrid(BuildContext context, ProfileProvider profile, StatsProvider stats) {
+    final List<UserPlatformData> platforms = [
+      UserPlatformData(
+        platformName: 'LeetCode',
+        username: profile.profile?["leetcode"] ?? 'Not Connected',
+        solvedCount: stats.leetcodeStats?.totalSolved ?? 0,
+        rating: stats.leetcodeStats?.contestRating?.toInt(),
+        ranking: stats.leetcodeStats?.ranking.toString(),
+        isConnected: profile.profile?["leetcode"]?.isNotEmpty ?? false,
+        icon: FontAwesomeIcons.code,
+        color: AppTheme.leetCodeYellow,
+      ),
+      UserPlatformData(
+        platformName: 'Codeforces',
+        username: profile.profile?["codeforces"] ?? 'Not Connected',
+        solvedCount: stats.codeforcesStats?.totalSolved ?? 0,
+        rating: stats.codeforcesStats?.rating,
+        ranking: stats.codeforcesStats?.ranking,
+        isConnected: profile.profile?["codeforces"]?.isNotEmpty ?? false,
+        icon: FontAwesomeIcons.bolt,
+        color: AppTheme.primary,
+      ),
+      UserPlatformData(
+        platformName: 'CodeChef',
+        username: profile.profile?["codechef"] ?? 'Not Connected',
+        solvedCount: stats.codechefStats?.totalSolved ?? 0,
+        rating: stats.codechefStats?.rating,
+        ranking: stats.codechefStats?.ranking,
+        isConnected: profile.profile?["codechef"]?.isNotEmpty ?? false,
+        icon: FontAwesomeIcons.graduationCap,
+        color: const Color(0xFF5B4638),
+      ),
+      UserPlatformData(
+        platformName: 'GitHub',
+        username: profile.profile?["github"] ?? 'Not Connected',
+        solvedCount: stats.githubCommitCalendar.values.fold(0, (a, b) => a + b),
+        isConnected: profile.profile?["github"]?.isNotEmpty ?? false,
+        icon: FontAwesomeIcons.github,
+        color: AppTheme.githubGrey,
+      ),
+      UserPlatformData(
+        platformName: 'HackerRank',
+        username: profile.profile?["hackerrank"] ?? 'Not Connected',
+        solvedCount: stats.hackerrankStats?.totalSolved ?? 0,
+        isConnected: profile.profile?["hackerrank"]?.isNotEmpty ?? false,
+        icon: FontAwesomeIcons.hackerrank,
+        color: const Color(0xFF2EC866),
+      ),
+    ];
 
-  const _PlatformTileSmall({
-    required this.icon,
-    required this.platform,
-    required this.username,
-    required this.color,
-  });
+    return FadeSlideTransition(
+      delay: const Duration(milliseconds: 250),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.85,
+        ),
+        itemCount: platforms.length,
+        itemBuilder: (context, index) {
+          return PlatformCard(data: platforms[index]);
+        },
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isInactive = username == "Node Inactive";
-
-    return ModernCard(
-      padding: const EdgeInsets.all(18),
-      isGlass: true,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          "Deactivate Session",
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        content: const Text(
+          "Are you sure you want to logout? All local cache will be cleared.",
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.6)),
             ),
-            child: FaIcon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  platform, 
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.2)
-                ),
-                Text(
-                  username,
-                  style: TextStyle(
-                    color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              context.read<AuthProvider>().logout(context).then((_) {
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                }
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-          ),
-          Icon(
-            isInactive ? FontAwesomeIcons.circleExclamation : FontAwesomeIcons.solidCircleCheck, 
-            color: isInactive ? Colors.orange.withValues(alpha: 0.5) : AppTheme.secondary, 
-            size: 16
+            child: const Text("Logout"),
           ),
         ],
       ),
@@ -289,7 +322,6 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(

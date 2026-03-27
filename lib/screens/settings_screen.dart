@@ -4,6 +4,7 @@ import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/premium_widgets.dart';
+import '../widgets/notification_settings_tile.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -96,6 +97,22 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // 🔔 Notifications Section
+                  const PremiumSectionHeader(
+                    title: 'Alert Network',
+                    subtitle: 'Manage real-time contest triggers',
+                    icon: Icons.notifications_active_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  ModernCard(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    isGlass: true,
+                    borderRadius: 28,
+                    child: const NotificationSettingsTile(),
                   ),
 
                   const SizedBox(height: 32),

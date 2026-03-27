@@ -169,15 +169,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                   codeforces: {
                     'rating': stats.codeforcesStats?.rating,
-                    'rank': stats.codeforcesStats?.rank,
+                    'rank': stats.codeforcesStats?.ranking,
                   },
                   codechef: {
                     'rating': stats.codechefStats?.rating,
-                    'rank': stats.codechefStats?.rank,
+                    'rank': stats.codechefStats?.ranking,
                   },
                   hackerrank: {
                     'solved': stats.hackerrankStats?.totalSolved,
-                    'rank': stats.hackerrankStats?.rank,
+                    'rank': stats.hackerrankStats?.ranking,
                   },
                   leetcodeLoading:
                       stats.leetcodeLoading && stats.leetcodeStats == null,

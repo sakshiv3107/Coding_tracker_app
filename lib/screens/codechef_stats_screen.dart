@@ -285,7 +285,7 @@ class _ProfileHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        stats.rank ?? 'Unrated',
+                        stats.ranking ?? 'Unrated',
                         style: const TextStyle(
                           color: _amber,
                           fontWeight: FontWeight.bold,
@@ -482,7 +482,7 @@ class _StarsCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      stats.rank ?? 'Unrated',
+                      stats.ranking ?? 'Unrated',
                       style: const TextStyle(
                         color: _gold,
                         fontSize: 28,

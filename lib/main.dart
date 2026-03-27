@@ -11,7 +11,7 @@ import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../providers/resume_provider.dart';
 import '../providers/theme_provider.dart';
-// import '../services/notification_service.dart';
+import '../services/notification_service.dart';
 import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
@@ -31,7 +31,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // await NotificationService.init();0
+  NotificationService.init();
 
   runApp(
     MultiProvider(

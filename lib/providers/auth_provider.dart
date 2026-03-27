@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'stats_provider.dart';
+import 'profile_provider.dart';
+import 'package:provider/provider.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -97,11 +100,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Logout
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
     try {
       isLoading = true;
       notifyListeners();
+
+      // Clear memory caches in other providers first
+      Provider.of<StatsProvider>(context, listen: false).clearAllCache();
+      Provider.of<ProfileProvider>(context, listen: false).clearProfile();
 
       await _service.logout();
       user = null;

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'profile_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -150,6 +152,18 @@ class AuthService {
     try {
       await _firebaseAuth.signOut();
       await _googleSignIn.signOut();
+      
+      // Clear Firestore offline cache (optional, but good for clean start)
+      // await FirebaseFirestore.instance.terminate();
+      // await FirebaseFirestore.instance.clearPersistence();
+
+      // Clear local SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      // Clear Hive boxes
+      await Hive.deleteFromDisk();
+      
     } catch (e) {
       throw Exception("Logout failed: ${e.toString()}");
     }

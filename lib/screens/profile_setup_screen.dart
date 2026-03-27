@@ -14,6 +14,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final codechefCtrl = TextEditingController();
   final codeforcesCtrl = TextEditingController();
   final githubCtrl = TextEditingController();
+  final hackerrankCtrl = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -23,6 +24,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     codechefCtrl.dispose();
     codeforcesCtrl.dispose();
     githubCtrl.dispose();
+    hackerrankCtrl.dispose();
     super.dispose();
   }
 
@@ -125,6 +127,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             label: "GitHub Username",
                             icon: Icons.account_tree,
                           ),
+                          const SizedBox(height: 20),
+                          _buildInputField(
+                            controller: hackerrankCtrl,
+                            label: "HackerRank Username (Optional)",
+                            icon: Icons.code_rounded,
+                            required: false,
+                          ),
                           const SizedBox(height: 30),
 
                           // Modern Button
@@ -147,6 +156,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         codechef: codechefCtrl.text.trim(),
                                         codeforces: codeforcesCtrl.text.trim(),
                                         github: githubCtrl.text.trim(),
+                                        hackerrank: hackerrankCtrl.text.trim(),
                                       );
 
                                       // Check if save was successful
@@ -218,13 +228,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    bool required = true,
   }) {
     final theme = Theme.of(context);
 
     return TextFormField(
       controller: controller,
       validator: (value) =>
-          value == null || value.isEmpty ? "Required field" : null,
+          required && (value == null || value.isEmpty) ? "Required field" : null,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
