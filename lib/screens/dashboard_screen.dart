@@ -109,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               if (githubUser.isNotEmpty)
                 github.fetchGithubData(githubUser, forceRefresh: true),
-              stats.fetchUpcomingContests(),
+              stats.fetchUpcomingContests(cfHandle: cfUser, lcHandle: leetcodeUser),
             ]);
           },
           child: SingleChildScrollView(
@@ -142,12 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildCareerBanner(context),
                 const SizedBox(height: 16),
 
-                // ── Contest Tracker ─────────────────────────────────────────
-                ContestTrackerCard(
-                  contests: stats.upcomingContests,
-                  isLoading: stats.contestsLoading,
-                ),
-                const SizedBox(height: 16),
+
 
                 // ── Total Problems Solved ───────────────────────────────────
                 UnifiedAnalyticsCard(
@@ -220,19 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── AI Coding Insights ──────────────────────────────────────
-                AIInsightsCard(
-                  leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
-                  githubCommits:
-                      github.githubStats?.totalContributions ?? 0,
-                  tagStats: stats.leetcodeStats?.tagStats ?? {},
-                  easy: stats.leetcodeStats?.easy ?? 0,
-                  medium: stats.leetcodeStats?.medium ?? 0,
-                  hard: stats.leetcodeStats?.hard ?? 0,
-                  recommendation: stats.aiRecommendation,
-                ),
-                const SizedBox(height: 16),
-
+                
                 // ── Achievements ────────────────────────────────────────────
                 if (unlockedAchievements.isNotEmpty) ...[
                   _buildAchievementsSection(
@@ -262,7 +245,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SkillRadarChart(tagStats: tagStats),
                   const SizedBox(height: 16),
                 ],
+
+                const SizedBox(height: 16),
+                // ── AI Coding Insights ──────────────────────────────────────
+                AIInsightsCard(
+                  leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
+                  githubCommits:
+                      github.githubStats?.totalContributions ?? 0,
+                  tagStats: stats.leetcodeStats?.tagStats ?? {},
+                  easy: stats.leetcodeStats?.easy ?? 0,
+                  medium: stats.leetcodeStats?.medium ?? 0,
+                  hard: stats.leetcodeStats?.hard ?? 0,
+                  recommendation: stats.aiRecommendation,
+                ),
+                const SizedBox(height: 16),
+
               ],
+
+              
             ),
           ),
         ),

@@ -17,6 +17,7 @@ class ContestTrackerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return ModernCard(
       padding: const EdgeInsets.all(24),
@@ -25,18 +26,54 @@ class ContestTrackerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.event_note_rounded, color: theme.colorScheme.primary),
-              const SizedBox(width: 12),
-              const Text(
-                'Upcoming Contests',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.event_note_rounded,
+                        color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    const Flexible(
+                      child: Text(
+                        'Upcoming Contests',
+                        style: TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               if (isLoading)
                 const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/contests'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          size: 10, color: theme.colorScheme.primary),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -56,60 +93,84 @@ class ContestTrackerCard extends StatelessWidget {
               separatorBuilder: (context, index) => const Divider(height: 24),
               itemBuilder: (context, index) {
                 final contest = contests[index];
-                final isToday = contest.startTime.day == DateTime.now().day;
+
+                final Color platformColor;
+                switch (contest.platform.toLowerCase()) {
+                  case 'codeforces':
+                    platformColor = Colors.redAccent;
+                    break;
+                  case 'leetcode':
+                    platformColor = AppTheme.leetCodeYellow;
+                    break;
+                  case 'codechef':
+                    platformColor = const Color(0xFFE08D2D);
+                    break;
+                  default:
+                    platformColor = Colors.blueAccent;
+                }
 
                 return Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      width: 80,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
-                        color: contest.platform == 'Codeforces' 
-                            ? Colors.red.withOpacity(0.1) 
-                            : Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: platformColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: platformColor.withOpacity(0.25), width: 1),
                       ),
-                      child: Text(
-                        contest.platform,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: contest.platform == 'Codeforces' ? Colors.red : Colors.orange,
+                      child: Center(
+                        child: Text(
+                          contest.platform,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: platformColor,
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             contest.title,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            DateFormat('MMM d, hh:mm a').format(contest.startTime),
+                            DateFormat('MMM d, hh:mm a')
+                                .format(contest.startTime),
                             style: TextStyle(
                               fontSize: 12,
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onSurface
+                                  .withOpacity(0.5),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (isToday)
+                    if (contest.startsSoon)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
+                          color: Colors.amber.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'TODAY',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),
-                        ),
+                        child: const Icon(Icons.flash_on_rounded,
+                            size: 12, color: Colors.amber),
                       ),
                   ],
                 );

@@ -63,6 +63,13 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _pushItem(
                   context,
+                  title: 'Contest Calendar',
+                  icon: Icons.calendar_today_rounded,
+                  route: '/contests',
+                  isDark: isDark,
+                ),
+                _pushItem(
+                  context,
                   title: 'Career Dashboard',
                   icon: Icons.description_rounded,
                   route: '/resume',

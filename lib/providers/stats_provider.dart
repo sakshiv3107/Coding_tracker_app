@@ -162,8 +162,10 @@ class StatsProvider extends ChangeNotifier {
   List<Submission> get failedProblems => _failedProblems;
 
   List<Contest> _upcomingContests = [];
+  List<Contest> _attendedContests = [];
   bool _contestsLoading = false;
   List<Contest> get upcomingContests => _upcomingContests;
+  List<Contest> get attendedContests => _attendedContests;
   bool get contestsLoading => _contestsLoading;
 
   // ── Cache helpers ──────────────────────────────────────────────────────────
@@ -193,12 +195,18 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── Contests ────────────────────────────────────────────────────────────────
-  Future<void> fetchUpcomingContests() async {
+  Future<void> fetchUpcomingContests({String? cfHandle, String? lcHandle}) async {
     if (_contestsLoading) return; // dedup
     _contestsLoading = true;
     notifyListeners();
     try {
-      _upcomingContests = await ContestService().fetchUpcomingContests();
+      final service = ContestService();
+      final results = await Future.wait([
+        service.fetchUpcomingContests(),
+        service.fetchAttendedContests(cfHandle: cfHandle, lcHandle: lcHandle),
+      ]);
+      _upcomingContests = results[0];
+      _attendedContests = results[1];
     } catch (e) {
       debugPrint('[Contests] fetch error: $e');
     }

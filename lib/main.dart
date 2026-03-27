@@ -21,6 +21,7 @@ import 'screens/settings_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/hackerrank_stats_screen.dart';
 import 'screens/resume_screen.dart';
+import 'screens/contest_calendar_screen.dart';
 import 'firebase_options.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -80,6 +81,7 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/edit_profile': (context) => const EditProfileScreen(),
         '/resume': (context) => const ResumeScreen(),
+        '/contests': (context) => const ContestCalendarScreen(),
       },
     );
   }
