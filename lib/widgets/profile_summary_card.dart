@@ -93,10 +93,11 @@ class ProfileSummaryCard extends StatelessWidget {
                         maxLines: 1,
                       ),
                       const SizedBox(height: 12),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           _smallBadge(FontAwesomeIcons.cube, '$totalPlatforms Nodes', AppTheme.primary),
-                          const SizedBox(width: 8),
                           _smallBadge(FontAwesomeIcons.circleCheck, 'Verified', Colors.green),
                         ],
                       ),

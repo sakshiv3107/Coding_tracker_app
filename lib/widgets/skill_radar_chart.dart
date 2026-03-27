@@ -62,10 +62,10 @@ class SkillRadarChart extends StatelessWidget {
                     angle: angle,
                   );
                 },
-                titlePositionPercentageOffset: 0.15,
+                titlePositionPercentageOffset: 0.25,
                 titleTextStyle: TextStyle(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.bold,
                 ),
               ),

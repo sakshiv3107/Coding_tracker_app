@@ -80,13 +80,17 @@ class PlatformQuickStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth > 600 ? 3 : 2;
+    final padding = screenWidth > 400 ? 16.0 : 12.0;
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.1,
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: padding,
+      mainAxisSpacing: padding,
+      childAspectRatio: screenWidth > 360 ? 1.05 : 0.95,
       children: [
         _platformCard(
           context: context,
@@ -222,32 +226,36 @@ class PlatformQuickStatsGrid extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    letterSpacing: -0.2,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 4),
-                if (hasError || isRateLimited) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                   Text(
-                    statusText,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: stateColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      letterSpacing: -0.2,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
-                  if (isRateLimited)
+                  const SizedBox(height: 2),
+                  if (hasError || isRateLimited) ...[
+                    FittedBox(
+                      fit: MediaQuery.of(context).textScaleFactor > 1.2 ? BoxFit.scaleDown : BoxFit.none,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        isRateLimited ? 'Rate Limited' : 'Profile Error',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: stateColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       'Tap to retry',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -256,29 +264,32 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                ] else ...[
-                  Text(
-                    mainStat,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textPrimaryDark.withOpacity(0.9),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  ] else ...[
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        mainStat,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textPrimaryDark.withOpacity(0.9),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Text(
-                    subStat,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppTheme.textSecondaryDark.withOpacity(0.4),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 10,
+                    Text(
+                      subStat,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),

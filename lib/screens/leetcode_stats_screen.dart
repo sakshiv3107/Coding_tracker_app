@@ -84,37 +84,41 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                 sliver: SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      _buildBackButton(context),
-                      const SizedBox(width: 12),
-                      _buildMenuButton(context),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'LeetCode',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          Text(
-                            'Analytics Dashboard',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondaryDark.withOpacity(
-                                0.5,
+                    child: Row(
+                      children: [
+                        _buildBackButton(context),
+                        const SizedBox(width: 8),
+                        _buildMenuButton(context),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'LeetCode',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 24,
+                                  letterSpacing: -1,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              fontWeight: FontWeight.w600,
-                            ),
+                              Text(
+                                'Analytics Dashboard',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondaryDark.withOpacity(0.5),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const Spacer(),
-                      _buildRefreshButton(stats.leetcodeLoading),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildRefreshButton(stats.leetcodeLoading),
+                      ],
+                    ),
                 ),
               ),
 

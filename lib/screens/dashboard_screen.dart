@@ -114,20 +114,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Row(
                     children: [
                       Builder(builder: (context) {
-                        final isDark =
-                            Theme.of(context).brightness == Brightness.dark;
+                        final isDark = Theme.of(context).brightness == Brightness.dark;
                         return Container(
-                          margin: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.only(right: 16),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppTheme.surfaceDark
-                                : Colors.white,
+                            color: isDark ? AppTheme.surfaceDark : Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.black.withOpacity(0.05),
-                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -137,56 +129,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                           child: IconButton(
-                            icon: Icon(
-                              Icons.menu_rounded,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppTheme.textPrimaryLight,
-                              size: 22,
-                            ),
-                            onPressed: () =>
-                                Scaffold.of(context).openDrawer(),
+                            icon: const Icon(Icons.menu_rounded, size: 22),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
                           ),
                         );
                       }),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hello, ${userName.split(' ').first}!',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hello, ${userName.split(' ').first}!',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          Text(
-                            'Your coding journey continues...',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondaryDark
-                                  .withOpacity(0.5),
-                              fontWeight: FontWeight.w600,
+                            Text(
+                              'The grind continues...',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 12),
                       // XP Bar
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceDarkLighter.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.05),
-                          ),
+                          border: Border.all(color: Colors.white.withOpacity(0.05)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.bolt_rounded,
-                                color: AppTheme.accent, size: 20),
+                            const Icon(Icons.bolt_rounded, color: AppTheme.accent, size: 18),
                             const SizedBox(width: 8),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

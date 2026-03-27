@@ -43,53 +43,59 @@ class UnifiedAnalyticsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CUMULATIVE PROGRESS',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                          color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CUMULATIVE PROGRESS',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        totalSolved.toString(),
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 48,
-                          letterSpacing: -1,
+                        const SizedBox(height: 8),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            totalSolved.toString(),
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 48,
+                              letterSpacing: -1,
+                            ),
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Total Problems Decimated',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondaryDark.withOpacity(0.6),
-                          fontWeight: FontWeight.w700,
+                        Text(
+                          'Total Problems Decimated',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondaryDark.withOpacity(0.6),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 16),
                   SizedBox(
-                    height: 100,
-                    width: 100,
+                    height: 90,
+                    width: 90,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         PieChart(
                           PieChartData(
                             sectionsSpace: 2,
-                            centerSpaceRadius: 32,
+                            centerSpaceRadius: 28,
                             startDegreeOffset: 270,
                             sections: _buildPieSections(),
                           ),
                         ),
-                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withOpacity(0.3), size: 24),
+                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withOpacity(0.3), size: 20),
                       ],
                     ),
                   ),
@@ -190,18 +196,26 @@ class UnifiedAnalyticsCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value.toString(),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
-              ),
-              Text(
-                label,
-                style: TextStyle(fontSize: 8, color: color.withOpacity(0.6), fontWeight: FontWeight.w900, letterSpacing: 1),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 8, color: color.withOpacity(0.6), fontWeight: FontWeight.w900, letterSpacing: 1),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
           ),
         ],
       ),
