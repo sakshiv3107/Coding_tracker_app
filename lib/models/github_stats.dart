@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_constructors_over_static_methods
 class GithubStats {
   final String login;
   final String avatarUrl;
@@ -74,6 +75,61 @@ class GithubStats {
       totalContributions: user["contributionsCollection"]?["contributionCalendar"]?["totalContributions"] ?? 0,
       contributionCalendar: calendar,
     );
+  }
+
+  // ── Disk-cache serialisation ───────────────────────────────────────────────
+
+  /// Deserialise from a flat map stored in SharedPreferences.
+  factory GithubStats.fromCache(Map<String, dynamic> json) {
+    // Contribution calendar is stored as Map<String, int> (ISO date → count)
+    final Map<DateTime, int> calendar = {};
+    final rawCal = json['contributionCalendar'] as Map<String, dynamic>?;
+    rawCal?.forEach((k, v) {
+      try {
+        calendar[DateTime.parse(k)] = v as int;
+      } catch (_) {}
+    });
+
+    final Map<String, double> languages = {};
+    final rawLang = json['topLanguages'] as Map<String, dynamic>?;
+    rawLang?.forEach((k, v) => languages[k] = (v as num).toDouble());
+
+    return GithubStats(
+      login: json['login'] ?? '',
+      avatarUrl: json['avatarUrl'] ?? '',
+      name: json['name'] ?? '',
+      bio: json['bio'] as String?,
+      publicRepos: json['publicRepos'] ?? 0,
+      followers: json['followers'] ?? 0,
+      following: json['following'] ?? 0,
+      totalStars: json['totalStars'] ?? 0,
+      totalStarredRepos: json['totalStarredRepos'] ?? 0,
+      topLanguages: languages,
+      totalContributions: json['totalContributions'] ?? 0,
+      contributionCalendar: calendar,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    // Serialise calendar as Map<String, int> (ISO date → count)
+    final calMap = <String, int>{};
+    contributionCalendar.forEach(
+        (d, c) => calMap[d.toIso8601String().split('T').first] = c);
+
+    return {
+      'login': login,
+      'avatarUrl': avatarUrl,
+      'name': name,
+      'bio': bio,
+      'publicRepos': publicRepos,
+      'followers': followers,
+      'following': following,
+      'totalStars': totalStars,
+      'totalStarredRepos': totalStarredRepos,
+      'topLanguages': topLanguages,
+      'totalContributions': totalContributions,
+      'contributionCalendar': calMap,
+    };
   }
 }
 

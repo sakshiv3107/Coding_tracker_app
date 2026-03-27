@@ -93,13 +93,6 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _buildMenuItem(
                   context,
-                  title: 'GeeksforGeeks',
-                  icon: Icons.school_rounded,
-                  route: '/gfg_stats',
-                  currentRoute: currentRoute,
-                ),
-                _buildMenuItem(
-                  context,
                   title: 'Codeforces',
                   icon: Icons.trending_up_rounded,
                   route: '/codeforces_stats',

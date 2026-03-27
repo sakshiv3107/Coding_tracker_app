@@ -8,7 +8,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
   final int leetcode;
   final int codeforces;
   final int codechef;
-  final int gfg;
   final int hackerrank;
   final int githubStars;
   final int githubRepos;
@@ -19,7 +18,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     required this.leetcode,
     required this.codeforces,
     required this.codechef,
-    required this.gfg,
     required this.hackerrank,
     required this.githubStars,
     required this.githubRepos,
@@ -29,7 +27,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final totalSolved = leetcode + codeforces + codechef + gfg + hackerrank;
+    final totalSolved = leetcode + codeforces + codechef + hackerrank;
 
     return ModernCard(
       padding: EdgeInsets.zero,
@@ -113,8 +111,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                     _divider(),
                     _buildPlatformRow('CodeChef', codechef, const Color(0xFF8B4513)),
                     _divider(),
-                    _buildPlatformRow('GeeksforGeeks', gfg, const Color(0xFF2F8946)),
-                    _divider(),
                     _buildPlatformRow('HackerRank', hackerrank, const Color(0xFF2EC366)),
                   ],
                 ),
@@ -145,7 +141,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     if (leetcode > 0) count++;
     if (codeforces > 0) count++;
     if (codechef > 0) count++;
-    if (gfg > 0) count++;
     if (hackerrank > 0) count++;
     if (githubRepos > 0) count++;
     return count;
@@ -214,7 +209,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
   }
 
   List<PieChartSectionData> _buildPieSections() {
-    final total = leetcode + codeforces + codechef + gfg + hackerrank;
+    final total = leetcode + codeforces + codechef + hackerrank;
     if (total == 0) return [PieChartSectionData(color: Colors.white.withOpacity(0.1), value: 1, radius: 12, showTitle: false)];
 
     return [
@@ -224,8 +219,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
         PieChartSectionData(color: Colors.blueAccent, value: codeforces.toDouble(), radius: 12, showTitle: false),
       if (codechef > 0)
         PieChartSectionData(color: const Color(0xFF8B4513), value: codechef.toDouble(), radius: 12, showTitle: false),
-      if (gfg > 0)
-        PieChartSectionData(color: const Color(0xFF2F8946), value: gfg.toDouble(), radius: 12, showTitle: false),
       if (hackerrank > 0)
         PieChartSectionData(color: const Color(0xFF2EC366), value: hackerrank.toDouble(), radius: 12, showTitle: false),
     ];

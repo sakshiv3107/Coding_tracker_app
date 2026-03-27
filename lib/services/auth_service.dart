@@ -25,7 +25,7 @@ class AuthService {
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   // Sign up with email and password
-  Future<Map<String, String>> signUp(
+  Future<Map<String, dynamic>> signUp(
     String email,
     String password,
     String name,
@@ -53,14 +53,17 @@ class AuthService {
         "uid": userCredential.user!.uid,
         "email": userCredential.user!.email ?? "",
         "name": name,
+        "isNewUser": true,
       };
     } on FirebaseAuthException catch (e) {
-      throw _handleFirebaseException(e);
+      throw Exception(_handleFirebaseException(e));
     }
   }
 
   // Login with email and password
-  Future<Map<String, String>> login(String email, String password) async {
+  // Firebase SDK v9+ returns 'invalid-credential' for BOTH wrong-password and user-not-found.
+  // To distinguish: first fetch sign-in methods for the email.
+  Future<Map<String, dynamic>> login(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
       throw Exception("All fields required");
     }
@@ -73,14 +76,35 @@ class AuthService {
         "uid": userCredential.user!.uid,
         "email": userCredential.user!.email ?? "",
         "name": userCredential.user!.displayName ?? email.split('@')[0],
+        "isNewUser": false,
       };
     } on FirebaseAuthException catch (e) {
-      throw _handleFirebaseException(e);
+      // For 'invalid-credential' we disambiguate via fetchSignInMethodsForEmail
+      if (e.code == 'invalid-credential' ||
+          e.code == 'wrong-password' ||
+          e.code == 'user-not-found') {
+        final methods = await _tryFetchSignInMethods(email);
+        if (methods == null || methods.isEmpty) {
+          throw Exception("User not registered. Sign up now.");
+        } else {
+          throw Exception("Incorrect password. Please try again.");
+        }
+      }
+      throw Exception(_handleFirebaseException(e));
     }
   }
 
-  // Google Sign In
-  Future<Map<String, String>> signInWithGoogle() async {
+  /// Safely fetch sign-in methods; returns null on error (network etc.)
+  Future<List<String>?> _tryFetchSignInMethods(String email) async {
+    try {
+      return await _firebaseAuth.fetchSignInMethodsForEmail(email);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Google Sign In — returns isNewUser flag
+  Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -96,10 +120,13 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _firebaseAuth
-          .signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
 
-      // Save user info to Firestore
+      final bool isNew =
+          userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      // Save user info to Firestore for ALL users (merge, so old data is safe)
       await _profileService.saveUserInfo(
         email: userCredential.user!.email ?? "",
         name: userCredential.user!.displayName ?? "User",
@@ -109,9 +136,10 @@ class AuthService {
         "uid": userCredential.user!.uid,
         "email": userCredential.user!.email ?? "",
         "name": userCredential.user!.displayName ?? "User",
+        "isNewUser": isNew,
       };
     } on FirebaseAuthException catch (e) {
-      throw _handleFirebaseException(e);
+      throw Exception(_handleFirebaseException(e));
     } catch (e) {
       throw Exception("Google sign in failed: ${e.toString()}");
     }
@@ -136,7 +164,7 @@ class AuthService {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      throw _handleFirebaseException(e);
+      throw Exception(_handleFirebaseException(e));
     }
   }
 
@@ -144,7 +172,7 @@ class AuthService {
   String _handleFirebaseException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'The password provided is too weak (min 6 characters).';
       case 'email-already-in-use':
         return 'An account already exists for that email.';
       case 'invalid-email':
@@ -154,11 +182,15 @@ class AuthService {
       case 'user-disabled':
         return 'This user account has been disabled.';
       case 'user-not-found':
-        return 'No user found for that email.';
+        return 'User not registered. Sign up now.';
       case 'wrong-password':
-        return 'Wrong password provided.';
+        return 'Incorrect password. Please try again.';
       case 'invalid-credential':
-        return 'Invalid email or password.';
+        return 'Invalid credentials. Please check and try again.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Check your internet connection.';
       default:
         return 'An authentication error occurred: ${e.message}';
     }

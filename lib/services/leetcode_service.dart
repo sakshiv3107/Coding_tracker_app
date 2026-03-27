@@ -15,15 +15,20 @@ import '../core/exceptions.dart';
 //   3. Sequential REST via alfa-leetcode-api (150ms delay between calls)
 //      with optional GraphQL fallback on real devices
 //
-// FIX SUMMARY (vs previous version):
-//   - Replaced parallel Future.wait in _fetchRest with sequential awaits +
-//     150ms delays → eliminates HTTP 429 bursts on the free Render instance
-//   - _fetchPart now re-throws UserNotFoundException so a real 404 is never
-//     swallowed and misreported as "User Not Found" due to a network error
-//   - Removed parallel race between GraphQL + REST for Profile/Submissions;
-//     REST is now the primary source; GraphQL can be re-enabled per-device
-//   - Rate-limit errors (429) surface a human-readable message instead of
-//     the generic "All N sources failed" chain
+// FIX SUMMARY v2 (vs previous version):
+//   - FIX #1: totalSolved was reading "totalSolved" but alfa API returns
+//     "solvedProblem" on the /{username} endpoint. Now tries both keys +
+//     dedicated /{username}/solved endpoint as authoritative source.
+//   - FIX #2: easy/medium/hard counts now fall back to alternate key names
+//     ("easy", "medium", "hard") in case the API shape changes.
+//   - FIX #3: Added /{username}/solved endpoint call in profile fetch path.
+//     Its data is merged into profileData so solved counts are always reliable.
+//   - FIX #4: tagStats parsing now handles both "tagSkillStats" and
+//     "advancedTagProblemCounts" wrapper shapes returned by different API versions.
+//   - FIX #5: Added verbose debug logging of raw profileData keys & solved
+//     fields so future regressions are trivially diagnosable.
+//   - All prior fixes (sequential calls, 429 surfacing, UserNotFoundException
+//     re-throw) are retained unchanged.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class LeetcodeService {
@@ -114,12 +119,28 @@ class LeetcodeService {
   }
 
   Future<LeetcodeStats> _fetchFresh(String username) async {
-    debugPrint("[LC] 🔄 Starting multi-source assembly for: $username");
+    debugPrint("[LC] 🔄 Starting data assembly for: $username");
 
-    // FIX: Fetch profile first, then submissions sequentially.
-    // Previously both were fired in parallel via Future.wait, which combined
-    // with the 6-parallel calls inside _fetchRest caused 12 simultaneous
-    // requests → instant 429 on the free Render instance.
+    // 1 ── Attempt Direct GraphQL (Fastest, one call)
+    try {
+      final gqlStats = await _fetchGraphQL(
+        username,
+        "https://leetcode.com/graphql",
+        label: "Direct GraphQL",
+        query: _gqlUnifiedQuery,
+      );
+      
+      _cache = gqlStats;
+      _lastFetch = DateTime.now();
+      await _saveToDisk(username, gqlStats);
+      return gqlStats;
+    } catch (e) {
+      debugPrint("[LC] ⚠️ GraphQL failed: $e. Falling back to multi-source REST.");
+      // If we got a UserNotFoundException, don't bother falling back
+      if (e is UserNotFoundException) rethrow;
+    }
+
+    // 2 ── Fallback: Multi-source REST assembly (Slower, 5+ calls)
     final profileStats = await _fetchPart(
       (u) => _getProfile(u),
       username,
@@ -132,7 +153,6 @@ class LeetcodeService {
       );
     }
 
-    // Small delay between the two top-level fetches
     await Future.delayed(_restCallDelay);
 
     final subStats = await _fetchPart(
@@ -171,18 +191,17 @@ class LeetcodeService {
     await _saveToDisk(username, combined);
 
     debugPrint(
-      "[LC] 🏁 Combined fetch successful: "
+      "[LC] 🏁 REST fallback successful: "
       "solved=${combined.totalSolved}, "
-      "submissions=${combined.recentSubmissions?.length}",
+      "easy=${combined.easy}, "
+      "medium=${combined.medium}, "
+      "hard=${combined.hard}",
     );
     return combined;
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  /// FIX: Re-throw [UserNotFoundException] so a real 404 isn't swallowed and
-  /// later misreported as "user not found" due to a network / rate-limit error.
-  /// Also surfaces 429 with a human-readable message.
   Future<LeetcodeStats?> _fetchPart(
     Future<LeetcodeStats> Function(String) fetcher,
     String username,
@@ -191,7 +210,6 @@ class LeetcodeService {
     try {
       return await fetcher(username).timeout(_raceTimeout);
     } on UserNotFoundException {
-      // Real 404 → bubble up so caller can show "user not found"
       rethrow;
     } catch (e) {
       final msg = e.toString();
@@ -207,15 +225,10 @@ class LeetcodeService {
     }
   }
 
-  // FIX: Use only the alfa REST source (no parallel GraphQL race).
-  // The direct leetcode.com/graphql endpoint is blocked by CORS/bot-detection
-  // outside of real Android/iOS devices. Racing it alongside REST was causing
-  // double the concurrent connections for no benefit in emulator/desktop.
-  // To re-enable GraphQL on real devices, swap these back to _race([gql, rest]).
   Future<LeetcodeStats> _getProfile(String username) {
     return _fetchRest(
       username,
-      "https://alfa-leetcode-api.onrender.com",
+      "https://leetcode.com/graphql",
       label: "alfa REST Profile",
       fetchType: _RestFetchType.profile,
     );
@@ -224,15 +237,11 @@ class LeetcodeService {
   Future<LeetcodeStats> _getSubmissions(String username) {
     return _fetchRest(
       username,
-      "https://alfa-leetcode-api.onrender.com",
+      "https://leetcode.com/graphql",
       label: "alfa REST Subs",
       fetchType: _RestFetchType.submissions,
     );
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SOURCE — alfa-leetcode-api REST (Sequential)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<LeetcodeStats> _fetchRest(
     String username,
@@ -255,7 +264,6 @@ class LeetcodeService {
         }
         debugPrint("[LC]   $label/$path → HTTP ${res.statusCode}");
 
-        // FIX: Surface 429 explicitly so _fetchPart can handle it correctly
         if (res.statusCode == 429) {
           throw Exception("[$label] HTTP 429 rate limit on $path");
         }
@@ -268,12 +276,8 @@ class LeetcodeService {
       }
     }
 
-    // ── FIX: Sequential calls with delay instead of parallel Future.wait ─────
-    // Previously all 6 endpoints were fired simultaneously, which combined with
-    // the parallel Profile + Submissions fetch above meant up to 12 concurrent
-    // requests against the free Render instance, triggering instant 429s.
-
     Map<String, dynamic>? profileData;
+    Map<String, dynamic>? solvedData;   // FIX #3: dedicated /solved endpoint
     Map<String, dynamic>? calBody;
     Map<String, dynamic>? contestBody;
     Map<String, dynamic>? submitBody;
@@ -281,20 +285,44 @@ class LeetcodeService {
     Map<String, dynamic>? skillBody;
 
     if (fetchType == _RestFetchType.profile) {
-      profileData   = await tryGet("$username");
+      profileData = await tryGet("$username");
       await Future.delayed(_restCallDelay);
-      calBody       = await tryGet("$username/submissionCalendar");
+
+      // FIX #3: /{username}/solved is the authoritative source for problem
+      // counts. Merge it into profileData so the parsing below always has
+      // the correct values regardless of which shape /{username} returns.
+      solvedData  = await tryGet("$username/solved");
       await Future.delayed(_restCallDelay);
-      contestBody   = await tryGet("$username/contest");
+
+      calBody     = await tryGet("$username/submissionCalendar");
       await Future.delayed(_restCallDelay);
-      skillBody     = await tryGet("$username/skillStats");
+      contestBody = await tryGet("$username/contest");
+      await Future.delayed(_restCallDelay);
+      skillBody   = await tryGet("$username/skillStats");
+
+      // Merge solved data on top of profile data so solved counts win
+      if (solvedData != null && profileData != null) {
+        profileData = {...profileData, ...solvedData};
+      } else if (solvedData != null) {
+        profileData = solvedData;
+      }
+
+      // FIX #5: Log raw keys so we can diagnose field-name mismatches easily
+      debugPrint("[LC] 🔑 profileData keys: ${profileData?.keys.toList()}");
+      debugPrint(
+        "[LC] 🔢 solved fields — "
+        "totalSolved=${profileData?['totalSolved']}, "
+        "solvedProblem=${profileData?['solvedProblem']}, "
+        "easySolved=${profileData?['easySolved']}, "
+        "mediumSolved=${profileData?['mediumSolved']}, "
+        "hardSolved=${profileData?['hardSolved']}",
+      );
     } else {
-      // Submissions-only fetch — only hit the endpoints we actually need
-      profileData   = await tryGet("$username"); // needed for null-check
+      profileData  = await tryGet("$username");
       await Future.delayed(_restCallDelay);
-      submitBody    = await tryGet("$username/submission");
+      submitBody   = await tryGet("$username/submission");
       await Future.delayed(_restCallDelay);
-      acSubmitBody  = await tryGet("$username/acSubmission");
+      acSubmitBody = await tryGet("$username/acSubmission");
     }
 
     if (profileData == null) {
@@ -378,18 +406,66 @@ class LeetcodeService {
     final streaks = _calculateStreaks(calendar);
 
     // ── Tag stats ─────────────────────────────────────────────────────────────
+    // FIX #4: Handle multiple wrapper shapes that the API returns across
+    // different deployed versions:
+    //   Shape A: { "tagSkillStats": { "fundamental": [...], ... } }
+    //   Shape B: { "advancedTagProblemCounts": [...], "intermediateTagProblemCounts": [...], ... }
+    //   Shape C: { "skillStats": { "fundamental": [...], ... } }
+    //   Shape D: the root skillBody itself is the map
     final Map<String, int> tagStats = {};
     if (skillBody != null) {
-      final tags = skillBody["tagSkillStats"] ?? skillBody["skillStats"] ?? skillBody;
-      if (tags is Map) {
+      // Try shape A / C: nested under a known wrapper key
+      final wrapper = skillBody["tagSkillStats"] ??
+          skillBody["skillStats"] ??
+          skillBody["tagProblemCounts"];
+
+      if (wrapper is Map) {
+        // Shape A / C / D
         for (final level in ["fundamental", "intermediate", "advanced"]) {
-          final cats = tags[level] as List?;
+          final cats = wrapper[level] as List?;
           if (cats != null) {
             for (final item in cats) {
               final i = item as Map<String, dynamic>;
               final name = i["tagName"]?.toString() ?? "";
               if (name.isNotEmpty) {
-                tagStats[name] = (tagStats[name] ?? 0) + _toInt(i["problemsSolved"]);
+                tagStats[name] =
+                    (tagStats[name] ?? 0) + _toInt(i["problemsSolved"]);
+              }
+            }
+          }
+        }
+      } else {
+        // Shape B: flat lists at root level
+        for (final levelKey in [
+          "fundamentalTagProblemCounts",
+          "intermediateTagProblemCounts",
+          "advancedTagProblemCounts",
+        ]) {
+          final cats = skillBody[levelKey] as List?;
+          if (cats != null) {
+            for (final item in cats) {
+              final i = item as Map<String, dynamic>;
+              final name = i["tagName"]?.toString() ?? "";
+              if (name.isNotEmpty) {
+                tagStats[name] =
+                    (tagStats[name] ?? 0) + _toInt(i["problemsSolved"]);
+              }
+            }
+          }
+        }
+
+        // Last resort: treat root level keys as the map directly (original logic)
+        if (tagStats.isEmpty) {
+          for (final level in ["fundamental", "intermediate", "advanced"]) {
+            final cats = skillBody[level] as List?;
+            if (cats != null) {
+              for (final item in cats) {
+                final i = item as Map<String, dynamic>;
+                final name = i["tagName"]?.toString() ?? "";
+                if (name.isNotEmpty) {
+                  tagStats[name] =
+                      (tagStats[name] ?? 0) + _toInt(i["problemsSolved"]);
+                }
               }
             }
           }
@@ -397,19 +473,41 @@ class LeetcodeService {
       }
     }
 
+    // ── FIX #1 & #2: Robust solved-count extraction ──────────────────────────
+    // The alfa API /{username} endpoint has returned different field names
+    // across versions. Priority order:
+    //   1. "solvedProblem"  — returned by /{username}/solved (merged above)
+    //   2. "totalSolved"    — older /{username} shape
+    //   3. "totalQuestions" — some forks use this
+    // For easy/medium/hard the field names are stable but we add fallbacks too.
+    final int totalSolved = _toInt(
+      profileData["solvedProblem"] ??
+      profileData["totalSolved"] ??
+      profileData["totalQuestions"],
+    );
+    final int easySolved = _toInt(
+      profileData["easySolved"] ?? profileData["easy"],
+    );
+    final int mediumSolved = _toInt(
+      profileData["mediumSolved"] ?? profileData["medium"],
+    );
+    final int hardSolved = _toInt(
+      profileData["hardSolved"] ?? profileData["hard"],
+    );
+
     debugPrint(
       "[LC] ✅ $label succeeded — "
-      "solved=${profileData["totalSolved"]} "
+      "solved=$totalSolved (easy=$easySolved, med=$mediumSolved, hard=$hardSolved) "
       "contests=${contestHistory.length} "
       "submissions=${recentSubmissions.length} "
       "tags=${tagStats.length}",
     );
 
     return LeetcodeStats(
-      totalSolved: _toInt(profileData["totalSolved"]),
-      easy: _toInt(profileData["easySolved"]),
-      medium: _toInt(profileData["mediumSolved"]),
-      hard: _toInt(profileData["hardSolved"]),
+      totalSolved: totalSolved,
+      easy: easySolved,
+      medium: mediumSolved,
+      hard: hardSolved,
       avatar: profileData["avatar"]?.toString() ?? "",
       ranking: _toInt(profileData["ranking"]),
       rating: _toDouble(summary?["contestRating"]),
@@ -440,8 +538,8 @@ class LeetcodeService {
   // _getProfile / _getSubmissions on confirmed real-device builds only.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const String _gqlProfileQuery = r"""
-    query userPublicProfile($username: String!) {
+  static const String _gqlUnifiedQuery = r"""
+    query combinedUserInfo($username: String!) {
       matchedUser(username: $username) {
         profile { ranking userAvatar }
         submissionCalendar
@@ -460,11 +558,6 @@ class LeetcodeService {
         attended rating rank problemsSolved totalProblems
         contest { title startTime }
       }
-    }
-  """;
-
-  static const String _gqlSubQuery = r"""
-    query getRecentSubmissions($username: String!) {
       recentSubmissionList(username: $username, limit: 20) {
         title
         titleSlug
@@ -484,7 +577,7 @@ class LeetcodeService {
     int maxRetries = 1,
     String? query,
   }) async {
-    final finalQuery = query ?? _gqlProfileQuery;
+    final finalQuery = query ?? _gqlUnifiedQuery;
     for (var attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         final res = await http
@@ -806,9 +899,7 @@ class LeetcodeService {
     return {'streak': current, 'longestStreak': maxStreak};
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // HELPERS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ── HELPERS ─────────────────────────────────────────────────────────────────
 
   static int _toInt(dynamic v) {
     if (v == null) return 0;

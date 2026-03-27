@@ -99,22 +99,22 @@ class LeetcodeStats {
     }
 
     return LeetcodeStats(
-      totalSolved: json['totalSolved'] as int,
-      easy: json['easy'] as int,
-      medium: json['medium'] as int,
-      hard: json['hard'] as int,
-      avatar: json['avatar'] as String,
-      ranking: json['ranking'] as int,
-      rating: (json['rating'] as num).toDouble(),
+      totalSolved: (json['totalSolved'] as num? ?? 0).toInt(),
+      easy: (json['easy'] as num? ?? 0).toInt(),
+      medium: (json['medium'] as num? ?? 0).toInt(),
+      hard: (json['hard'] as num? ?? 0).toInt(),
+      avatar: json['avatar']?.toString() ?? '',
+      ranking: (json['ranking'] as num? ?? 0).toInt(),
+      rating: (json['rating'] as num? ?? 0.0).toDouble(),
       submissionCalendar: calendar,
-      streak: json['streak'] as int? ?? 0,
-      longestStreak: json['longestStreak'] as int? ?? 0,
-      activeDays: json['activeDays'] as int? ?? 0,
+      streak: (json['streak'] as num? ?? 0).toInt(),
+      longestStreak: (json['longestStreak'] as num? ?? 0).toInt(),
+      activeDays: (json['activeDays'] as num? ?? 0).toInt(),
       contestRating: (json['contestRating'] as num?)?.toDouble(),
       highestRating: (json['highestRating'] as num?)?.toDouble(),
-      globalRanking: json['globalRanking'] as int?,
+      globalRanking: (json['globalRanking'] as num?)?.toInt(),
       topPercentage: (json['topPercentage'] as num?)?.toDouble(),
-      totalContests: json['totalContests'] as int?,
+      totalContests: (json['totalContests'] as num?)?.toInt(),
       contestHistory: (json['contestHistory'] as List<dynamic>?)
           ?.map((e) => LeetCodeContestHistory.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -125,7 +125,7 @@ class LeetcodeStats {
           ?.map((e) => LeetCodeBadge.fromJson(e as Map<String, dynamic>))
           .toList(),
       tagStats: (json['tagStats'] as Map<String, dynamic>?)
-          ?.map((k, v) => MapEntry(k, v as int)),
+          ?.map((k, v) => MapEntry(k, (v as num? ?? 0).toInt())),
     );
   }
 }
@@ -160,12 +160,13 @@ class LeetCodeContestHistory {
 
   factory LeetCodeContestHistory.fromJson(Map<String, dynamic> json) =>
       LeetCodeContestHistory(
-        contestTitle: json['contestTitle'] as String,
-        rating: (json['rating'] as num).toDouble(),
-        rank: json['rank'] as int,
-        solved: json['solved'] as int?,
-        totalProblems: json['totalProblems'] as int?,
-        date: DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
+        contestTitle: json['contestTitle']?.toString() ?? '',
+        rating: (json['rating'] as num? ?? 0.0).toDouble(),
+        rank: (json['rank'] as num? ?? 0).toInt(),
+        solved: (json['solved'] as num?)?.toInt(),
+        totalProblems: (json['totalProblems'] as num?)?.toInt(),
+        date: DateTime.fromMillisecondsSinceEpoch(
+            (json['date'] as num? ?? 0).toInt()),
       );
 }
 
@@ -194,9 +195,9 @@ class LeetCodeBadge {
       };
 
   factory LeetCodeBadge.fromJson(Map<String, dynamic> json) => LeetCodeBadge(
-        name: json['name'] as String,
-        icon: json['icon'] as String,
-        description: json['description'] as String?,
-        earnedDate: json['earnedDate'] as String?,
+        name: json['name']?.toString() ?? '',
+        icon: json['icon']?.toString() ?? '',
+        description: json['description']?.toString(),
+        earnedDate: json['earnedDate']?.toString(),
       );
 }

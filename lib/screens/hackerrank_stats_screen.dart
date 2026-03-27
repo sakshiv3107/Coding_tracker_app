@@ -9,7 +9,7 @@ import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/not_connected_widget.dart';
 import '../widgets/coding_heatmap.dart';
 import '../widgets/responsive_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/platform_error_card.dart';
 
 class HackerRankStatsScreen extends StatefulWidget {

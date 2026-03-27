@@ -1,3 +1,5 @@
+// lib/screens/home/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/profile_provider.dart';
@@ -9,6 +11,7 @@ import '../github_stats_screen.dart';
 import '../dashboard_screen.dart';
 import '../goals_screen.dart';
 import '../../widgets/app_drawer.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,72 +22,113 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const DashboardScreen(),
-    const CodingStatsScreen(),
-    const GitHubStatsScreen(),
-    const GoalsScreen(),
-    const ProfileScreen(),
-  ];
+  // ✅ Pages built once, stored as late final to avoid remounting on rebuild
+  late final List<Widget> _pages;
 
-  // Track last-known usernames to detect changes
   String? _lastLcUser;
   String? _lastGhUser;
-  // Guard against re-entrant refresh during the first-load lifecycle
-  bool _initialRefreshDone = false;
+  String? _lastCfUser;
+  String? _lastCcUser;
+  String? _lastHrUser;
+
+  bool _initialFetchDone = false;
 
   @override
   void initState() {
     super.initState();
+    _pages = [
+      const DashboardScreen(),
+      const CodingStatsScreen(),
+      const GitHubStatsScreen(),
+      const GoalsScreen(),
+      const ProfileScreen(),
+    ];
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initialRefreshDone = true;
-      _refreshAllData();
+      _initializeData();
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only run after the initial post-frame refresh has been scheduled
-    if (!_initialRefreshDone) return;
+    if (!_initialFetchDone) return;
 
     final profile = context.read<ProfileProvider>();
-    final lcUser = profile.profile?["leetcode"] ?? "";
-    final ghUser = profile.profile?["github"] ?? "";
+    final lcUser = profile.profile?['leetcode'] ?? '';
+    final ghUser = profile.profile?['github'] ?? '';
+    final cfUser = profile.profile?['codeforces'] ?? '';
+    final ccUser = profile.profile?['codechef'] ?? '';
+    final hrUser = profile.profile?['hackerrank'] ?? '';
 
-    // Only refresh when usernames actually change (e.g. after edit-profile)
-    if (lcUser != _lastLcUser || ghUser != _lastGhUser) {
+    final changed = lcUser != _lastLcUser ||
+        ghUser != _lastGhUser ||
+        cfUser != _lastCfUser ||
+        ccUser != _lastCcUser ||
+        hrUser != _lastHrUser;
+
+    if (changed) {
       _lastLcUser = lcUser;
       _lastGhUser = ghUser;
-      // Schedule outside of the current build/dependency phase
+      _lastCfUser = cfUser;
+      _lastCcUser = ccUser;
+      _lastHrUser = hrUser;
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _refreshAllData();
+        if (mounted) _refreshAllData(forceRefresh: true);
       });
     }
   }
 
-  void _refreshAllData() {
+  // ── Data initialisation ──────────────────────────────────────────────────
+
+  void _initializeData() {
     if (!mounted) return;
+    final profile = context.read<ProfileProvider>();
+
+    // ✅ Profile not ready yet — wait for it then retry
+    if (profile.isLoading || profile.profile == null) {
+      profile.addListener(_onProfileReady);
+      return;
+    }
+
+    _doFetch();
+  }
+
+  /// Listener called when ProfileProvider notifies after loading completes.
+  void _onProfileReady() {
+    final profile = context.read<ProfileProvider>();
+    if (!profile.isLoading && profile.profile != null) {
+      profile.removeListener(_onProfileReady);
+      if (mounted) _doFetch();
+    }
+  }
+
+  /// The actual fetch once profile data is confirmed available.
+  void _doFetch() {
+    if (!mounted) return;
+
     final profile = context.read<ProfileProvider>();
     final stats = context.read<StatsProvider>();
     final github = context.read<GithubProvider>();
 
-    final lcUser = profile.profile?["leetcode"] ?? "";
-    final ghUser = profile.profile?["github"] ?? "";
-    final cfUser = profile.profile?["codeforces"] ?? "";
-    final ccUser = profile.profile?["codechef"] ?? "";
-    final gfgUser = profile.profile?["gfg"] ?? "";
-    final hrUser = profile.profile?["hackerrank"] ?? "";
+    final lcUser = profile.profile?['leetcode'] ?? '';
+    final ghUser = profile.profile?['github'] ?? '';
+    final cfUser = profile.profile?['codeforces'] ?? '';
+    final ccUser = profile.profile?['codechef'] ?? '';
+    final hrUser = profile.profile?['hackerrank'] ?? '';
 
-    // Cache current usernames
     _lastLcUser = lcUser;
     _lastGhUser = ghUser;
+    _lastCfUser = cfUser;
+    _lastCcUser = ccUser;
+    _lastHrUser = hrUser;
+    _initialFetchDone = true;
 
-    stats.fetchAllStats(
+    stats.initializeAndFetch(
       leetcode: lcUser,
       codeforces: cfUser,
       codechef: ccUser,
-      gfg: gfgUser,
       hackerrank: hrUser,
     );
 
@@ -102,8 +146,62 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _refreshAllData({bool forceRefresh = false}) {
+    if (!mounted) return;
+
+    final profile = context.read<ProfileProvider>();
+    final stats = context.read<StatsProvider>();
+    final github = context.read<GithubProvider>();
+
+    final lcUser = profile.profile?['leetcode'] ?? '';
+    final ghUser = profile.profile?['github'] ?? '';
+    final cfUser = profile.profile?['codeforces'] ?? '';
+    final ccUser = profile.profile?['codechef'] ?? '';
+    final hrUser = profile.profile?['hackerrank'] ?? '';
+
+    stats.fetchAllStats(
+      leetcode: lcUser,
+      codeforces: cfUser,
+      codechef: ccUser,
+      hackerrank: hrUser,
+      forceRefresh: forceRefresh,
+    );
+
+    if (ghUser.isNotEmpty) {
+      github.fetchGithubData(ghUser, forceRefresh: forceRefresh).then((_) {
+        if (!mounted) return;
+        if (github.githubStats != null) {
+          stats.updateGitHubData(
+            commitCalendar: github.githubStats!.contributionCalendar,
+            stars: github.githubStats!.totalStars,
+            totalCommits: github.githubStats!.totalContributions,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Remove listener if screen is disposed before profile ever loaded
+    try {
+      context.read<ProfileProvider>().removeListener(_onProfileReady);
+    } catch (_) {}
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final profile = context.watch<ProfileProvider>();
+
+    // ✅ Show spinner while profile loads — prevents pages from building
+    //    with null usernames and firing empty fetches
+    if (profile.isLoading || profile.profile == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       drawer: const AppDrawer(),
       body: IndexedStack(
@@ -112,5 +210,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }

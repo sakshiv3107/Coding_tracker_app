@@ -98,4 +98,48 @@ class HackerRankStats {
       },
     );
   }
+
+  // ── Disk-cache serialisation ──────────────────────────────────────────────
+
+  Map<String, dynamic> toJson() {
+    // serialise submissionHistory as Map<String, int> (ISO date → count)
+    final histMap = <String, int>{};
+    submissionHistory.forEach(
+        (d, c) => histMap[d.toIso8601String().split('T').first] = c);
+
+    return {
+      'username': username,
+      'totalSolved': totalSolved,
+      'rank': rank,
+      'avatarUrl': avatarUrl,
+      'followers': followers,
+      'country': country,
+      'submissionHistory': histMap,
+      'extraMetrics': extraMetrics,
+    };
+  }
+
+  factory HackerRankStats.fromJson(Map<String, dynamic> json) {
+    final Map<DateTime, int> history = {};
+    final rawHist = json['submissionHistory'] as Map<String, dynamic>?;
+    rawHist?.forEach((k, v) {
+      if (v != null) {
+        try {
+          history[DateTime.parse(k)] = (v as num).toInt();
+        } catch (_) {}
+      }
+    });
+
+    return HackerRankStats(
+      username: json['username']?.toString() ?? '',
+      totalSolved: (json['totalSolved'] as num? ?? 0).toInt(),
+      rank: json['rank']?.toString(),
+      avatarUrl: json['avatarUrl']?.toString(),
+      followers: (json['followers'] as num? ?? 0).toInt(),
+      country: json['country']?.toString(),
+      submissionHistory: history,
+      extraMetrics: (json['extraMetrics'] as Map<String, dynamic>?) ?? {},
+    );
+  }
 }
+

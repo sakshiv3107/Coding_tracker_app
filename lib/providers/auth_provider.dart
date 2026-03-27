@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
+enum AuthStatus { idle, loading, success, error }
+
 class AuthProvider extends ChangeNotifier {
   final AuthService _service = AuthService();
 
@@ -8,52 +10,91 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   String? error;
 
+  /// True when the user just registered (email or Google new user).
+  /// Used by AuthWrapper / screens to decide whether to show Profile Setup.
+  bool isNewUser = false;
+
   // Check if user is authenticated
   bool get isAuthenticated => user != null;
 
+  void clearError() {
+    error = null;
+    notifyListeners();
+  }
+
   // Sign up
-  Future<void> signUp(String email, String password, String name) async {
+  Future<bool> signUp(String email, String password, String name) async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
 
-      user = await _service.signUp(email, password, name);
+      final result = await _service.signUp(email, password, name);
+      user = {
+        "uid": result["uid"] as String,
+        "email": result["email"] as String,
+        "name": result["name"] as String,
+      };
+      isNewUser = true;
+      isLoading = false;
+      notifyListeners();
+      return true;
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
+      isLoading = false;
+      notifyListeners();
+      return false;
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   // Login with email and password
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
 
-      user = await _service.login(email, password);
+      final result = await _service.login(email, password);
+      user = {
+        "uid": result["uid"] as String,
+        "email": result["email"] as String,
+        "name": result["name"] as String,
+      };
+      isNewUser = false;
+      isLoading = false;
+      notifyListeners();
+      return true;
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
+      isLoading = false;
+      notifyListeners();
+      return false;
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   // Google Sign In
-  Future<void> signInWithGoogle() async {
+  Future<bool> signInWithGoogle() async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
 
-      user = await _service.signInWithGoogle();
+      final result = await _service.signInWithGoogle();
+      user = {
+        "uid": result["uid"] as String,
+        "email": result["email"] as String,
+        "name": result["name"] as String,
+      };
+      isNewUser = result["isNewUser"] as bool? ?? false;
+      isLoading = false;
+      notifyListeners();
+      return true;
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
+      isLoading = false;
+      notifyListeners();
+      return false;
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   // Logout
@@ -65,26 +106,31 @@ class AuthProvider extends ChangeNotifier {
       await _service.logout();
       user = null;
       error = null;
+      isNewUser = false;
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
     }
     isLoading = false;
     notifyListeners();
   }
 
   // Password reset
-  Future<void> resetPassword(String email) async {
+  Future<bool> resetPassword(String email) async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
 
       await _service.resetPassword(email);
+      isLoading = false;
+      notifyListeners();
+      return true;
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
+      isLoading = false;
+      notifyListeners();
+      return false;
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   // Get current user from Firebase
@@ -93,7 +139,7 @@ class AuthProvider extends ChangeNotifier {
       user = _service.currentUser;
       notifyListeners();
     } catch (e) {
-      error = e.toString();
+      error = e.toString().replaceFirst('Exception: ', '');
       notifyListeners();
     }
   }

@@ -23,7 +23,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _codeforcesController;
   late TextEditingController _githubController;
   late TextEditingController _hackerrankController;
-  late TextEditingController _gfgController;
+
 
   @override
   void initState() {
@@ -38,7 +38,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _codeforcesController = TextEditingController(text: profile.profile?["codeforces"] ?? "");
     _githubController = TextEditingController(text: profile.profile?["github"] ?? "");
     _hackerrankController = TextEditingController(text: profile.profile?["hackerrank"] ?? "");
-    _gfgController = TextEditingController(text: profile.profile?["gfg"] ?? "");
   }
 
   @override
@@ -50,7 +49,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _codeforcesController.dispose();
     _githubController.dispose();
     _hackerrankController.dispose();
-    _gfgController.dispose();
     super.dispose();
   }
 
@@ -67,7 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final codeforces = _codeforcesController.text.trim();
     final github = _githubController.text.trim();
     final hackerrank = _hackerrankController.text.trim();
-    final gfg = _gfgController.text.trim();
+
 
     await profileProvider.updateFullProfile(
       name: name,
@@ -77,7 +75,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       codeforces: codeforces,
       github: github,
       hackerrank: hackerrank,
-      gfg: gfg,
     );
 
     if (profileProvider.error == null) {
@@ -218,12 +215,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               label: 'HACKERRANK ID',
                               icon: FontAwesomeIcons.hackerrank,
                               hint: 'hr_nick',
-                            ),
-                            _buildModernField(
-                              controller: _gfgController,
-                              label: 'GEEKSFORGEEKS',
-                              icon: Icons.school_rounded,
-                              hint: 'gfg_username',
                             ),
                             _buildModernField(
                               controller: _codeforcesController,

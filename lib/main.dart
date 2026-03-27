@@ -16,7 +16,7 @@ import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
 import 'screens/codechef_stats_screen.dart';
-import 'screens/gfg_stats_screen.dart';
+
 import 'screens/settings_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/hackerrank_stats_screen.dart';
@@ -75,7 +75,7 @@ class MyApp extends StatelessWidget {
         '/github_stats': (context) => const GitHubStatsScreen(),
         '/codeforces_stats': (context) => const CodeforcesStatsScreen(),
         '/codechef_stats': (context) => const CodeChefStatsScreen(),
-        '/gfg_stats': (context) => const GfgStatsScreen(),
+
         '/hackerrank_stats': (context) => const HackerRankStatsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/edit_profile': (context) => const EditProfileScreen(),

@@ -40,7 +40,6 @@ class ProfileProvider extends ChangeNotifier {
     required String codeforces,
     required String github,
     String? hackerrank,
-    String? gfg,
   }) async {
     try {
       isLoading = true;
@@ -53,7 +52,6 @@ class ProfileProvider extends ChangeNotifier {
         codeforces: codeforces,
         github: github,
         hackerrank: hackerrank,
-        gfg: gfg,
       );
 
       profile = {
@@ -62,7 +60,6 @@ class ProfileProvider extends ChangeNotifier {
         "codeforces": codeforces,
         "github": github,
         "hackerrank": hackerrank ?? "",
-        "gfg": gfg ?? "",
       };
     } catch (e) {
       error = e.toString();
@@ -80,7 +77,6 @@ class ProfileProvider extends ChangeNotifier {
     required String codeforces,
     required String github,
     String? hackerrank,
-    String? gfg,
   }) async {
     try {
       isLoading = true;
@@ -95,7 +91,6 @@ class ProfileProvider extends ChangeNotifier {
         codeforces: codeforces,
         github: github,
         hackerrank: hackerrank,
-        gfg: gfg,
       );
 
       profile = {
@@ -104,7 +99,6 @@ class ProfileProvider extends ChangeNotifier {
         "codeforces": codeforces,
         "github": github,
         "hackerrank": hackerrank ?? "",
-        "gfg": gfg ?? "",
         "profilePic": profilePic ?? profile?["profilePic"] ?? "",
       };
     } catch (e) {

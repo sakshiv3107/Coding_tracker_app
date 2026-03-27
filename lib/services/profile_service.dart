@@ -39,7 +39,6 @@ class ProfileService {
     required String codeforces,
     required String github,
     String? hackerrank,
-    String? gfg,
   }) async {
     if (currentUserId == null) {
       throw Exception("User not authenticated");
@@ -53,7 +52,6 @@ class ProfileService {
           'codeforces': codeforces,
           'github': github,
           if (hackerrank != null) 'hackerrank': hackerrank,
-          if (gfg != null) 'gfg': gfg,
         },
         'profileCompleted': true,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -97,7 +95,6 @@ class ProfileService {
           'codeforces': profileData['codeforces'] ?? '',
           'github': profileData['github'] ?? '',
           'hackerrank': profileData['hackerrank'] ?? '',
-          'gfg': profileData['gfg'] ?? '',
           'profilePic': data?['profilePic'] ?? '',
         };
       }
@@ -146,7 +143,6 @@ class ProfileService {
     required String codeforces,
     required String github,
     String? hackerrank,
-    String? gfg,
   }) async {
     if (currentUserId == null) {
       throw Exception("User not authenticated");
@@ -162,7 +158,6 @@ class ProfileService {
           'codeforces': codeforces,
           'github': github,
           if (hackerrank != null) 'hackerrank': hackerrank,
-          if (gfg != null) 'gfg': gfg,
         },
         'updatedAt': FieldValue.serverTimestamp(),
       };
