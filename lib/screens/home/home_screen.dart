@@ -1,10 +1,7 @@
 // lib/screens/home/home_screen.dart
 //
-// FIX: Replaced IndexedStack with a simple body switcher.
-// IndexedStack builds ALL pages simultaneously (even hidden ones) causing
-// FadeSlideTransition and other animated widgets in those pages to crash
-// with "Null check operator" / "RenderBox was not laid out" errors before
-// their constraints are established. Now only the active page is built.
+// FIX: Removed bottom NavigationBar, restored AppDrawer-based navigation.
+// Pages switch via a callback passed to the drawer, avoiding bottom nav.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,17 +30,31 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _lastCfUser;
   String? _lastCcUser;
   String? _lastHrUser;
-
   bool _initialFetchDone = false;
 
-  // Pages list — built lazily (only current index is rendered)
-  static const List<Widget> _pages = [
-    DashboardScreen(),
-    CodingStatsScreen(),
-    GitHubStatsScreen(),
-    GoalsScreen(),
-    ProfileScreen(),
-  ];
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return const DashboardScreen();
+      case 1:
+        return const CodingStatsScreen();
+      case 2:
+        return const GitHubStatsScreen();
+      case 3:
+        return const GoalsScreen();
+      case 4:
+        return const ProfileScreen();
+      default:
+        return const DashboardScreen();
+    }
+  }
+
+  void _navigateTo(int index) {
+    if (index != _selectedIndex) {
+      setState(() => _selectedIndex = index);
+    }
+    Navigator.pop(context); // close drawer
+  }
 
   @override
   void initState() {
@@ -77,24 +88,19 @@ class _HomeScreenState extends State<HomeScreen> {
       _lastCfUser = cfUser;
       _lastCcUser = ccUser;
       _lastHrUser = hrUser;
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _refreshAllData(forceRefresh: true);
       });
     }
   }
 
-  // ── Data initialisation ──────────────────────────────────────────────────
-
   void _initializeData() {
     if (!mounted) return;
     final profile = context.read<ProfileProvider>();
-
     if (profile.isLoading || profile.profile == null) {
       profile.addListener(_onProfileReady);
       return;
     }
-
     _doFetch();
   }
 
@@ -103,15 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final profile = context.read<ProfileProvider>();
     if (!profile.isLoading) {
       profile.removeListener(_onProfileReady);
-      if (profile.profile != null) {
-        _doFetch();
-      }
+      if (profile.profile != null && mounted) _doFetch();
     }
   }
 
   void _doFetch() {
     if (!mounted) return;
-
     final profile = context.read<ProfileProvider>();
     final stats = context.read<StatsProvider>();
     final github = context.read<GithubProvider>();
@@ -152,7 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshAllData({bool forceRefresh = false}) {
     if (!mounted) return;
-
     final profile = context.read<ProfileProvider>();
     final stats = context.read<StatsProvider>();
     final github = context.read<GithubProvider>();
@@ -205,38 +207,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      drawer: const AppDrawer(),
-      // KEY FIX: Use _pages[_selectedIndex] instead of IndexedStack.
-      // This ensures only the active page's widget tree is built.
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
+      // Drawer with page-switch callback
+      drawer: AppDrawer(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.code_rounded),
-            label: 'LeetCode',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.hub_rounded),
-            label: 'GitHub',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.flag_rounded),
-            label: 'Goals',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
+        onNavigate: _navigateTo,
       ),
+      // Only the active page is built (no IndexedStack)
+      body: _buildPage(_selectedIndex),
     );
   }
 }

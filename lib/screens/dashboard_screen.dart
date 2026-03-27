@@ -47,10 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // ── LOADING GATE: never build with null profile ───────────────────────────
     if (profile.isLoading || profile.profile == null) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: const SafeArea(child: DashboardSkeleton()),
-      );
+      return const SafeArea(child: DashboardSkeleton());
     }
 
     // ── Safe data extraction ──────────────────────────────────────────────────
@@ -95,9 +92,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final unlockedAchievements =
         List.from(achievementProvider.unlockedAchievements);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
+    return Material(
+      color: theme.scaffoldBackgroundColor,
+      child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
             setState(() => _rateLimitBannerDismissed = false);

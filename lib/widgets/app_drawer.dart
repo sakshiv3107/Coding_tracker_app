@@ -5,10 +5,20 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
-import 'modern_card.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  /// Index of the currently active Home page (0=Dashboard, 3=Goals, 4=Profile).
+  /// Null when the drawer is used outside HomeScreen (e.g. detail screens).
+  final int? selectedIndex;
+
+  /// Switches the active page inside HomeScreen. Called for pages 0, 3, 4.
+  final void Function(int index)? onNavigate;
+
+  const AppDrawer({
+    super.key,
+    this.selectedIndex,
+    this.onNavigate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +27,10 @@ class AppDrawer extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
     final themeProvider = context.watch<ThemeProvider>();
-    
-    final userName = auth.user?["name"] ?? "Developer";
-    final leetcodeUser = profile.profile?["leetcode"] ?? "not_set";
-    final profilePic = profile.profile?["profilePic"];
-    final currentRoute = ModalRoute.of(context)?.settings.name ?? '/';
+
+    final userName = auth.user?['name'] ?? 'Developer';
+    final leetcodeUser = profile.profile?['leetcode'] ?? '';
+    final profilePic = profile.profile?['profilePic'];
 
     return Drawer(
       backgroundColor: isDark ? AppTheme.bgDark : Colors.white,
@@ -33,94 +42,104 @@ class AppDrawer extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── Premium Profile Header ─────────────────────────────────────
+          // ── Header ──────────────────────────────────────────────────────
           _buildHeader(context, userName, leetcodeUser, profilePic, isDark),
 
-          // ── Scrollable Menu ──────────────────────────────────────────
+          // ── Scrollable Menu ──────────────────────────────────────────────
           Expanded(
             child: ListView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               children: [
-                _buildSectionLabel('ANALYTICS HUB'),
-                _buildMenuItem(
+                // ── ANALYTICS HUB ──────────────────────────────────────────
+                _sectionLabel('ANALYTICS HUB'),
+                _pageItem(
                   context,
                   title: 'Control Center',
                   icon: Icons.dashboard_rounded,
-                  route: '/',
-                  currentRoute: currentRoute,
+                  pageIndex: 0,
+                  isDark: isDark,
                 ),
-                _buildMenuItem(
-                  context,
-                  title: 'Unified Insights',
-                  icon: Icons.analytics_rounded,
-                  route: '/analytics',
-                  currentRoute: currentRoute,
-                ),
-                _buildMenuItem(
+                _pushItem(
                   context,
                   title: 'Career Dashboard',
                   icon: Icons.description_rounded,
                   route: '/resume',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
+                ),
+                _pageItem(
+                  context,
+                  title: 'Goals & Targets',
+                  icon: Icons.flag_rounded,
+                  pageIndex: 3,
+                  isDark: isDark,
                 ),
 
                 const SizedBox(height: 24),
-                _buildSectionLabel('CONNECTED NODES'),
-                _buildMenuItem(
+                // ── CONNECTED PLATFORMS ─────────────────────────────────────
+                _sectionLabel('CONNECTED PLATFORMS'),
+                _pushItem(
                   context,
                   title: 'LeetCode',
                   icon: FontAwesomeIcons.code,
                   route: '/leetcode_stats',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                   iconSize: 16,
                 ),
-                _buildMenuItem(
+                _pushItem(
                   context,
                   title: 'GitHub',
                   icon: FontAwesomeIcons.github,
                   route: '/github_stats',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                   iconSize: 18,
                 ),
-                _buildMenuItem(
+                _pushItem(
                   context,
                   title: 'HackerRank',
                   icon: FontAwesomeIcons.hackerrank,
                   route: '/hackerrank_stats',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                   iconSize: 18,
                 ),
-                _buildMenuItem(
+                _pushItem(
                   context,
                   title: 'Codeforces',
                   icon: Icons.trending_up_rounded,
                   route: '/codeforces_stats',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                 ),
-                _buildMenuItem(
+                _pushItem(
                   context,
                   title: 'CodeChef',
                   icon: Icons.restaurant_menu_rounded,
                   route: '/codechef_stats',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                 ),
 
                 const SizedBox(height: 24),
-                _buildSectionLabel('SYSTEM'),
-                _buildMenuItem(
+                // ── ACCOUNT ─────────────────────────────────────────────────
+                _sectionLabel('ACCOUNT'),
+                _pageItem(
                   context,
-                  title: 'Global Settings',
+                  title: 'Profile',
+                  icon: Icons.person_rounded,
+                  pageIndex: 4,
+                  isDark: isDark,
+                ),
+                _pushItem(
+                  context,
+                  title: 'Settings',
                   icon: Icons.settings_rounded,
                   route: '/settings',
-                  currentRoute: currentRoute,
+                  isDark: isDark,
                 ),
-                _buildMenuItem(
+                _actionItem(
                   context,
-                  title: 'Terminate Session',
+                  title: 'Sign Out',
                   icon: Icons.logout_rounded,
                   color: Colors.redAccent,
-                  currentRoute: currentRoute,
                   onTap: () {
                     Navigator.pop(context);
                     auth.logout();
@@ -130,10 +149,10 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
 
-          // ── Theme Toggle & Version ─────────────────────────────────────
+          // ── Theme Toggle ─────────────────────────────────────────────────
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -169,7 +188,7 @@ class AppDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 24),
             child: Text(
-              'v1.0.4 - ALPHA',
+              'v1.0.4 · CodeSphere',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -183,13 +202,17 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, String username, String? pic, bool isDark) {
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context, String name, String username,
+      String? pic, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
-        borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
+        borderRadius:
+            const BorderRadius.only(topRight: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -203,27 +226,31 @@ class AppDrawer extends StatelessWidget {
         children: [
           Row(
             children: [
-              Hero(
-                tag: 'drawer_avatar',
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.accent]),
-                  ),
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: isDark ? AppTheme.surfaceDarkLighter : Colors.grey[200],
-                    backgroundImage: (pic != null && pic.isNotEmpty) ? NetworkImage(pic) : null,
-                    child: (pic == null || pic.isEmpty)
-                        ? const Icon(Icons.person_rounded, color: AppTheme.primary, size: 32)
-                        : null,
-                  ),
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                      colors: [AppTheme.primary, AppTheme.accent]),
+                ),
+                child: CircleAvatar(
+                  radius: 32,
+                  backgroundColor: isDark
+                      ? AppTheme.surfaceDarkLighter
+                      : Colors.grey[200],
+                  backgroundImage: (pic != null && pic.isNotEmpty)
+                      ? NetworkImage(pic)
+                      : null,
+                  child: (pic == null || pic.isEmpty)
+                      ? const Icon(Icons.person_rounded,
+                          color: AppTheme.primary, size: 32)
+                      : null,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -251,7 +278,7 @@ class AppDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '@$username',
+            username.isNotEmpty ? '@$username' : 'Setup your profile',
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'monospace',
@@ -264,74 +291,159 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  Widget _sectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 12, top: 8),
+      padding: const EdgeInsets.only(left: 12, bottom: 10, top: 8),
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w900,
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
           color: Colors.grey,
         ),
       ),
     );
   }
 
-  Widget _buildMenuItem(
+  /// Page item — switches tab in HomeScreen without pushing a route.
+  Widget _pageItem(
     BuildContext context, {
     required String title,
     required IconData icon,
-    String? route,
-    required String currentRoute,
+    required int pageIndex,
+    required bool isDark,
     double iconSize = 22,
-    Color? color,
-    VoidCallback? onTap,
+  }) {
+    final isActive = selectedIndex == pageIndex;
+    final theme = Theme.of(context);
+
+    return _tile(
+      context,
+      title: title,
+      icon: icon,
+      iconSize: iconSize,
+      isActive: isActive,
+      isDark: isDark,
+      theme: theme,
+      onTap: () {
+        if (onNavigate != null) {
+          onNavigate!(pageIndex);
+        } else {
+          Navigator.pop(context);
+        }
+      },
+    );
+  }
+
+  /// Push item — navigates to a named route.
+  Widget _pushItem(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required String route,
+    required bool isDark,
+    double iconSize = 22,
   }) {
     final theme = Theme.of(context);
-    final isActive = route != null && currentRoute == route;
-    final isDark = theme.brightness == Brightness.dark;
+    final currentRoute =
+        ModalRoute.of(context)?.settings.name ?? '/';
+    final isActive = currentRoute == route;
 
+    return _tile(
+      context,
+      title: title,
+      icon: icon,
+      iconSize: iconSize,
+      isActive: isActive,
+      isDark: isDark,
+      theme: theme,
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.pushNamed(context, route);
+      },
+    );
+  }
+
+  /// Action item (e.g. logout) — no route, just a callback.
+  Widget _actionItem(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        onTap: onTap,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Icon(icon, size: 22, color: color),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required double iconSize,
+    required bool isActive,
+    required bool isDark,
+    required ThemeData theme,
+    required VoidCallback onTap,
+  }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isActive 
-            ? AppTheme.primary.withOpacity(isDark ? 0.15 : 0.08) 
+        color: isActive
+            ? AppTheme.primary.withOpacity(isDark ? 0.15 : 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        onTap: onTap ?? () {
-          Navigator.pop(context);
-          if (route != null && currentRoute != route) {
-            if (route == '/') {
-              Navigator.pushReplacementNamed(context, '/');
-            } else {
-              Navigator.pushNamed(context, route);
-            }
-          }
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onTap: onTap,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Icon(
           icon,
           size: iconSize,
-          color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withOpacity(0.4)),
+          color: isActive
+              ? AppTheme.primary
+              : theme.colorScheme.onSurface.withOpacity(0.45),
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: color ?? (isActive ? AppTheme.primary : theme.colorScheme.onSurface.withOpacity(0.8)),
-            fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+            color: isActive
+                ? AppTheme.primary
+                : theme.colorScheme.onSurface.withOpacity(0.85),
+            fontWeight:
+                isActive ? FontWeight.w900 : FontWeight.w600,
             fontSize: 15,
           ),
         ),
-        trailing: isActive 
+        trailing: isActive
             ? Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: AppTheme.primary,
+                  shape: BoxShape.circle,
+                ),
               )
             : null,
       ),
