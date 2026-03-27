@@ -31,7 +31,6 @@ class UnifiedAnalyticsCard extends StatelessWidget {
 
     return ModernCard(
       padding: EdgeInsets.zero,
-      isGlass: true,
       showShadow: true,
       borderRadius: 32,
       child: InkWell(

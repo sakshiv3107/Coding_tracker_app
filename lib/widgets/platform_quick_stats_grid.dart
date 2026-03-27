@@ -39,11 +39,16 @@ class PlatformQuickStatsGrid extends StatelessWidget {
   final bool hackerrankLoading;
   final bool githubLoading;
 
-  // Rate-limit flags (distinct from generic errors)
   final bool leetcodeRateLimited;
   final bool codeforcesRateLimited;
   final bool codechefRateLimited;
   final bool hackerrankRateLimited;
+
+  final bool leetcodeNotSet;
+  final bool codeforcesNotSet;
+  final bool codechefNotSet;
+  final bool hackerrankNotSet;
+  final bool githubNotSet;
 
   final VoidCallback? onLeetCodeTap;
   final VoidCallback? onGitHubTap;
@@ -71,6 +76,11 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     this.codeforcesRateLimited = false,
     this.codechefRateLimited = false,
     this.hackerrankRateLimited = false,
+    this.leetcodeNotSet = false,
+    this.codeforcesNotSet = false,
+    this.codechefNotSet = false,
+    this.hackerrankNotSet = false,
+    this.githubNotSet = false,
     this.onLeetCodeTap,
     this.onGitHubTap,
     this.onCodeforcesTap,
@@ -103,6 +113,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           error: leetcodeError,
           isLoading: leetcodeLoading,
           isRateLimited: leetcodeRateLimited,
+          isNotSet: leetcodeNotSet,
           onTap: onLeetCodeTap,
         ),
         _platformCard(
@@ -113,6 +124,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           mainStat: '${github['repos'] ?? 0} Repos',
           subStat: '${github['commits'] ?? 0} Activity',
           isLoading: githubLoading,
+          isNotSet: githubNotSet,
           onTap: onGitHubTap,
         ),
         _platformCard(
@@ -125,6 +137,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           error: codeforcesError,
           isLoading: codeforcesLoading,
           isRateLimited: codeforcesRateLimited,
+          isNotSet: codeforcesNotSet,
           onTap: onCodeforcesTap,
         ),
         _platformCard(
@@ -137,6 +150,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           error: codechefError,
           isLoading: codechefLoading,
           isRateLimited: codechefRateLimited,
+          isNotSet: codechefNotSet,
           onTap: onCodeChefTap,
         ),
         _platformCard(
@@ -149,6 +163,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           error: hackerrankError,
           isLoading: hackerrankLoading,
           isRateLimited: hackerrankRateLimited,
+          isNotSet: hackerrankNotSet,
           onTap: onHackerRankTap,
         ),
       ],
@@ -165,6 +180,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     String? error,
     bool isLoading = false,
     bool isRateLimited = false,
+    bool isNotSet = false,
     VoidCallback? onTap,
   }) {
     // While loading and no data yet → shimmer placeholder
@@ -181,26 +197,24 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     // Determine card state colours
     final Color stateColor = isRateLimited
         ? Colors.amber
-        : hasError
-            ? Colors.redAccent
-            : color;
+        : isNotSet
+            ? theme.colorScheme.onSurface.withOpacity(0.3)
+            : hasError
+                ? Colors.redAccent
+                : color;
 
     final IconData stateIcon = isRateLimited
         ? FontAwesomeIcons.clock
-        : hasError
-            ? FontAwesomeIcons.circleExclamation
-            : icon;
-
-    final String statusText = isRateLimited
-        ? 'Rate Limited'
-        : hasError
-            ? 'Update Required'
-            : '';
+        : isNotSet
+            ? Icons.info_outline_rounded
+            : hasError
+                ? FontAwesomeIcons.circleExclamation
+                : icon;
 
     return ModernCard(
       padding: EdgeInsets.zero,
       margin: EdgeInsets.zero,
-      isGlass: true,
+      showShadow: true,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -243,12 +257,16 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                     maxLines: 1,
                   ),
                   const SizedBox(height: 2),
-                  if (hasError || isRateLimited) ...[
+                  if (hasError || isRateLimited || isNotSet) ...[
                     FittedBox(
                       fit: MediaQuery.of(context).textScaleFactor > 1.2 ? BoxFit.scaleDown : BoxFit.none,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        isRateLimited ? 'Rate Limited' : 'Profile Error',
+                        isRateLimited 
+                            ? 'Rate Limited' 
+                            : isNotSet 
+                                ? 'Username Not Entered'
+                                : 'Profile Error',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: stateColor,
                           fontWeight: FontWeight.w700,
@@ -258,7 +276,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Tap to retry',
+                      isNotSet ? 'Tap to configure' : 'Tap to retry',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: stateColor.withOpacity(0.7),
                         fontSize: 10,

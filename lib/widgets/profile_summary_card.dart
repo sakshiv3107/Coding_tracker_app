@@ -28,7 +28,6 @@ class ProfileSummaryCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       showShadow: true,
       borderRadius: 28,
-      isGlass: true,
       child: Stack(
         children: [
           Positioned(

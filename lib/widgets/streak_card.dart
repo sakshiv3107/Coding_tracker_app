@@ -74,7 +74,7 @@ class _StreakCardState extends State<StreakCard>
         : Colors.amber;
 
     return ModernCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -87,39 +87,47 @@ class _StreakCardState extends State<StreakCard>
                       ? Icons.local_fire_department_rounded
                       : Icons.emoji_events_rounded,
                   color: color,
-                  size: 22,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                isCurrent ? 'CURRENT STREAK' : 'MAX STREAK',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade500,
-                  letterSpacing: 0.8,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  isCurrent ? 'CURRENT STREAK' : 'MAX STREAK',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              AnimatedStatCounter(
-                value: value,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isActive && isCurrent ? color : null,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedStatCounter(
+                    value: value,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: isActive && isCurrent ? color : null,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 2),
               Text(
                 'd',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade500,
                 ),
@@ -129,12 +137,16 @@ class _StreakCardState extends State<StreakCard>
           const SizedBox(height: 4),
           Text(
             isCurrent ? 'Consecutive days' : 'Best record',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade500,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
 
           // Mini flame progress bar for current streak
           if (isCurrent && widget.maxStreak > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
@@ -143,7 +155,8 @@ class _StreakCardState extends State<StreakCard>
                     : 0,
                 minHeight: 4,
                 backgroundColor: Colors.orange.withOpacity(0.1),
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Colors.orange),
               ),
             ),
             const SizedBox(height: 4),
@@ -156,6 +169,7 @@ class _StreakCardState extends State<StreakCard>
       ),
     );
   }
+
 
   // ── Compact version (home screen) ─────────────────────────────────────────
 

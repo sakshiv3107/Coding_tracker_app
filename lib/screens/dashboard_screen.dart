@@ -201,6 +201,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   codeforcesError: stats.codeforcesError,
                   codechefError: stats.codechefError,
                   hackerrankError: stats.hackerrankError,
+                  leetcodeNotSet: leetcodeUser.trim().isEmpty,
+                  githubNotSet: githubUser.trim().isEmpty,
+                  codeforcesNotSet: cfUser.trim().isEmpty,
+                  codechefNotSet: ccUser.trim().isEmpty,
+                  hackerrankNotSet: hrUser.trim().isEmpty,
                   onLeetCodeTap: () =>
                       Navigator.pushNamed(context, '/leetcode_stats'),
                   onGitHubTap: () =>
