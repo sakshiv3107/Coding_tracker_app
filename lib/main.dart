@@ -41,7 +41,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => GithubProvider()),
-        ChangeNotifierProvider(create: (_) => GoalProvider()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()..init()),
         ChangeNotifierProvider(create: (_) => ResumeProvider()..init()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()..init()),
         // Stream provider for real-time auth state

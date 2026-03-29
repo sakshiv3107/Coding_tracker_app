@@ -1,19 +1,59 @@
+import 'dart:convert';
+
+enum GoalType {
+  questions,
+  commits,
+}
+
+enum GoalTimeframe {
+  daily,
+  weekly,
+}
+
 class Goal {
   final String id;
   final String title;
+  final GoalType type;
   final int targetValue;
-  final int currentValue;
-  final String type; // 'leetcode' or 'github'
-  final DateTime deadline;
+  final GoalTimeframe timeframe;
+  final String? platform;
+  final DateTime createdAt;
 
   Goal({
     required this.id,
     required this.title,
-    required this.targetValue,
-    required this.currentValue,
     required this.type,
-    required this.deadline,
+    required this.targetValue,
+    required this.timeframe,
+    this.platform,
+    required this.createdAt,
   });
 
-  double get progress => (currentValue / targetValue).clamp(0.0, 1.0);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'type': type.name,
+      'targetValue': targetValue,
+      'timeframe': timeframe.name,
+      'platform': platform,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory Goal.fromJson(Map<String, dynamic> json) {
+    var rawType = json['type'];
+    if (rawType == 'questionsPerDay') rawType = 'questions'; // Migration
+    if (rawType == 'commitsPerWeek') rawType = 'commits';    // Migration
+
+    return Goal(
+      id: json['id'],
+      title: json['title'],
+      type: GoalType.values.byName(rawType),
+      targetValue: json['targetValue'],
+      timeframe: GoalTimeframe.values.byName(json['timeframe']),
+      platform: json['platform'],
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
 }
