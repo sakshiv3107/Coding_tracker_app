@@ -1,7 +1,7 @@
 name: coding_tracker_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0
+version: 0.1.0+1
 
 environment:
   sdk: ^3.8.1
@@ -39,6 +39,7 @@ dependencies:
   read_pdf_text: ^0.3.1
   url_launcher: ^6.3.0
   firebase_messaging: ^15.2.10
+  workmanager: ^0.9.0+3
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'modern_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 
 class SkillRadarChart extends StatelessWidget {
   final Map<String, int> tagStats;
@@ -45,8 +45,8 @@ class SkillRadarChart extends StatelessWidget {
                 radarShape: RadarShape.circle,
                 dataSets: [
                   RadarDataSet(
-                    fillColor: AppTheme.primary.withOpacity(0.2),
-                    borderColor: AppTheme.primary,
+                    fillColor: theme.colorScheme.primary.withOpacity(0.2),
+                    borderColor: theme.colorScheme.primary,
                     entryRadius: 3,
                     dataEntries: data.map((v) => RadarEntry(value: v)).toList(),
                   ),

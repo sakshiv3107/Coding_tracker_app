@@ -236,7 +236,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 10,
-                  color: AppTheme.textSecondaryDark.withOpacity(0.3),
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
                 ),
               ],
             ),
@@ -290,7 +290,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                       child: Text(
                         mainStat,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textPrimaryDark.withOpacity(0.9),
+                          color: theme.colorScheme.onSurface.withOpacity(0.9),
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -299,7 +299,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                     Text(
                       subStat,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                        color: theme.colorScheme.onSurface.withOpacity(0.4),
                         fontWeight: FontWeight.w600,
                         fontSize: 10,
                       ),

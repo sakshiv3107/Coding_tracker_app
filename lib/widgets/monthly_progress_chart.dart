@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'modern_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 
 class MonthlyProgressChart extends StatelessWidget {
   final Map<DateTime, int> submissionCalendar;
@@ -43,7 +43,7 @@ class MonthlyProgressChart extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: val.toDouble(),
-              color: AppTheme.primary,
+              color: theme.colorScheme.primary,
               width: 16,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(6),

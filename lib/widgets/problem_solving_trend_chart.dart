@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import 'modern_card.dart';
 
 class ProblemSolvingTrendChart extends StatelessWidget {
@@ -99,7 +99,7 @@ class ProblemSolvingTrendChart extends StatelessWidget {
                   LineChartBarData(
                     spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                     isCurved: true,
-                    color: AppTheme.primary,
+                    color: theme.colorScheme.primary,
                     barWidth: 4,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -108,7 +108,7 @@ class ProblemSolvingTrendChart extends StatelessWidget {
                         radius: 4,
                         color: Colors.white,
                         strokeWidth: 2,
-                        strokeColor: AppTheme.primary,
+                        strokeColor: theme.colorScheme.primary,
                       ),
                     ),
                     belowBarData: BarAreaData(
@@ -117,8 +117,8 @@ class ProblemSolvingTrendChart extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppTheme.primary.withOpacity(0.2),
-                          AppTheme.primary.withOpacity(0),
+                          theme.colorScheme.primary.withOpacity(0.2),
+                          theme.colorScheme.primary.withOpacity(0),
                         ],
                       ),
                     ),

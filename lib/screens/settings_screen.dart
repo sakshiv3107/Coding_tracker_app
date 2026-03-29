@@ -6,8 +6,36 @@ import '../widgets/modern_card.dart';
 import '../widgets/premium_widgets.dart';
 import '../widgets/notification_settings_tile.dart';
 
-class SettingsScreen extends StatelessWidget {
+import '../services/smart_reminder_service.dart';
+
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _smartRemindersEnabled = true;
+  bool _inactivityRemindersEnabled = true;
+  bool _goalRemindersEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderPrefs();
+  }
+
+  Future<void> _loadReminderPrefs() async {
+    final enabled = await SmartReminderService.isSmartRemindersEnabled();
+    final inactivity = await SmartReminderService.isInactivityAlertsEnabled();
+    final goals = await SmartReminderService.isGoalAlertsEnabled();
+    setState(() {
+      _smartRemindersEnabled = enabled;
+      _inactivityRemindersEnabled = inactivity;
+      _goalRemindersEnabled = goals;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
                         Text(
                           'System & Profile Preferences',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -94,6 +122,112 @@ class SettingsScreen extends StatelessWidget {
                           isSelected: themeProvider.themeMode == ThemeMode.system,
                           onTap: () => themeProvider.setThemeMode(ThemeMode.system),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // 🎨 Accent Color Section
+                  const PremiumSectionHeader(
+                    title: 'Accent System',
+                    subtitle: 'Choose your primary node color',
+                    icon: Icons.color_lens_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  ModernCard(
+                    padding: const EdgeInsets.all(16),
+                    isGlass: true,
+                    borderRadius: 28,
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
+                      children: List.generate(
+                        ThemeProvider.availableColors.length,
+                        (index) {
+                          final color = ThemeProvider.availableColors[index];
+                          final isSelected = themeProvider.colorIndex == index;
+                          return GestureDetector(
+                            onTap: () => themeProvider.setPrimaryColor(index),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: isSelected
+                                    ? Border.all(color: theme.colorScheme.onSurface, width: 3)
+                                    : null,
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: color.withValues(alpha: 0.4),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                              child: isSelected 
+                                ? const Icon(Icons.check, color: Colors.white) 
+                                : null,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // 💡 Smart Reminders Section
+                  const PremiumSectionHeader(
+                    title: 'Smart AI Alerts',
+                    subtitle: 'Behavior-based nudges',
+                    icon: Icons.psychology_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  ModernCard(
+                    padding: const EdgeInsets.all(12),
+                    isGlass: true,
+                    borderRadius: 28,
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          title: const Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: const Text('Enable AI-based behavior reminders'),
+                          value: _smartRemindersEnabled,
+                          activeColor: theme.colorScheme.primary,
+                          onChanged: (val) async {
+                            await SmartReminderService.setSmartRemindersEnabled(val);
+                            setState(() => _smartRemindersEnabled = val);
+                          },
+                        ),
+                        if (_smartRemindersEnabled) ...[
+                          const Divider(),
+                          SwitchListTile(
+                            title: const Text('Inactivity Alerts', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Alert if no activity by evening'),
+                            value: _inactivityRemindersEnabled,
+                            activeColor: theme.colorScheme.primary,
+                            onChanged: (val) async {
+                              await SmartReminderService.setInactivityAlertsEnabled(val);
+                              setState(() => _inactivityRemindersEnabled = val);
+                            },
+                          ),
+                          SwitchListTile(
+                            title: const Text('Goal Reminders', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Alert for incomplete daily goals'),
+                            value: _goalRemindersEnabled,
+                            activeColor: theme.colorScheme.primary,
+                            onChanged: (val) async {
+                              await SmartReminderService.setGoalAlertsEnabled(val);
+                              setState(() => _goalRemindersEnabled = val);
+                            },
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -221,6 +355,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildBackButton(BuildContext context, bool isDark) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
@@ -238,7 +373,7 @@ class SettingsScreen extends StatelessWidget {
         icon: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 16,
-          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          color: theme.colorScheme.onSurface,
         ),
       ),
     );
@@ -259,11 +394,11 @@ class SettingsScreen extends StatelessWidget {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        tileColor: isSelected ? AppTheme.primary.withValues(alpha: 0.05) : Colors.transparent,
+        tileColor: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.05) : Colors.transparent,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : Colors.grey.withValues(alpha: 0.1),
+            color: isSelected ? theme.colorScheme.primary : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
@@ -277,7 +412,7 @@ class SettingsScreen extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 15,
-            color: isSelected ? AppTheme.primary : theme.colorScheme.onSurface,
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
           ),
         ),
         subtitle: Text(
@@ -289,7 +424,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         trailing: isSelected 
-            ? const Icon(Icons.radio_button_checked_rounded, color: AppTheme.primary, size: 18)
+            ? Icon(Icons.radio_button_checked_rounded, color: theme.colorScheme.primary, size: 18)
             : Icon(Icons.radio_button_off_rounded, color: Colors.grey.withValues(alpha: 0.3), size: 18),
       ),
     );

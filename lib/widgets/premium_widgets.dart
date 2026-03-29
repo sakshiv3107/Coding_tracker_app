@@ -30,10 +30,10 @@ class PremiumSectionHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? AppTheme.primary).withOpacity(0.1),
+                color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 20, color: iconColor ?? AppTheme.primary),
+              child: Icon(icon, size: 20, color: iconColor ?? theme.colorScheme.primary),
             ),
             const SizedBox(width: 12),
           ],
@@ -52,7 +52,7 @@ class PremiumSectionHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondaryDark.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
               ],
@@ -151,7 +151,7 @@ class PremiumStatCard extends StatelessWidget {
                 label,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondaryDark.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
             ],
@@ -178,19 +178,20 @@ class PremiumGradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       height: 58,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: gradient ?? [AppTheme.primary, AppTheme.primaryLight],
+          colors: gradient ?? [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: (gradient?.first ?? AppTheme.primary).withOpacity(0.3),
+            color: (gradient?.first ?? theme.colorScheme.primary).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),

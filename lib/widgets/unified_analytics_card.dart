@@ -62,7 +62,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                           child: Text(
                             totalSolved.toString(),
                             style: theme.textTheme.headlineLarge?.copyWith(
-                              color: AppTheme.primary,
+                              color: theme.colorScheme.primary,
                               fontWeight: FontWeight.w900,
                               fontSize: 48,
                               letterSpacing: -1,
@@ -91,10 +91,10 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                             sectionsSpace: 2,
                             centerSpaceRadius: 28,
                             startDegreeOffset: 270,
-                            sections: _buildPieSections(),
+                            sections: _buildPieSections(theme),
                           ),
                         ),
-                        Icon(FontAwesomeIcons.circleNodes, color: AppTheme.primary.withOpacity(0.3), size: 20),
+                        Icon(FontAwesomeIcons.circleNodes, color: theme.colorScheme.primary.withOpacity(0.3), size: 20),
                       ],
                     ),
                   ),
@@ -124,7 +124,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildQuickStat('NODES', _countConnected(), FontAwesomeIcons.networkWired, AppTheme.primary),
+                    child: _buildQuickStat('NODES', _countConnected(), FontAwesomeIcons.networkWired, theme.colorScheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -221,7 +221,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     );
   }
 
-  List<PieChartSectionData> _buildPieSections() {
+  List<PieChartSectionData> _buildPieSections(ThemeData theme) {
     final total = leetcode + codeforces + codechef + hackerrank;
     if (total == 0) return [PieChartSectionData(color: Colors.white.withOpacity(0.1), value: 1, radius: 12, showTitle: false)];
 

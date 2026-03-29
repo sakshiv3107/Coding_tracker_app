@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-class _ErrorBanner extends StatelessWidget {
+class ErrorBanner extends StatelessWidget {
   final String message;
-  const _ErrorBanner({required this.message});
+  const ErrorBanner({required this.message, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +16,20 @@ class _ErrorBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: Colors.redAccent, size: 20),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Colors.redAccent,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
-                  color: Colors.redAccent,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500),
+                color: Colors.redAccent,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

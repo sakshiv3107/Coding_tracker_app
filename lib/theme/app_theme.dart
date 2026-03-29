@@ -10,6 +10,8 @@ class AppTheme {
   static const Color accent = Color(0xFFF43F5E); // Rose/Crimson accent
 
   // Platform specific (kept consistent but slightly more vibrant)
+
+  // Platform specific (kept consistent but slightly more vibrant)
   static const Color leetCodeYellow = Color(0xFFF97316); // Orange-600
   static const Color githubGrey = Color(0xFF4B5563);
   static const Color githubBlack = Color(0xFF0F172A);
@@ -33,14 +35,14 @@ class AppTheme {
   static const double borderRadius = 24.0;
   static const double inputBorderRadius = 16.0;
 
-  static ThemeData get lightTheme {
+  static ThemeData lightTheme(Color primaryColor) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.light(
-        primary: primary,
-        secondary: secondary,
-        tertiary: accent,
+        primary: primaryColor,
+        secondary: const Color(0xFF06B6D4), // Modern Cyan
+        tertiary: const Color(0xFFF43F5E), // Rose/Crimson accent
         surface: surfaceLight,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
@@ -105,7 +107,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
@@ -135,7 +137,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(inputBorderRadius),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         hintStyle: GoogleFonts.outfit(
           color: textSecondaryLight.withValues(alpha: 0.5),
@@ -145,14 +147,14 @@ class AppTheme {
     );
   }
 
-  static ThemeData get darkTheme {
+  static ThemeData darkTheme(Color primaryColor) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.dark(
-        primary: primary,
-        secondary: secondary,
-        tertiary: accent,
+        primary: primaryColor,
+        secondary: const Color(0xFF06B6D4), // Modern Cyan
+        tertiary: const Color(0xFFF43F5E), // Rose/Crimson accent
         surface: surfaceDark,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
@@ -203,7 +205,7 @@ class AppTheme {
             labelLarge: GoogleFonts.jetBrainsMono(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: primaryLight,
+              color: primaryColor,
               letterSpacing: 1,
             ),
           ),
@@ -231,14 +233,14 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(inputBorderRadius),
           ),
           elevation: 0,
-          shadowColor: primary.withValues(alpha: 0.3),
+          shadowColor: primaryColor.withValues(alpha: 0.3),
           textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -262,7 +264,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(inputBorderRadius),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         hintStyle: GoogleFonts.outfit(
           color: textSecondaryDark.withValues(alpha: 0.4),

@@ -12,6 +12,7 @@ import '../providers/achievement_provider.dart';
 import '../providers/resume_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/notification_service.dart';
+import '../services/smart_reminder_service.dart';
 import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
@@ -31,7 +32,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  NotificationService.init();
+  await NotificationService.init();
+  await SmartReminderService.init();
 
   runApp(
     MultiProvider(
@@ -67,8 +69,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CodeSphere',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme(themeProvider.primaryColor),
+      darkTheme: AppTheme.darkTheme(themeProvider.primaryColor),
       themeMode: themeProvider.themeMode,
       home: const AuthWrapper(),
       routes: {

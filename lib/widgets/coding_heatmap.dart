@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
 import 'modern_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 
 class CodingHeatmap extends StatelessWidget {
   final Map<DateTime, int> datasets;
@@ -49,11 +49,11 @@ class CodingHeatmap extends StatelessWidget {
             startDate: DateTime.now().subtract(const Duration(days: 365)),
             endDate: DateTime.now(),
             colorsets: {
-              1: AppTheme.primary.withOpacity(0.2),
-              2: AppTheme.primary.withOpacity(0.4),
-              3: AppTheme.primary.withOpacity(0.6),
-              4: AppTheme.primary.withOpacity(0.8),
-              5: AppTheme.primary,
+              1: theme.colorScheme.primary.withOpacity(0.2),
+              2: theme.colorScheme.primary.withOpacity(0.4),
+              3: theme.colorScheme.primary.withOpacity(0.6),
+              4: theme.colorScheme.primary.withOpacity(0.8),
+              5: theme.colorScheme.primary,
             },
             onClick: (value) {
               ScaffoldMessenger.of(context).showSnackBar(

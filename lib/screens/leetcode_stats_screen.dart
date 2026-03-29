@@ -76,7 +76,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => _refreshStats(),
-          color: AppTheme.primary,
+          color: theme.colorScheme.primary,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -106,7 +106,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                               Text(
                                 'Analytics Dashboard',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.textSecondaryDark.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
@@ -418,6 +418,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
 
   Widget _buildMainStats(StatsProvider stats) {
     final lc = stats.leetcodeStats!;
+    final theme = Theme.of(context);
     return Row(
       children: [
         Expanded(
@@ -425,7 +426,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             label: 'SOLVED',
             value: lc.totalSolved.toString(),
             icon: FontAwesomeIcons.checkDouble,
-            color: AppTheme.secondary,
+            color: theme.colorScheme.secondary,
           ),
         ),
         const SizedBox(width: 16),
@@ -531,14 +532,14 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                           Icon(
                             FontAwesomeIcons.at,
                             size: 12,
-                            color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             username,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondaryDark.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -555,7 +556,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
@@ -573,34 +575,36 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         icon: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 18,
-          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          color: theme.colorScheme.onSurface,
         ),
       ),
     );
   }
 
   Widget _buildRefreshButton(bool isLoading) {
+    final theme = Theme.of(context);
     return IconButton.filledTonal(
       onPressed: isLoading ? null : _refreshStats,
       icon: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppTheme.primary,
+                color: theme.colorScheme.primary,
               ),
             )
           : const Icon(Icons.refresh_rounded, size: 20),
       style: IconButton.styleFrom(
-        backgroundColor: AppTheme.primary.withOpacity(0.1),
-        foregroundColor: AppTheme.primary,
+        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+        foregroundColor: theme.colorScheme.primary,
       ),
     );
   }
 
   Widget _buildMenuButton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Builder(
       builder: (context) {
         return Container(
@@ -620,7 +624,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
             icon: Icon(
               Icons.menu_rounded,
               size: 18,
-              color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'modern_card.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 
 class AIInsightsCard extends StatelessWidget {
   final int leetcodeSolved;
@@ -79,10 +79,10 @@ class AIInsightsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.psychology_rounded, color: Colors.purple, size: 24),
+                child: Icon(Icons.psychology_rounded, color: theme.colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 14),
               const Text(
@@ -102,8 +102,8 @@ class AIInsightsCard extends StatelessWidget {
                       child: Container(
                         width: 6,
                         height: 6,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
                         ),
                       ),

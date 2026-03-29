@@ -1,12 +1,4 @@
 // lib/screens/dashboard_screen.dart
-//
-// PERMANENT FIX v3:
-// - Replaced CustomScrollView + slivers with a simple SingleChildScrollView.
-//   BackdropFilter (isGlass: true) crashes inside CustomScrollView slivers
-//   because no composition layer is available before layout finishes.
-// - All glassmorphism removed from scroll content (only safe in non-scrolling contexts).
-// - Profile loading gate prevents any build with null data.
-// - All provider fields validated against StatsProvider's actual API.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +7,7 @@ import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/achievement_provider.dart';
-import '../theme/app_theme.dart';
+// import '../theme/app_theme.dart';
 import '../widgets/unified_analytics_card.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
@@ -317,10 +309,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: AppTheme.accent.withOpacity(0.12),
+            color: theme.colorScheme.tertiary.withOpacity(0.12),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: AppTheme.accent.withOpacity(0.25)),
+                color: theme.colorScheme.tertiary.withOpacity(0.25)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -329,15 +321,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.bolt_rounded,
-                      color: AppTheme.accent, size: 14),
+                  Icon(Icons.bolt_rounded,
+                      color: theme.colorScheme.tertiary, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     'LVL $level',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      color: AppTheme.accent,
+                      color: theme.colorScheme.tertiary,
                     ),
                   ),
                 ],
@@ -349,9 +341,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: AppTheme.accent.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppTheme.accent),
+                    backgroundColor: theme.colorScheme.tertiary.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.tertiary),
                     minHeight: 4,
                   ),
                 ),
@@ -398,20 +390,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCareerBanner(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/resume'),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primary, AppTheme.primaryLight],
+          gradient: LinearGradient(
+            colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -459,15 +452,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: AppTheme.accent.withOpacity(0.2)),
+            color: theme.colorScheme.tertiary.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.workspace_premium_rounded,
-                  color: AppTheme.accent, size: 20),
+              Icon(Icons.workspace_premium_rounded,
+                  color: theme.colorScheme.tertiary, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Achievements',
@@ -478,7 +471,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 '${achievements.length} earned',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.accent,
+                  color: theme.colorScheme.tertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -500,17 +493,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withOpacity(0.1),
+                      color: theme.colorScheme.tertiary.withOpacity(0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: AppTheme.accent.withOpacity(0.3)),
+                          color: theme.colorScheme.tertiary.withOpacity(0.3)),
                     ),
                     child: Center(
                       child: Icon(
                         (a.icon is IconData)
                             ? a.icon as IconData
                             : Icons.emoji_events_rounded,
-                        color: AppTheme.accent,
+                        color: theme.colorScheme.tertiary,
                         size: 28,
                       ),
                     ),

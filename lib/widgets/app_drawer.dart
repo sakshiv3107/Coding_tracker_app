@@ -186,7 +186,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 Switch.adaptive(
                   value: isDark,
-                  activeColor: AppTheme.primary,
+                  activeColor: theme.colorScheme.primary,
                   onChanged: (val) => themeProvider.toggleTheme(val),
                 ),
               ],
@@ -213,6 +213,7 @@ class AppDrawer extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, String name, String username,
       String? pic, bool isDark) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
@@ -235,10 +236,10 @@ class AppDrawer extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.secondary]),
+                      colors: [theme.colorScheme.primary, theme.colorScheme.tertiary]),
                 ),
                 child: CircleAvatar(
                   radius: 32,
@@ -248,11 +249,11 @@ class AppDrawer extends StatelessWidget {
                   backgroundImage: (pic != null && pic.isNotEmpty)
                       ? NetworkImage(pic)
                       : null,
-                  child: (pic == null || pic.isEmpty)
-                      ? Icon(Icons.person_rounded,
-                          color: isDark ? AppTheme.primaryLight : AppTheme.primary, 
-                          size: 32)
-                      : null,
+                    child: (pic == null || pic.isEmpty)
+                        ? Icon(Icons.person_rounded,
+                            color: theme.colorScheme.primary, 
+                            size: 32)
+                        : null,
                 ),
               ),
               const Spacer(),
@@ -260,13 +261,13 @@ class AppDrawer extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   'DEV PRO',
                   style: TextStyle(
-                    color: AppTheme.primary,
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w900,
                     fontSize: 10,
                     letterSpacing: 1,
@@ -291,7 +292,7 @@ class AppDrawer extends StatelessWidget {
               fontSize: 13,
               fontFamily: 'monospace',
               fontWeight: FontWeight.w700,
-              color: isDark ? AppTheme.primaryLight : AppTheme.primary,
+              color: theme.colorScheme.primary,
             ),
           ),
         ],
@@ -418,7 +419,7 @@ class AppDrawer extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: isActive
-            ? AppTheme.primary.withOpacity(isDark ? 0.15 : 0.08)
+            ? theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
       ),
@@ -430,14 +431,14 @@ class AppDrawer extends StatelessWidget {
           icon,
           size: iconSize,
           color: isActive
-              ? AppTheme.primary
+              ? theme.colorScheme.primary
               : theme.colorScheme.onSurface.withOpacity(0.45),
         ),
         title: Text(
           title,
           style: TextStyle(
             color: isActive
-                ? AppTheme.primary
+                ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withOpacity(0.85),
             fontWeight:
                 isActive ? FontWeight.w900 : FontWeight.w600,
@@ -448,8 +449,8 @@ class AppDrawer extends StatelessWidget {
             ? Container(
                 width: 7,
                 height: 7,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primary,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
               )

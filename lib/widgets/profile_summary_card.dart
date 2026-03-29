@@ -36,7 +36,7 @@ class ProfileSummaryCard extends StatelessWidget {
             child: Icon(
               FontAwesomeIcons.solidUserCircle,
               size: 100,
-              color: AppTheme.primary.withOpacity(0.05),
+              color: theme.colorScheme.primary.withOpacity(0.05),
             ),
           ),
           Padding(
@@ -49,7 +49,7 @@ class ProfileSummaryCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.5)],
+                      colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.5)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -61,7 +61,7 @@ class ProfileSummaryCard extends StatelessWidget {
                         ? NetworkImage(profilePicUrl!) 
                         : null,
                     child: (profilePicUrl == null || profilePicUrl!.isEmpty)
-                        ? const Icon(Icons.person_rounded, color: AppTheme.primary, size: 40)
+                        ? Icon(Icons.person_rounded, color: theme.colorScheme.primary, size: 40)
                         : null,
                   ),
                 ),
@@ -96,7 +96,7 @@ class ProfileSummaryCard extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _smallBadge(FontAwesomeIcons.cube, '$totalPlatforms Nodes', AppTheme.primary),
+                          _smallBadge(FontAwesomeIcons.cube, '$totalPlatforms Nodes', theme.colorScheme.primary),
                           _smallBadge(FontAwesomeIcons.circleCheck, 'Verified', Colors.green),
                         ],
                       ),
