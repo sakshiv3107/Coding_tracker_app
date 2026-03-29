@@ -12,7 +12,7 @@ class MonthlyProgressChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  //  final isDark = theme.brightness == Brightness.dark;
 
     // Aggregate monthly data for the last 6 months
     final Map<int, int> monthlyData = {};
@@ -23,7 +23,7 @@ class MonthlyProgressChart extends StatelessWidget {
     }
 
     submissionCalendar.forEach((date, count) {
-      final monthStart = DateTime(date.year, date.month, 1);
+      // final monthStart = DateTime(date.year, date.month, 1);
       if (monthlyData.containsKey(date.month)) {
         monthlyData[date.month] = (monthlyData[date.month] ?? 0) + count;
       }

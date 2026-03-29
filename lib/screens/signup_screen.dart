@@ -5,9 +5,9 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 import 'profile_setup_screen.dart';
-import 'login_screen.dart'
-    hide AuthFieldLabel, AuthErrorBanner, AuthOrDivider,
-         AuthGradientButton, AuthGoogleIcon, AuthHeroLogo;
+// import 'login_screen.dart'
+//     hide AuthFieldLabel, AuthErrorBanner, AuthOrDivider,
+//          AuthGradientButton, AuthGoogleIcon, AuthHeroLogo;
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -197,8 +197,9 @@ class _SignupScreenState extends State<SignupScreen>
                       hint: 'John Doe',
                       icon: Icons.person_outline_rounded,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return 'Name is required';
+                        }
                         if (v.trim().length < 2) return 'Name is too short';
                         return null;
                       },

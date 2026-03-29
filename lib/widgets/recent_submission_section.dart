@@ -3,7 +3,6 @@
 // status indicator, language chip, and time ago label.
 
 import 'package:flutter/material.dart';
-import '../models/leetcode_stats.dart';
 import '../models/submission.dart';
 import 'modern_card.dart';
 

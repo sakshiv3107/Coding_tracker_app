@@ -18,9 +18,9 @@ class CodeChefStatsScreen extends StatefulWidget {
 }
 
 class _CodeChefStatsScreenState extends State<CodeChefStatsScreen> {
-  static const _codechefBrown = Color(0xFF6B3A2A);
+  // static const _codechefBrown = Color(0xFF6B3A2A);
   static const _codechefAmber = Color(0xFFE08D2D);
-  static const _codechefGold  = Color(0xFFFFD166);
+  // static const _codechefGold  = Color(0xFFFFD166);
 
   @override
   void initState() {

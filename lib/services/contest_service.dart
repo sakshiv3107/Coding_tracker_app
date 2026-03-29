@@ -110,10 +110,16 @@ class ContestService {
     final finalContests = unique.values.toList();
     finalContests.sort((a, b) => a.startTime.compareTo(b.startTime));
     
-    // Automatically schedule notifications for fetched contests
-    await scheduleAllContestNotifications(finalContests);
+    // Schedule notifications in background without blocking the result
+    _scheduleNotificationsInBackground(finalContests);
     
     return finalContests;
+  }
+
+  void _scheduleNotificationsInBackground(List<Contest> contests) {
+    scheduleAllContestNotifications(contests).catchError((e) {
+      debugPrint("Error scheduling notifications: $e");
+    });
   }
 
   Future<void> scheduleAllContestNotifications(List<Contest> contests) async {
@@ -168,12 +174,19 @@ class ContestService {
       final response = await http.get(cfUrl).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == 'OK') {
+        if (data is Map && data['status'] == 'OK' && data['result'] is List) {
           final List list = data['result'];
-          return list
-              .where((c) => c['phase'] == 'BEFORE')
-              .map((c) => Contest.fromJson(c, 'Codeforces'))
-              .toList();
+          final List<Contest> contests = [];
+          for (var c in list) {
+            try {
+              if (c['phase'] == 'BEFORE') {
+                 contests.add(Contest.fromJson(c, 'Codeforces'));
+              }
+            } catch (e) {
+               debugPrint("Error parsing CF contest: $e");
+            }
+          }
+          return contests;
         }
       }
     } catch (e) {
@@ -188,14 +201,20 @@ class ContestService {
       final response = await http.get(ccUrl).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List future = data['future_contests'] ?? [];
-        final List present = data['present_contests'] ?? [];
-        
-        final List<Contest> contests = [];
-        for (var c in [...present, ...future]) {
-          contests.add(Contest.fromJson(c, 'CodeChef'));
+        if (data is Map) {
+          final List future = data['future_contests'] ?? [];
+          final List present = data['present_contests'] ?? [];
+          
+          final List<Contest> contests = [];
+          for (var c in [...present, ...future]) {
+            try {
+              contests.add(Contest.fromJson(c, 'CodeChef'));
+            } catch (e) {
+               debugPrint("Error parsing CC contest: $e");
+            }
+          }
+          return contests;
         }
-        return contests;
       }
     } catch (e) {
       debugPrint("CodeChef contests error: $e");
@@ -227,13 +246,25 @@ class ContestService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List list = data['data']['allContests'] ?? [];
-        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        
-        return list
-            .where((c) => (c['startTime'] as int) + (c['duration'] as int) > now)
-            .map((c) => Contest.fromJson(c, 'LeetCode'))
-            .toList();
+        if (data is Map && data['data'] != null && data['data']['allContests'] is List) {
+          final List list = data['data']['allContests'];
+          final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+          
+          final List<Contest> contests = [];
+          for (var c in list) {
+            try {
+              final int start = (c['startTime'] is int) ? c['startTime'] : (int.tryParse(c['startTime']?.toString() ?? '0') ?? 0);
+              final int duration = (c['duration'] is int) ? c['duration'] : (int.tryParse(c['duration']?.toString() ?? '0') ?? 0);
+              
+              if (start + duration > now) {
+                contests.add(Contest.fromJson(c, 'LeetCode'));
+              }
+            } catch (e) {
+               debugPrint("Error parsing LC contest: $e");
+            }
+          }
+          return contests;
+        }
       }
     } catch (e) {
       debugPrint("LeetCode contests error: $e");
@@ -305,15 +336,15 @@ class ContestService {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List list = data['data']['userContestRankingHistory'] ?? [];
-        return list.where((e) => e['attended'] == true).map((e) {
+        final List list = (data['data'] != null) ? (data['data']['userContestRankingHistory'] ?? []) : [];
+        return list.where((e) => e != null && e['attended'] == true && e['contest'] != null).map((e) {
           final c = e['contest'];
           return Contest(
-            title: c['title'],
-            startTime: DateTime.fromMillisecondsSinceEpoch(c['startTime'] * 1000),
+            title: c['title'] ?? 'LeetCode Contest',
+            startTime: DateTime.fromMillisecondsSinceEpoch((c['startTime'] ?? 0) * 1000),
             duration: const Duration(minutes: 90),
             platform: 'LeetCode',
-            url: 'https://leetcode.com/contest/${c['title'].toString().toLowerCase().replaceAll(' ', '-')}',
+            url: 'https://leetcode.com/contest/${(c['title'] ?? '').toString().toLowerCase().replaceAll(' ', '-')}',
           );
         }).toList();
       }

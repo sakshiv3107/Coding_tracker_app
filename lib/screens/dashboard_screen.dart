@@ -23,7 +23,6 @@ import '../widgets/coding_heatmap.dart';
 import '../widgets/skill_radar_chart.dart';
 import '../widgets/ai_insights_card.dart';
 import '../widgets/weekly_activity_chart.dart';
-import '../widgets/contest_tracker_card.dart';
 import '../widgets/skeleton_loading.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -282,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: theme.colorScheme.surface,
               shape: BoxShape.circle,
               border: Border.all(
-                  color: Colors.grey.withOpacity(0.15)),
+                  color: Colors.grey.withOpacity(0.3)),
             ),
             child: IconButton(
               icon: const Icon(Icons.menu_rounded, size: 22),
@@ -412,7 +411,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.3),
+              color: AppTheme.primary.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -420,8 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: const Row(
           children: [
-            Icon(Icons.description_rounded,
-                color: Colors.white, size: 32),
+            Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
             SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -439,15 +437,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     'Export your coding portfolio to PDF',
                     style: TextStyle(
-                        color: Colors.white70,
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                color: Colors.white70, size: 16),
+            Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
           ],
         ),
       ),

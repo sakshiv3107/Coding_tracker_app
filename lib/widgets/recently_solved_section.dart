@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/leetcode_stats.dart';
 import '../models/submission.dart';
 import 'modern_card.dart';
 
@@ -60,8 +59,8 @@ class RecentlySolvedSection extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      if (sub.difficulty != null && sub.difficulty!.isNotEmpty) ...[
-                        _buildDifficultyTag(sub.difficulty!),enhance the color pal
+                      if (sub.difficulty != null && sub.difficulty!.isNotEmpty)
+                        _buildDifficultyTag(sub.difficulty!),
                     ],
                   ),
                 ],

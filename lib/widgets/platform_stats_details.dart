@@ -4,7 +4,6 @@ import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/responsive_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
-import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/not_connected_widget.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/platform_error_card.dart';

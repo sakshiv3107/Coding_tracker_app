@@ -160,9 +160,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                       );
 
                                       // Check if save was successful
+                                      if (!mounted) return;
+
                                       if (profileProvider.error == null &&
-                                          profileProvider.isProfileCompleted &&
-                                          mounted) {
+                                          profileProvider.isProfileCompleted) {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -177,8 +178,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         // The AuthWrapper will automatically handle this
                                         // due to profile being marked as completed
                                       } else if (profileProvider.error !=
-                                              null &&
-                                          mounted) {
+                                          null) {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -234,8 +234,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     return TextFormField(
       controller: controller,
-      validator: (value) =>
-          required && (value == null || value.isEmpty) ? "Required field" : null,
+      validator: (value) => required && (value == null || value.isEmpty)
+          ? "Required field"
+          : null,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),

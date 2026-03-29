@@ -38,7 +38,7 @@ class _NotificationSettingsTileState extends State<NotificationSettingsTile> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     
     return Column(
       children: [

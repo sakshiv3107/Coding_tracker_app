@@ -5,7 +5,6 @@ import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/premium_widgets.dart';
 import '../widgets/notification_settings_tile.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

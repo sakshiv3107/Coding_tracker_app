@@ -44,7 +44,7 @@ class AIInsightsCard extends StatelessWidget {
 
     // Suggested focus based on tag stats (rule-based)
     // Find missing or low areas
-    final basicTags = ['Arrays', 'Strings', 'Hash Table'];
+    // final basicTags = ['Arrays', 'Strings', 'Hash Table'];
     final advancedTags = ['Dynamic Programming', 'Graphs', 'Trees'];
     
     String? focus;

@@ -238,7 +238,7 @@ class AppDrawer extends StatelessWidget {
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.accent]),
+                      colors: [AppTheme.primary, AppTheme.secondary]),
                 ),
                 child: CircleAvatar(
                   radius: 32,
@@ -249,8 +249,9 @@ class AppDrawer extends StatelessWidget {
                       ? NetworkImage(pic)
                       : null,
                   child: (pic == null || pic.isEmpty)
-                      ? const Icon(Icons.person_rounded,
-                          color: AppTheme.primary, size: 32)
+                      ? Icon(Icons.person_rounded,
+                          color: isDark ? AppTheme.primaryLight : AppTheme.primary, 
+                          size: 32)
                       : null,
                 ),
               ),
@@ -290,7 +291,7 @@ class AppDrawer extends StatelessWidget {
               fontSize: 13,
               fontFamily: 'monospace',
               fontWeight: FontWeight.w700,
-              color: AppTheme.primary.withOpacity(0.8),
+              color: isDark ? AppTheme.primaryLight : AppTheme.primary,
             ),
           ),
         ],

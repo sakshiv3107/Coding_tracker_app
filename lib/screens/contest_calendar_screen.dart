@@ -35,7 +35,7 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
   Widget build(BuildContext context) {
     final stats = context.watch<StatsProvider>();
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -67,18 +67,31 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
                       onRefresh: () async => _refresh(),
                       child: (stats.upcomingContests.isEmpty &&
                               stats.attendedContests.isEmpty)
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.event_busy_rounded,
-                                      size: 64,
-                                      color: Colors.grey.withOpacity(0.5)),
-                                  const SizedBox(height: 16),
-                                  const Text('No contests found',
-                                      style: TextStyle(color: Colors.grey)),
-                                ],
-                              ),
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.event_busy_rounded,
+                                            size: 64,
+                                            color: Colors.grey.withOpacity(0.5)),
+                                        const SizedBox(height: 16),
+                                        const Text('No contests found',
+                                            style: TextStyle(color: Colors.grey)),
+                                        const SizedBox(height: 8),
+                                        TextButton(
+                                          onPressed: _refresh,
+                                          child: const Text('Tap to retry'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             )
                           : ListView(
                               padding: const EdgeInsets.symmetric(
@@ -311,7 +324,7 @@ class _ContestListItem extends StatelessWidget {
     if (d.inHours > 0) {
       final h = d.inHours;
       final m = d.inMinutes % 60;
-      return m > 0 ? '${h} hr ${m} m' : '${h} hr';
+      return m > 0 ? '$h hr $m m' : '$h hr';
     }
     return '${d.inMinutes} m';
   }
