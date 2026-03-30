@@ -3,11 +3,50 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  
+  // Web Client ID from google-services.json (client_type: 3)
+  // This is required on Android to avoid ApiException: 10 in some environments
+  static const String _serverClientId = '168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com';
+  
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: _serverClientId,
+  );
   final ProfileService _profileService = ProfileService();
+  final _secureStorage = const FlutterSecureStorage();
+
+  // Persist authentication state
+  Future<void> _persistAuthData(String uid, String email, String name) async {
+    await _secureStorage.write(key: 'auth_uid', value: uid);
+    await _secureStorage.write(key: 'auth_email', value: email);
+    await _secureStorage.write(key: 'auth_name', value: name);
+    // You can also persist an auth token here if using a custom backend
+  }
+
+  Future<void> clearAuthData() async {
+    await _secureStorage.delete(key: 'auth_uid');
+    await _secureStorage.delete(key: 'auth_email');
+    await _secureStorage.delete(key: 'auth_name');
+  }
+
+  // Get persisted auth data on app launch
+  Future<Map<String, String>?> getPersistedUser() async {
+    final uid = await _secureStorage.read(key: 'auth_uid');
+    if (uid != null && uid.isNotEmpty) {
+      final email = await _secureStorage.read(key: 'auth_email') ?? '';
+      final name = await _secureStorage.read(key: 'auth_name') ?? 'User';
+      return {
+        "uid": uid,
+        "email": email,
+        "name": name,
+      };
+    }
+    return null;
+  }
 
   // Get current user
   User? get currentFirebaseUser => _firebaseAuth.currentUser;
@@ -50,6 +89,9 @@ class AuthService {
 
       // Save user info to Firestore
       await _profileService.saveUserInfo(email: email, name: name);
+      
+      // Persist auth locally
+      await _persistAuthData(userCredential.user!.uid, email, name);
 
       return {
         "uid": userCredential.user!.uid,
@@ -74,10 +116,15 @@ class AuthService {
       final UserCredential userCredential = await _firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
 
+      final String name = userCredential.user!.displayName ?? email.split('@')[0];
+
+      // Persist auth locally
+      await _persistAuthData(userCredential.user!.uid, email, name);
+
       return {
         "uid": userCredential.user!.uid,
         "email": userCredential.user!.email ?? "",
-        "name": userCredential.user!.displayName ?? email.split('@')[0],
+        "name": name,
         "isNewUser": false,
       };
     } on FirebaseAuthException catch (e) {
@@ -134,6 +181,13 @@ class AuthService {
         name: userCredential.user!.displayName ?? "User",
       );
 
+      // Persist auth locally
+      await _persistAuthData(
+        userCredential.user!.uid, 
+        userCredential.user!.email ?? "", 
+        userCredential.user!.displayName ?? "User",
+      );
+
       return {
         "uid": userCredential.user!.uid,
         "email": userCredential.user!.email ?? "",
@@ -142,6 +196,13 @@ class AuthService {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(_handleFirebaseException(e));
+    } on PlatformException catch (e) {
+      if (e.code == 'sign_in_failed') {
+        if (e.message?.contains('ApiException: 10') ?? false) {
+          throw Exception("Google Sign-In Error (10): This is usually a developer error. Please ensure your SHA-1 fingerprint is correctly registered in the Firebase Console and that Google Sign-In is enabled.");
+        }
+      }
+      throw Exception("Google Sign-In failed: ${e.message ?? e.toString()}");
     } catch (e) {
       throw Exception("Google sign in failed: ${e.toString()}");
     }
@@ -160,6 +221,9 @@ class AuthService {
       // Clear local SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      
+      // Clear secure storage auth data
+      await clearAuthData();
 
       // Clear Hive boxes
       await Hive.deleteFromDisk();

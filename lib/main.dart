@@ -43,9 +43,11 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => GithubProvider()),
+        // init() wires up the Firestore auth-listener and loads from disk.
+        // Without this call goals were never populated/synced.
         ChangeNotifierProvider(create: (_) => GoalProvider()..init()),
-        ChangeNotifierProvider(create: (_) => ResumeProvider()..init()),
-        ChangeNotifierProvider(create: (_) => AchievementProvider()..init()),
+        ChangeNotifierProvider(create: (_) => ResumeProvider()),
+        ChangeNotifierProvider(create: (_) => AchievementProvider()),
         // Stream provider for real-time auth state
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),

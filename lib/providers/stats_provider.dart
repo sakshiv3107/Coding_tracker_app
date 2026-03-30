@@ -573,12 +573,25 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // LeetcodeService handles its own memory + disk cache internally.
-      // We pass forceRefresh through so the user's explicit pull-to-refresh
-      // bypasses both layers.
+      // LeetcodeService uses stale-while-revalidate: it may return cached data
+      // immediately and then re-fetch in the background.  We pass a callback
+      // so that when the background refresh finishes the UI also updates with
+      // the fresh, real solved-question count (fixes the "always shows N
+      // questions" bug caused by stale cache not propagating to the provider).
       final stats = await _withRetry(
-        () =>
-            LeetcodeService().fetchData(username!, forceRefresh: forceRefresh),
+        () => LeetcodeService().fetchData(
+          username!,
+          forceRefresh: forceRefresh,
+          onBackgroundRefresh: (freshStats) {
+            // Skip the update if we're already mid-load (race condition guard).
+            if (_leetcodeLoading) return;
+            _leetcodeStats = freshStats;
+            _leetcodeLastFetch = DateTime.now();
+            _saveLcToDisk(freshStats); // Persist fresh data for next cold start.
+            _calculateAnalytics();
+            notifyListeners(); // Re-render UI with accurate counts.
+          },
+        ),
         platform: 'LeetCode',
       );
       _leetcodeStats = stats;

@@ -50,11 +50,52 @@ class GoalsScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.track_changes_rounded, size: 80, color: theme.colorScheme.onSurface.withOpacity(0.1)),
-                      const SizedBox(height: 16),
-                      Text('No active goals', style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                      // Empty-state illustration
+                      Container(
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.06),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.track_changes_rounded,
+                          size: 64,
+                          color: AppTheme.primary.withOpacity(0.35),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'No goals added yet',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface.withOpacity(0.55),
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text('Set a goal to track your progress!', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4))),
+                      Text(
+                        'Set a goal to track your progress!',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.38),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // ── Add Goal CTA ──────────────────────────────────
+                      FilledButton.icon(
+                        onPressed: () => _showAddGoalDialog(context),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add Goal'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 14,
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -9,8 +9,8 @@ class SmartReminderService {
   static const String _kInactivityAlertsEnabled = 'inactivity_alerts_enabled';
   static const String _kGoalAlertsEnabled = 'goal_alerts_enabled';
 
-  static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  //static final FlutterLocalNotificationsPlugin _localNotifications =
+  //    FlutterLocalNotificationsPlugin();
 
   // Initialization for UI and background
   static Future<void> init() async {

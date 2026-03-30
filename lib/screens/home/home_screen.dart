@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _initializeData() {
     if (!mounted) return;
     final profile = context.read<ProfileProvider>();
-    if (profile.isLoading || profile.profile == null) {
+    if (profile.isLoading) {
       profile.addListener(_onProfileReady);
       return;
     }
@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final profile = context.read<ProfileProvider>();
     if (!profile.isLoading) {
       profile.removeListener(_onProfileReady);
-      if (profile.profile != null && mounted) _doFetch();
+      if (mounted) _doFetch();
     }
   }
 
@@ -199,10 +199,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final profile = context.watch<ProfileProvider>();
 
-    // Show spinner while profile loads
-    if (profile.isLoading || profile.profile == null) {
+    // Show spinner ONLY while profile intentionally loads from network
+    if (profile.isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF00FFCC))),
       );
     }
 

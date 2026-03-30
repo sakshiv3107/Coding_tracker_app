@@ -3,11 +3,33 @@ import '../services/auth_service.dart';
 import 'stats_provider.dart';
 import 'profile_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 enum AuthStatus { idle, loading, success, error }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _service = AuthService();
+  StreamSubscription<User?>? _authSubscription;
+
+  AuthProvider() {
+    // Listen for real-time authentication state changes (e.g., token expiration, revocation)
+    _authSubscription = FirebaseAuth.instance.idTokenChanges().listen((User? firebaseUser) {
+      if (firebaseUser == null && user != null) {
+        // User's token expired or session was revoked remotely
+        user = null;
+        isNewUser = false;
+        _service.clearAuthData();
+        notifyListeners();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   Map<String, String>? user;
   bool isLoading = false;
@@ -22,6 +44,36 @@ class AuthProvider extends ChangeNotifier {
 
   void clearError() {
     error = null;
+    notifyListeners();
+  }
+
+  // Check if session exists on app startup
+  Future<void> checkLoginStatus() async {
+    isLoading = true;
+    notifyListeners();
+    
+    try {
+      // 1. Check secure storage first
+      final persistedUser = await _service.getPersistedUser();
+      if (persistedUser != null) {
+        user = persistedUser;
+        // Optionally, check if it's still locally valid with Firebase
+        if (_service.currentFirebaseUser != null) {
+           isNewUser = false;
+        }
+      } else {
+        // Fallback to Firebase current user
+        final fUser = _service.currentUser;
+        if (fUser != null) {
+           user = fUser;
+           isNewUser = false;
+        }
+      }
+    } catch (e) {
+      error = e.toString();
+    }
+    
+    isLoading = false;
     notifyListeners();
   }
 
@@ -75,8 +127,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Google Sign In
+  // Google Sign In — with improved error handling
   Future<bool> signInWithGoogle() async {
+    // Double-click guard: if already loading, ignore
+    if (isLoading) return false;
+
     try {
       isLoading = true;
       error = null;
@@ -93,7 +148,14 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      error = e.toString().replaceFirst('Exception: ', '');
+      final msg = e.toString().replaceFirst('Exception: ', '');
+
+      // Don't show error if user just cancelled the sign-in dialog
+      if (msg.contains('cancelled') || msg.contains('canceled')) {
+        error = null;
+      } else {
+        error = msg;
+      }
       isLoading = false;
       notifyListeners();
       return false;
@@ -107,7 +169,9 @@ class AuthProvider extends ChangeNotifier {
 
       // Clear memory caches in other providers first
       Provider.of<StatsProvider>(context, listen: false).clearAllCache();
-      Provider.of<ProfileProvider>(context, listen: false).clearProfile();
+      // clearProfile() is async — it clears the SharedPreferences flag
+      // so the next login goes through the full auth flow.
+      await Provider.of<ProfileProvider>(context, listen: false).clearProfile();
 
       await _service.logout();
       user = null;

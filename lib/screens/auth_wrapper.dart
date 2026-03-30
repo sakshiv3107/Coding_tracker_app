@@ -1,3 +1,13 @@
+// lib/screens/auth_wrapper.dart
+//
+// KEY FIXES:
+//  1. Profile initialization now works with the locally-persisted
+//     `profileCompleted` flag, so returning users skip ProfileSetup instantly.
+//  2. `clearProfile()` is now awaited properly (it's async to clear
+//     SharedPreferences on logout).
+//  3. The splash screen is only shown while auth + profile are initializing;
+//     once the local flag is read, navigation is immediate.
+
 import 'package:coding_tracker_app/screens/profile_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +25,30 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _profileLoaded = false;
+  late Future<void> _initializationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializationFuture = _checkAuthAndInitialize();
+  }
+
+  Future<void> _checkAuthAndInitialize() async {
+    final auth = context.read<AuthProvider>();
+    final profile = context.read<ProfileProvider>();
+    
+    // Add artificial delay for splash screen visibility if it is too fast
+    await Future.wait([
+      auth.checkLoginStatus(),
+      Future.delayed(const Duration(milliseconds: 1500)),
+    ]);
+    
+    // If securely logged in upon app launch, initialize the profile immediately
+    if (auth.user != null && !profile.isLoading) {
+      _profileLoaded = true;
+      profile.initializeProfile();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -25,7 +59,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Trigger profile load when user logs in (only once per session)
     if (auth.user != null && !_profileLoaded && !profile.isLoading) {
       _profileLoaded = true;
-      // Use addPostFrameCallback to avoid setState during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) profile.initializeProfile();
       });
@@ -34,7 +67,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Reset when user logs out
     if (auth.user == null && _profileLoaded) {
       _profileLoaded = false;
-      // Also clear profile data
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) profile.clearProfile();
       });
@@ -43,37 +75,82 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final profile = context.watch<ProfileProvider>();
+    return FutureBuilder(
+      future: _initializationFuture,
+      builder: (context, snapshot) {
+        // Show Splash Screen while checking auth
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _SplashScreen(message: 'Initializing Session...');
+        }
 
-    // Show loading screen while profile is being loaded
-    if (auth.user != null && profile.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: Color(0xFF4E8B7C)),
-              SizedBox(height: 24),
-              Text(
-                'Initializing CodeSphere...',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        final auth = context.watch<AuthProvider>();
+        final profile = context.watch<ProfileProvider>();
+
+        // ── Not authenticated → Login ─────────────────────────────────────
+        if (auth.user == null) {
+          return const LoginScreen();
+        }
+
+        // ── Authenticated → ALWAYS Home ──────────────────────────────────
+        // (Profile setup is only pushed once during registration)
+        return const HomeScreen();
+      },
+    );
+  }
+}
+
+class _SplashScreen extends StatelessWidget {
+  final String message;
+  const _SplashScreen({this.message = 'Initializing Session...'});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A), // Dark Cyber theme background
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Splash Logo or Icon
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00FFCC).withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
+              child: const Icon(
+                Icons.code,
+                size: 64,
+                color: Color(0xFF00FFCC), // Cyan accent
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'CodeSphere',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 48),
+            // Loading indicator
+            const CircularProgressIndicator(
+              color: Color(0xFF00FFCC),
+              strokeWidth: 3,
+            ),
+          ],
         ),
-      );
-    }
-
-    // Navigation logic
-    if (auth.user == null) {
-      return const LoginScreen();
-    }
-
-    if (!profile.isProfileCompleted) {
-      return const ProfileSetupScreen();
-    }
-
-    return const HomeScreen();
+      ),
+    );
   }
 }

@@ -75,7 +75,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _navigateAfterAuth({required bool isNewUser}) {
     if (isNewUser) {
-      Navigator.pushReplacement(
+      // Brand-new user → always go to Profile Setup
+      Navigator.pushAndRemoveUntil(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => const ProfileSetupScreen(),
@@ -83,13 +84,14 @@ class _LoginScreenState extends State<LoginScreen>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
+        (route) => false,
       );
     } else {
-      final profile = context.read<ProfileProvider>();
-      if (!profile.isProfileCompleted) {
-        // Profile not yet loaded/set, let AuthWrapper handle it
-      }
-      Navigator.pushReplacement(
+      // Returning user → go straight to Home.
+      // The HomeScreen / AuthWrapper will load the profile in background.
+      // If by some edge case the profile isn't complete, the AuthWrapper's
+      // check will redirect them to ProfileSetup on next cold start.
+      Navigator.pushAndRemoveUntil(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => const HomeScreen(),
@@ -97,6 +99,7 @@ class _LoginScreenState extends State<LoginScreen>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
+        (route) => false,
       );
     }
   }

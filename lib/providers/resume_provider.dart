@@ -1,18 +1,22 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart' show debugPrint;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:read_pdf_text/read_pdf_text.dart';
 import '../services/ai_service.dart';
+import '../services/resume_analysis_service.dart';
 
 class ResumeProvider extends ChangeNotifier {
   String? _resumeUrl;
   String? _resumePath;
   bool _isPdf = false;
   
-  // ── AI Analysis State ──────────────────────────────────────────────────
   bool _isAnalyzing = false;
   String? _resumeSummary;
   String? _codingSummary;
   String? _analysisError;
+  String? _generatedPdfPath;
+  String? _originalSavedPath;
 
   String? get resumeUrl => _resumeUrl;
   String? get resumePath => _resumePath;
@@ -21,6 +25,8 @@ class ResumeProvider extends ChangeNotifier {
   String? get resumeSummary => _resumeSummary;
   String? get codingSummary => _codingSummary;
   String? get analysisError => _analysisError;
+  String? get generatedPdfPath => _generatedPdfPath;
+  String? get originalSavedPath => _originalSavedPath;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -29,6 +35,8 @@ class ResumeProvider extends ChangeNotifier {
     _isPdf = prefs.getBool('is_pdf') ?? false;
     _resumeSummary = prefs.getString('resume_summary');
     _codingSummary = prefs.getString('coding_summary');
+    _generatedPdfPath = prefs.getString('generated_pdf_path');
+    _originalSavedPath = prefs.getString('original_saved_path');
     notifyListeners();
   }
 
@@ -53,19 +61,30 @@ class ResumeProvider extends ChangeNotifier {
     _isPdf = true;
     _resumeSummary = null;
     _codingSummary = null;
+    _generatedPdfPath = null;
+    _originalSavedPath = null;
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('resume_path', path);
     await prefs.remove('resume_url');
     await prefs.setBool('is_pdf', true);
     await prefs.remove('resume_summary');
     await prefs.remove('coding_summary');
-    notifyListeners();
+    await prefs.remove('generated_pdf_path');
+    await prefs.remove('original_saved_path');
     
-    // Automatically trigger analysis if it's a file
-    // (Actual call will be made from UI or explicitly based on user choice)
+    // Save original file securely
+    try {
+      _originalSavedPath = await ResumeAnalysisService.saveOriginalResume(File(path));
+      await prefs.setString('original_saved_path', _originalSavedPath!);
+    } catch (e) {
+      debugPrint("Error saving original resume: $e");
+    }
+
+    notifyListeners();
   }
 
-  Future<void> analyzeResume(String codingProfileData) async {
+  Future<void> analyzeResume(String codingProfileData, {required String candidateName, Map<String, dynamic>? stats}) async {
     if (_resumePath == null && _resumeUrl == null) return;
     
     _isAnalyzing = true;
@@ -75,26 +94,49 @@ class ResumeProvider extends ChangeNotifier {
     try {
       String resumeText = "";
       if (_isPdf && _resumePath != null) {
+        // Read PDF Text securely
         resumeText = await ReadPdfText.getPDFtext(_resumePath!);
+        if (resumeText.isEmpty) {
+           throw Exception("PDF extraction failed. File might be corrupted or empty.");
+        }
       } else if (_resumeUrl != null) {
         resumeText = "Candidate Portfolio Link: $_resumeUrl";
       }
 
-      // If no API key, use dummy (for testing)
+      if (resumeText.isEmpty) {
+        throw Exception("PDF parsing failed: Extracted text is empty");
+      }
+
+      debugPrint("Extracted Text Length: ${resumeText.length} characters");
+      // debugPrint("Extracted Text preview: ${resumeText.substring(0, resumeText.length > 100 ? 100 : resumeText.length)}...");
+
+      // 1. Get AI Analysis
       final result = await AIService.analyzeResume(
         resumeText: resumeText,
         codingProfileData: codingProfileData,
-      ).catchError((_) => AIService.getDummyAnalysis());
+      );
+
+      debugPrint("API Response successful: $result");
 
       _resumeSummary = result['resume_summary'];
       _codingSummary = result['coding_summary'];
       
+      // 2. Generate Summary PDF
+      _generatedPdfPath = await ResumeAnalysisService.generateSummaryPdf(
+        name: candidateName,
+        resumeSummary: _resumeSummary!,
+        codingSummary: _codingSummary!,
+        extraDetails: stats,
+      );
+
+      // 3. Persist everything
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('resume_summary', _resumeSummary!);
       await prefs.setString('coding_summary', _codingSummary!);
+      await prefs.setString('generated_pdf_path', _generatedPdfPath!);
       
     } catch (e) {
-      _analysisError = e.toString();
+      _analysisError = e.toString().replaceFirst("Exception: ", "");
     } finally {
       _isAnalyzing = false;
       notifyListeners();

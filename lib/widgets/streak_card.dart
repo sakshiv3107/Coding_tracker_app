@@ -56,13 +56,19 @@ class _StreakCardState extends State<StreakCard>
 
   // ── Full version (LeetCode stats screen) ──────────────────────────────────
 
+  // ── Full version (LeetCode stats screen) ──────────────────────────────────
+  // IntrinsicHeight forces both cards to share the same height even though
+  // the current-streak card may contain an extra progress-bar row.
   Widget _buildFull(bool isDark) {
-    return Row(
-      children: [
-        Expanded(child: _buildFlameCard(isDark, isCurrent: true)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildFlameCard(isDark, isCurrent: false)),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _buildFlameCard(isDark, isCurrent: true)),
+          const SizedBox(width: 12),
+          Expanded(child: _buildFlameCard(isDark, isCurrent: false)),
+        ],
+      ),
     );
   }
 

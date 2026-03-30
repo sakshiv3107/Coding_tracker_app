@@ -36,8 +36,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final github = context.watch<GithubProvider>();
     final achievementProvider = context.watch<AchievementProvider>();
 
-    // ── LOADING GATE: never build with null profile ───────────────────────────
-    if (profile.isLoading || profile.profile == null) {
+    // ── LOADING GATE: only show skeleton while intentionally loading from network ──
+    if (profile.isLoading) {
       return const SafeArea(child: DashboardSkeleton());
     }
 

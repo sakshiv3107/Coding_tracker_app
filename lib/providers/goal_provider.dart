@@ -53,23 +53,15 @@ class GoalProvider with ChangeNotifier {
         }
       }
       
-      // If we reach here, there's no goals in firestore. Maybe we have local goals we should migrate?
+      // ── No goals in Firestore ──────────────────────────────────────────────
+      // Maybe we have local goals from a previous session that should be synced up.
       if (_goals.isNotEmpty) {
-         _syncToFirestore(); // Push local goals up
+        _syncToFirestore(); // Push existing local goals to cloud.
       } else {
-         // Default seed for a brand new user
-         _goals = [
-            Goal(
-              id: 'seed_1',
-              title: 'Solve 2 problems Daily',
-              type: GoalType.questions,
-              timeframe: GoalTimeframe.daily,
-              targetValue: 2,
-              platform: 'all',
-              createdAt: DateTime.now()
-            )
-         ];
-         _syncToFirestore();
+        // Brand-new user: ensure any stale SharedPreferences data is wiped
+        // so a previous account's cached goals never appear for this user.
+        _goals = [];
+        await _saveToDisk(); // Write empty list to disk.
       }
       _isInit = true;
       notifyListeners();

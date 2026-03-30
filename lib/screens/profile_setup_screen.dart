@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
+import 'home/home_screen.dart'; // Needed for explicit post-save navigation
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -114,18 +115,21 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             controller: codechefCtrl,
                             label: "CodeChef Username",
                             icon: Icons.restaurant_menu,
+                            required: false,
                           ),
                           const SizedBox(height: 20),
                           _buildInputField(
                             controller: codeforcesCtrl,
                             label: "CodeForces Username",
                             icon: Icons.emoji_events,
+                            required: false,
                           ),
                           const SizedBox(height: 20),
                           _buildInputField(
                             controller: githubCtrl,
                             label: "GitHub Username",
                             icon: Icons.account_tree,
+                            required: false,
                           ),
                           const SizedBox(height: 20),
                           _buildInputField(
@@ -159,34 +163,31 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         hackerrank: hackerrankCtrl.text.trim(),
                                       );
 
-                                      // Check if save was successful
+                                      // Guard against async widget disposal
                                       if (!mounted) return;
 
                                       if (profileProvider.error == null &&
                                           profileProvider.isProfileCompleted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Profile Saved Successfully 🚀",
-                                            ),
-                                            duration: Duration(seconds: 1),
+                                        // ── Explicit navigation ────────────
+                                        // Do NOT rely on AuthWrapper auto-
+                                        // redirect — push HomeScreen directly
+                                        // and wipe the back-stack so the user
+                                        // cannot navigate back to this screen.
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder: (_) => const HomeScreen(),
                                           ),
+                                          (route) => false,
                                         );
-                                        // Navigate to home screen
-                                        // The AuthWrapper will automatically handle this
-                                        // due to profile being marked as completed
-                                      } else if (profileProvider.error !=
-                                          null) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
+                                      } else if (profileProvider.error != null) {
+                                        // Show error feedback
+                                        ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              "Error: ${profileProvider.error}",
+                                              "Error saving profile: ${profileProvider.error}",
                                             ),
                                             backgroundColor: Colors.red,
+                                            behavior: SnackBarBehavior.floating,
                                           ),
                                         );
                                       }

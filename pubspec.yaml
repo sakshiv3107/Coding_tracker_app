@@ -40,6 +40,10 @@ dependencies:
   url_launcher: ^6.3.0
   firebase_messaging: ^15.2.10
   workmanager: ^0.9.0+3
+  flutter_secure_storage: ^10.0.0
+  pdf: ^3.12.0
+  flutter_pdfview: ^1.4.4
+  google_generative_ai: ^0.4.6
 
 dev_dependencies:
   flutter_test:
@@ -50,7 +54,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/icon.png"
+  image_path: "assets/images/icon2.png"
   remove_alpha_ios: true
 
 flutter:
