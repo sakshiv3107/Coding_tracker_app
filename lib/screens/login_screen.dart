@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _navigateAfterAuth({required bool isNewUser}) {
     if (isNewUser) {
-      // Brand-new user → always go to Profile Setup
+      // Brand-new user → push Profile Setup
       Navigator.pushAndRemoveUntil(
         context,
         PageRouteBuilder(
@@ -86,20 +86,12 @@ class _LoginScreenState extends State<LoginScreen>
         (route) => false,
       );
     } else {
-      // Returning user → go straight to Home.
-      // The HomeScreen / AuthWrapper will load the profile in background.
-      // If by some edge case the profile isn't complete, the AuthWrapper's
-      // check will redirect them to ProfileSetup on next cold start.
-      Navigator.pushAndRemoveUntil(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-        (route) => false,
-      );
+      // Returning user → AuthWrapper will handle the transition once it
+      // detects the auth change. If we were pushed from a child route, 
+      // just pop back. If we are the current root, do nothing (rebuild happens).
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     }
   }
 

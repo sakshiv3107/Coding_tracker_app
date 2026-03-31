@@ -58,10 +58,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final profile = context.read<ProfileProvider>();
 
     // Trigger profile load when user logs in (only once per session)
-    if (auth.user != null && !_profileLoaded && !profile.isLoading) {
+    if (auth.user != null && !_profileLoaded) {
       _profileLoaded = true;
+      // We use addPostFrameCallback to avoid calling notifyListeners during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) profile.initializeProfile();
+        if (mounted) {
+          // Force a fresh sync every time we transition to this state
+          profile.initializeProfile();
+        }
       });
     }
 

@@ -17,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthProvider>();
+    final auth = context.watch<AuthProvider>();
     final profile = context.watch<ProfileProvider>();
     final stats = context.watch<StatsProvider>();
     final theme = Theme.of(context);
@@ -91,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
                               backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
                               child: Text(
                                 userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 42,
                                   fontWeight: FontWeight.w900,
                                   color: AppTheme.primary,
@@ -198,7 +198,7 @@ class ProfileScreen extends StatelessWidget {
     final List<UserPlatformData> platforms = [
       UserPlatformData(
         platformName: 'LeetCode',
-        username: profile.profile?["leetcode"] ?? 'Not Connected',
+        username: (profile.profile?["leetcode"]?.isNotEmpty == true) ? profile.profile!["leetcode"]! : 'Not Connected',
         solvedCount: stats.leetcodeStats?.totalSolved ?? 0,
         rating: stats.leetcodeStats?.contestRating?.toInt(),
         ranking: stats.leetcodeStats?.ranking.toString(),
@@ -208,7 +208,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       UserPlatformData(
         platformName: 'Codeforces',
-        username: profile.profile?["codeforces"] ?? 'Not Connected',
+        username: (profile.profile?["codeforces"]?.isNotEmpty == true) ? profile.profile!["codeforces"]! : 'Not Connected',
         solvedCount: stats.codeforcesStats?.totalSolved ?? 0,
         rating: stats.codeforcesStats?.rating,
         ranking: stats.codeforcesStats?.ranking,
@@ -218,7 +218,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       UserPlatformData(
         platformName: 'CodeChef',
-        username: profile.profile?["codechef"] ?? 'Not Connected',
+        username: (profile.profile?["codechef"]?.isNotEmpty == true) ? profile.profile!["codechef"]! : 'Not Connected',
         solvedCount: stats.codechefStats?.totalSolved ?? 0,
         rating: stats.codechefStats?.rating,
         ranking: stats.codechefStats?.ranking,
@@ -228,7 +228,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       UserPlatformData(
         platformName: 'GitHub',
-        username: profile.profile?["github"] ?? 'Not Connected',
+        username: (profile.profile?["github"]?.isNotEmpty == true) ? profile.profile!["github"]! : 'Not Connected',
         solvedCount: stats.githubCommitCalendar.values.fold(0, (a, b) => a + b),
         isConnected: profile.profile?["github"]?.isNotEmpty ?? false,
         icon: FontAwesomeIcons.github,
@@ -236,7 +236,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       UserPlatformData(
         platformName: 'HackerRank',
-        username: profile.profile?["hackerrank"] ?? 'Not Connected',
+        username: (profile.profile?["hackerrank"]?.isNotEmpty == true) ? profile.profile!["hackerrank"]! : 'Not Connected',
         solvedCount: stats.hackerrankStats?.totalSolved ?? 0,
         isConnected: profile.profile?["hackerrank"]?.isNotEmpty ?? false,
         icon: FontAwesomeIcons.hackerrank,
@@ -286,13 +286,23 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final authProvider = context.read<AuthProvider>();
+              final statsProvider = context.read<StatsProvider>();
+              final profileProvider = context.read<ProfileProvider>();
+              
               Navigator.pop(context); // Close dialog
-              context.read<AuthProvider>().logout(context).then((_) {
-                if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-                }
-              });
+              
+              // Logout using providers directly
+              await authProvider.logout(
+                statsProvider: statsProvider, 
+                profileProvider: profileProvider
+              );
+              
+              if (context.mounted) {
+                // Safely return to root (AuthWrapper)
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,

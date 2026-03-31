@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/stats_provider.dart';
 import '../theme/app_theme.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -14,11 +15,7 @@ class AppDrawer extends StatelessWidget {
   /// Switches the active page inside HomeScreen. Called for pages 0, 3, 4.
   final void Function(int index)? onNavigate;
 
-  const AppDrawer({
-    super.key,
-    this.selectedIndex,
-    this.onNavigate,
-  });
+  const AppDrawer({super.key, this.selectedIndex, this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +46,7 @@ class AppDrawer extends StatelessWidget {
           Expanded(
             child: ListView(
               physics: const BouncingScrollPhysics(),
-              padding:
-                  const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               children: [
                 // ── ANALYTICS HUB ──────────────────────────────────────────
                 _sectionLabel('ANALYTICS HUB'),
@@ -147,13 +143,30 @@ class AppDrawer extends StatelessWidget {
                   title: 'Sign Out',
                   icon: Icons.logout_rounded,
                   color: Colors.redAccent,
-                  onTap: () {
+                  onTap: () async {
+                    // Extract providers BEFORE any navigation/async gaps
+                    final statsProvider = Provider.of<StatsProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final profileProvider = Provider.of<ProfileProvider>(
+                      context,
+                      listen: false,
+                    );
+
                     // 1. Pop drawer
                     Navigator.pop(context);
-                    // 2. Immediate navigation to root to let AuthWrapper handle the transition
-                    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-                    // 3. Clear data
-                    auth.logout(context);
+
+                    // 2. Clear data and trigger AuthProvider.user = null
+                    // (AuthWrapper handles the redirect automatically)
+                    await auth.logout(
+                      statsProvider: statsProvider,
+                      profileProvider: profileProvider,
+                    );
+                    
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                    }
                   },
                 ),
               ],
@@ -215,16 +228,20 @@ class AppDrawer extends StatelessWidget {
 
   // ── Header ────────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(BuildContext context, String name, String username,
-      String? pic, bool isDark) {
+  Widget _buildHeader(
+    BuildContext context,
+    String name,
+    String username,
+    String? pic,
+    bool isDark,
+  ) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : Colors.white,
-        borderRadius:
-            const BorderRadius.only(topRight: Radius.circular(32)),
+        borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -243,7 +260,11 @@ class AppDrawer extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                      colors: [theme.colorScheme.primary, theme.colorScheme.tertiary]),
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.tertiary,
+                    ],
+                  ),
                 ),
                 child: CircleAvatar(
                   radius: 32,
@@ -253,17 +274,21 @@ class AppDrawer extends StatelessWidget {
                   backgroundImage: (pic != null && pic.isNotEmpty)
                       ? NetworkImage(pic)
                       : null,
-                    child: (pic == null || pic.isEmpty)
-                        ? Icon(Icons.person_rounded,
-                            color: theme.colorScheme.primary, 
-                            size: 32)
-                        : null,
+                  child: (pic == null || pic.isEmpty)
+                      ? Icon(
+                          Icons.person_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 32,
+                        )
+                      : null,
                 ),
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -361,8 +386,7 @@ class AppDrawer extends StatelessWidget {
     double iconSize = 22,
   }) {
     final theme = Theme.of(context);
-    final currentRoute =
-        ModalRoute.of(context)?.settings.name ?? '/';
+    final currentRoute = ModalRoute.of(context)?.settings.name ?? '/';
     final isActive = currentRoute == route;
 
     return _tile(
@@ -393,8 +417,7 @@ class AppDrawer extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
         onTap: onTap,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Icon(icon, size: 22, color: color),
         title: Text(
           title,
@@ -429,8 +452,7 @@ class AppDrawer extends StatelessWidget {
       ),
       child: ListTile(
         onTap: onTap,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Icon(
           icon,
           size: iconSize,
@@ -444,8 +466,7 @@ class AppDrawer extends StatelessWidget {
             color: isActive
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withOpacity(0.85),
-            fontWeight:
-                isActive ? FontWeight.w900 : FontWeight.w600,
+            fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
             fontSize: 15,
           ),
         ),

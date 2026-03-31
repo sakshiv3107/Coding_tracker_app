@@ -134,7 +134,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           const SizedBox(height: 20),
                           _buildInputField(
                             controller: hackerrankCtrl,
-                            label: "HackerRank Username (Optional)",
+                            label: "HackerRank Username",
                             icon: Icons.code_rounded,
                             required: false,
                           ),

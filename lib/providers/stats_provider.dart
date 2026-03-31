@@ -539,7 +539,17 @@ class StatsProvider extends ChangeNotifier {
     String? username, {
     bool forceRefresh = false,
   }) async {
-    if (!_validateUsername(username, 'LeetCode', (e) => _leetcodeError = e)) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (username == null || username.trim().isEmpty) {
+      _leetcodeError = 'LeetCode username required';
+      _leetcodeStats = null;
+      _leetcodeLastFetch = null;
+      if (uid != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_getLcKey(uid));
+        await prefs.remove('${_getLcKey(uid)}_ts');
+      }
+      _calculateAnalytics();
       notifyListeners();
       return;
     }
@@ -609,11 +619,17 @@ class StatsProvider extends ChangeNotifier {
     String? username, {
     bool forceRefresh = false,
   }) async {
-    if (!_validateUsername(
-      username,
-      'Codeforces',
-      (e) => _codeforcesError = e,
-    )) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (username == null || username.trim().isEmpty) {
+      _codeforcesError = 'Codeforces username required';
+      _codeforcesStats = null;
+      _codeforcesLastFetch = null;
+      if (uid != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_getCfKey(uid));
+        await prefs.remove('${_getCfKey(uid)}_ts');
+      }
+      _calculateAnalytics();
       notifyListeners();
       return;
     }
@@ -661,7 +677,17 @@ class StatsProvider extends ChangeNotifier {
     String? username, {
     bool forceRefresh = false,
   }) async {
-    if (!_validateUsername(username, 'CodeChef', (e) => _codechefError = e)) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (username == null || username.trim().isEmpty) {
+      _codechefError = 'CodeChef username required';
+      _codechefStats = null;
+      _codechefLastFetch = null;
+      if (uid != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_getCcKey(uid));
+        await prefs.remove('${_getCcKey(uid)}_ts');
+      }
+      _calculateAnalytics();
       notifyListeners();
       return;
     }
@@ -709,11 +735,17 @@ class StatsProvider extends ChangeNotifier {
     String? username, {
     bool forceRefresh = false,
   }) async {
-    if (!_validateUsername(
-      username,
-      'HackerRank',
-      (e) => _hackerrankError = e,
-    )) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (username == null || username.trim().isEmpty) {
+      _hackerrankError = 'HackerRank username required';
+      _hackerrankStats = null;
+      _hackerrankLastFetch = null;
+      if (uid != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_getHrKey(uid));
+        await prefs.remove('${_getHrKey(uid)}_ts');
+      }
+      _calculateAnalytics();
       notifyListeners();
       return;
     }

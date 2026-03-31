@@ -225,17 +225,7 @@ class AuthService {
     }
   }
 
-  // ─── Keys we intentionally clear on logout ────────────────────────────────
-  // We do NOT call prefs.clear() because that would wipe:
-  //   • profile_completed flag  → causes ProfileSetup to show again on next login
-  //   • disk-cached stats       → triggers unnecessary API calls on next login
-  //   • disk-cached goals       → goal data is lost
-  //
-  // We only delete the user-session auth tokens and the profile-completed flag
-  // so that the next login re-fetches the profile from Firestore (correct behavior).
-  static const List<String> _kPrefsToDeleteOnLogout = [
-    'profile_completed', // ProfileProvider flag — must be cleared so next login refetches
-  ];
+
 
   // Logout
   Future<void> logout() async {
@@ -247,13 +237,10 @@ class AuthService {
         await _googleSignIn.signOut();
       } catch (_) {} // Non-fatal: user may have signed in with email
 
-      // ── Selective SharedPreferences cleanup ───────────────────────────────
-      // Only delete auth-session keys. Stats cache & goals stay on disk so the
-      // next user session can reuse them (they are user-scoped via Firestore).
+      // ── Full SharedPreferences cleanup ───────────────────────────────
+      // Wiping all preferences completely as requested to ensure no stale data remains
       final prefs = await SharedPreferences.getInstance();
-      for (final key in _kPrefsToDeleteOnLogout) {
-        await prefs.remove(key);
-      }
+      await prefs.clear();
 
       // ── Clear secure storage auth tokens ─────────────────────────────────
       await clearAuthData();

@@ -97,6 +97,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _initializeData() {
     if (!mounted) return;
     final profile = context.read<ProfileProvider>();
+    
+    // If profile is null and not loading, we need to trigger initialization.
+    // This happens if the user re-logged and the AuthWrapper was bypassed.
+    if (profile.profile == null && !profile.isLoading) {
+      profile.initializeProfile();
+    }
+
     if (profile.isLoading) {
       profile.addListener(_onProfileReady);
       return;

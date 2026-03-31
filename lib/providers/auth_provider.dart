@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'stats_provider.dart';
 import 'profile_provider.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
@@ -162,25 +162,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> logout(BuildContext context) async {
+  Future<void> logout({
+    required StatsProvider statsProvider,
+    required ProfileProvider profileProvider,
+  }) async {
     try {
       isLoading = true;
       notifyListeners();
 
       // 1. Clear local session flag immediately to trigger instant redirect in AuthWrapper
-      final savedUser = user;
       user = null;
       isNewUser = false;
       notifyListeners(); 
 
       // 2. Perform background cleanup
       // Clear memory AND disk caches so no data leakage between logins.
-      final stats = Provider.of<StatsProvider>(context, listen: false);
-      final profile = Provider.of<ProfileProvider>(context, listen: false);
-      
       await Future.wait([
-        stats.clearDiskCache(),
-        profile.clearProfile(),
+        statsProvider.clearDiskCache(),
+        profileProvider.clearProfile(),
         _service.logout(),
       ]);
 
