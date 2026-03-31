@@ -148,7 +148,11 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.logout_rounded,
                   color: Colors.redAccent,
                   onTap: () {
+                    // 1. Pop drawer
                     Navigator.pop(context);
+                    // 2. Immediate navigation to root to let AuthWrapper handle the transition
+                    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                    // 3. Clear data
                     auth.logout(context);
                   },
                 ),

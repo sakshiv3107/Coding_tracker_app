@@ -8,7 +8,6 @@
 //  3. The splash screen is only shown while auth + profile are initializing;
 //     once the local flag is read, navigation is immediate.
 
-import 'package:coding_tracker_app/screens/profile_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -44,9 +43,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
     ]);
     
     // If securely logged in upon app launch, initialize the profile immediately
-    if (auth.user != null && !profile.isLoading) {
+    if (auth.user != null) {
       _profileLoaded = true;
-      profile.initializeProfile();
+      // We await this so the splash screen stays visible until the profile is 
+      // ready, ensuring the dashboard doesn't load with empty handles.
+      await profile.initializeProfile();
     }
   }
 
@@ -86,13 +87,20 @@ class _AuthWrapperState extends State<AuthWrapper> {
         final auth = context.watch<AuthProvider>();
         final profile = context.watch<ProfileProvider>();
 
-        // ── Not authenticated → Login ─────────────────────────────────────
+        // ── 1. Not authenticated → Login ─────────────────────────────────────
         if (auth.user == null) {
+          _profileLoaded = false;
           return const LoginScreen();
         }
 
-        // ── Authenticated → ALWAYS Home ──────────────────────────────────
-        // (Profile setup is only pushed once during registration)
+        // ── 2. Authenticated but Profile Syncing → Loading ───────────────────
+        // If we have a user but the profile is still loading (initial fetch), 
+        // stay on Splash to prevent a flash of empty "Not Connected" dashboard.
+        if (profile.isLoading && !_profileLoaded) {
+          return const _SplashScreen();
+        }
+
+        // ── 3. Authenticated → Home ──────────────────────────────────
         return const HomeScreen();
       },
     );

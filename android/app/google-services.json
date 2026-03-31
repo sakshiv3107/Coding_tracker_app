@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "168999871119-8mn8s3e2co8a9cfnio0qek4ja99je5ne.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.coding_tracker_app",
+            "certificate_hash": "62a6d53877e3292ea99e319b4b72fc21f81b7220"
+          }
+        },
+        {
           "client_id": "168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "168999871119-3k9l8t422lpcllrekbcn46e2bgbgkfp5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.codingTrackerApp"
+              }
             }
           ]
         }

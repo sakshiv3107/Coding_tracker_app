@@ -2,19 +2,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   
-  // Web Client ID from google-services.json (client_type: 3)
-  // This is required on Android to avoid ApiException: 10 in some environments
-  static const String _serverClientId = '168999871119-o7ptkd70i9jjt5nao3as7pn5cc7fsedc.apps.googleusercontent.com';
-  
+  // Google Sign-In instance.
+  // Note: serverClientId is NOT set here because on Android it causes
+  // ApiException: 10 when the SHA-1 fingerprint is not yet registered.
+  // The web client ID is picked up automatically from google-services.json.
+  // If you need an idToken for a custom backend, re-add serverClientId after
+  // registering your SHA-1 in the Firebase Console.
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: _serverClientId,
+    scopes: ['email', 'profile'],
   );
   final ProfileService _profileService = ProfileService();
   final _secureStorage = const FlutterSecureStorage();
@@ -198,36 +199,70 @@ class AuthService {
       throw Exception(_handleFirebaseException(e));
     } on PlatformException catch (e) {
       if (e.code == 'sign_in_failed') {
-        if (e.message?.contains('ApiException: 10') ?? false) {
-          throw Exception("Google Sign-In Error (10): This is usually a developer error. Please ensure your SHA-1 fingerprint is correctly registered in the Firebase Console and that Google Sign-In is enabled.");
+        final msg = e.message ?? '';
+        if (msg.contains('ApiException: 10')) {
+          throw Exception(
+            'Google Sign-In configuration error (code 10).\n'
+            'To fix this:\n'
+            '1. Go to Firebase Console → Project Settings → Your Android App\n'
+            '2. Add debug SHA-1: 62:A6:D5:38:77:E3:29:2E:A9:9E:31:9B:4B:72:FC:21:F8:1B:72:20\n'
+            '3. Download the updated google-services.json\n'
+            '4. Enable Google Sign-In in Firebase Console → Authentication → Sign-in method',
+          );
+        }
+        if (msg.contains('ApiException: 12501')) {
+          // User cancelled — not an error
+          throw Exception('Google sign in cancelled');
         }
       }
-      throw Exception("Google Sign-In failed: ${e.message ?? e.toString()}");
+      throw Exception('Google Sign-In failed: ${e.message ?? e.toString()}');
     } catch (e) {
-      throw Exception("Google sign in failed: ${e.toString()}");
+      final msg = e.toString();
+      if (msg.contains('cancelled') || msg.contains('canceled')) {
+        throw Exception('Google sign in cancelled');
+      }
+      throw Exception('Google sign in failed: $msg');
     }
   }
+
+  // ─── Keys we intentionally clear on logout ────────────────────────────────
+  // We do NOT call prefs.clear() because that would wipe:
+  //   • profile_completed flag  → causes ProfileSetup to show again on next login
+  //   • disk-cached stats       → triggers unnecessary API calls on next login
+  //   • disk-cached goals       → goal data is lost
+  //
+  // We only delete the user-session auth tokens and the profile-completed flag
+  // so that the next login re-fetches the profile from Firestore (correct behavior).
+  static const List<String> _kPrefsToDeleteOnLogout = [
+    'profile_completed', // ProfileProvider flag — must be cleared so next login refetches
+  ];
 
   // Logout
   Future<void> logout() async {
     try {
       await _firebaseAuth.signOut();
-      await _googleSignIn.signOut();
-      
-      // Clear Firestore offline cache (optional, but good for clean start)
-      // await FirebaseFirestore.instance.terminate();
-      // await FirebaseFirestore.instance.clearPersistence();
 
-      // Clear local SharedPreferences
+      // Sign out Google silently to force account-picker next time
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {} // Non-fatal: user may have signed in with email
+
+      // ── Selective SharedPreferences cleanup ───────────────────────────────
+      // Only delete auth-session keys. Stats cache & goals stay on disk so the
+      // next user session can reuse them (they are user-scoped via Firestore).
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      
-      // Clear secure storage auth data
+      for (final key in _kPrefsToDeleteOnLogout) {
+        await prefs.remove(key);
+      }
+
+      // ── Clear secure storage auth tokens ─────────────────────────────────
       await clearAuthData();
 
-      // Clear Hive boxes
-      await Hive.deleteFromDisk();
-      
+      // NOTE: We intentionally do NOT call Hive.deleteFromDisk() here.
+      // Hive stores goal data which should NOT be wiped on logout.
+      // If you need to wipe Hive data on logout you should do it per-box:
+      //   await Hive.box('goals').clear();
+
     } catch (e) {
       throw Exception("Logout failed: ${e.toString()}");
     }
@@ -235,13 +270,27 @@ class AuthService {
 
   // Password reset
   Future<void> resetPassword(String email) async {
-    if (email.isEmpty) {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) {
       throw Exception("Email is required");
     }
 
+    // Validate basic email format
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (!emailRegex.hasMatch(trimmedEmail)) {
+      throw Exception("Please enter a valid email address");
+    }
+
     try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      await _firebaseAuth.sendPasswordResetEmail(email: trimmedEmail);
     } on FirebaseAuthException catch (e) {
+      // Firebase v9+ may return 'user-not-found' for unregistered emails
+      if (e.code == 'user-not-found') {
+        throw Exception("No account found with this email. Please sign up first.");
+      }
+      if (e.code == 'invalid-email') {
+        throw Exception("The email address is not valid.");
+      }
       throw Exception(_handleFirebaseException(e));
     }
   }

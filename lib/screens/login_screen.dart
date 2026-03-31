@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 import 'signup_screen.dart';
@@ -106,6 +105,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _showForgotPassword() {
     final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    final sheetFormKey = GlobalKey<FormState>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -123,64 +124,119 @@ class _LoginScreenState extends State<LoginScreen>
                   const BorderRadius.vertical(top: Radius.circular(28)),
             ),
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(2),
+            child: Form(
+              key: sheetFormKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Reset Password',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800, fontSize: 22),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Enter your email and we\'ll send you a reset link.',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
-                _buildField(
-                  controller: emailCtrl,
-                  hint: 'email@example.com',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 24),
-                AuthGradientButton(
-                  label: 'Send Reset Link',
-                  icon: Icons.send_rounded,
-                  onTap: () async {
-                    if (emailCtrl.text.trim().isEmpty) return;
-                    Navigator.pop(ctx);
-                    final auth = context.read<AuthProvider>();
-                    final ok =
-                        await auth.resetPassword(emailCtrl.text.trim());
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(ok
-                            ? '✅ Reset link sent! Check your email.'
-                            : auth.error ?? 'Failed to send reset link.'),
-                        backgroundColor:
-                            ok ? AppTheme.secondary : Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Reset Password',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800, fontSize: 22),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Enter your registered email and we'll send a reset link.",
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  // Email field with validation
+                  TextFormField(
+                    controller: emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Email is required';
+                      }
+                      if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                          .hasMatch(v.trim())) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                    style: theme.textTheme.bodyLarge,
+                    decoration: InputDecoration(
+                      hintText: 'email@example.com',
+                      prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppTheme.surfaceDarkLighter
+                          : const Color(0xFFF1F5F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
-                    );
-                  },
-                ),
-              ],
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.08),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                            const BorderSide(color: AppTheme.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                            color: Colors.redAccent, width: 1.5),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                            const BorderSide(color: Colors.redAccent, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  AuthGradientButton(
+                    label: 'Send Reset Link',
+                    icon: Icons.send_rounded,
+                    onTap: () async {
+                      // Validate before sending
+                      if (!sheetFormKey.currentState!.validate()) return;
+                      final email = emailCtrl.text.trim();
+                      Navigator.pop(ctx);
+                      final auth = context.read<AuthProvider>();
+                      final ok = await auth.resetPassword(email);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(ok
+                              ? '✅ Reset link sent to $email. Check your inbox (and spam folder).'
+                              : auth.error != null
+                                  ? '❌ ${auth.error}'
+                                  : '❌ Failed to send reset link. Is this email registered?'),
+                          backgroundColor:
+                              ok ? AppTheme.secondary : Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );

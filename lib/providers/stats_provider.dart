@@ -31,15 +31,18 @@ import '../services/hackerrank_service.dart';
 import '../services/contest_service.dart';
 import '../core/analytics_engine.dart';
 import '../core/exceptions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // ─── Disk-cache config ────────────────────────────────────────────────────────
-const _kLcPrefix = 'sp_lc_';
-const _kCfPrefix = 'sp_cf_';
-const _kCcPrefix = 'sp_cc_';
-const _kHrPrefix = 'sp_hr_';
+// Keys are now prefixed with UID to ensure isolation between accounts on one device.
+String _getLcKey(String uid) => 'sp_${uid}_lc_';
+String _getCfKey(String uid) => 'sp_${uid}_cf_';
+String _getCcKey(String uid) => 'sp_${uid}_cc_';
+String _getHrKey(String uid) => 'sp_${uid}_hr_';
 
-const _kLcMaxAge = Duration(hours: 12); // LeetCode: stricter to avoid stale
-const _kOtherMaxAge = Duration(hours: 6); // Others: 6h cache
+const _kLcMaxAge = Duration(hours: 12); 
+const _kOtherMaxAge = Duration(hours: 6); 
+
 
 // ─── Retry config ─────────────────────────────────────────────────────────────
 const _kMaxRetries = 2;
@@ -260,62 +263,58 @@ class StatsProvider extends ChangeNotifier {
   // ════════════════════════════════════════════════════════════════════════════
 
   Future<void> _warmFromDisk() async {
-    // Called on first load to restore cached data instantly without showing
-    // skeletons for platforms where we have valid cached data.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
     await Future.wait([
-      _loadLcFromDisk(),
-      _loadCfFromDisk(),
-      _loadCcFromDisk(),
-      _loadHrFromDisk(),
+      _loadLcFromDisk(uid),
+      _loadCfFromDisk(uid),
+      _loadCcFromDisk(uid),
+      _loadHrFromDisk(uid),
     ]);
   }
 
-  Future<void> _loadLcFromDisk() async {
+  Future<void> _loadLcFromDisk(String uid) async {
     try {
+      final key = _getLcKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kLcPrefix);
-      final tsMs = prefs.getInt('${_kLcPrefix}_ts');
+      final raw = prefs.getString(key);
+      final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(tsMs),
-      );
+      
+      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
       if (age > _kLcMaxAge) return;
-      _leetcodeStats = LeetcodeStats.fromJson(
-        jsonDecode(raw) as Map<String, dynamic>,
-      );
+
+      _leetcodeStats = LeetcodeStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
       _leetcodeLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       _calculateAnalytics();
-      debugPrint(
-        '[StatsProvider] ✅ LC disk cache loaded (${age.inMinutes}m old)',
-      );
     } catch (e) {
       debugPrint('[StatsProvider] LC disk load error: $e');
     }
   }
 
-  Future<void> _saveLcToDisk(LeetcodeStats stats) async {
+  Future<void> _saveLcToDisk(LeetcodeStats stats, String uid) async {
     try {
+      final key = _getLcKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_kLcPrefix, jsonEncode(stats.toJson()));
-      await prefs.setInt(
-        '${_kLcPrefix}_ts',
-        DateTime.now().millisecondsSinceEpoch,
-      );
+      await prefs.setString(key, jsonEncode(stats.toJson()));
+      await prefs.setInt('${key}_ts', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       debugPrint('[StatsProvider] LC disk save error: $e');
     }
   }
 
-  Future<void> _loadCfFromDisk() async {
+  Future<void> _loadCfFromDisk(String uid) async {
     try {
+      final key = _getCfKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kCfPrefix);
-      final tsMs = prefs.getInt('${_kCfPrefix}_ts');
+      final raw = prefs.getString(key);
+      final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(tsMs),
-      );
+
+      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
       if (age > _kOtherMaxAge) return;
+
       final json = jsonDecode(raw) as Map<String, dynamic>;
       _codeforcesStats = PlatformStats(
         platform: json['platform'] ?? 'Codeforces',
@@ -325,14 +324,14 @@ class StatsProvider extends ChangeNotifier {
         ranking: json['ranking'] as String?,
       );
       _codeforcesLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
-      debugPrint('[StatsProvider] ✅ CF disk cache loaded');
     } catch (e) {
       debugPrint('[StatsProvider] CF disk load error: $e');
     }
   }
 
-  Future<void> _saveCfToDisk(PlatformStats stats) async {
+  Future<void> _saveCfToDisk(PlatformStats stats, String uid) async {
     try {
+      final key = _getCfKey(uid);
       final prefs = await SharedPreferences.getInstance();
       final data = {
         'platform': stats.platform,
@@ -341,33 +340,29 @@ class StatsProvider extends ChangeNotifier {
         'rating': stats.rating,
         'ranking': stats.ranking,
       };
-      await prefs.setString(_kCfPrefix, jsonEncode(data));
-      await prefs.setInt(
-        '${_kCfPrefix}_ts',
-        DateTime.now().millisecondsSinceEpoch,
-      );
+      await prefs.setString(key, jsonEncode(data));
+      await prefs.setInt('${key}_ts', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       debugPrint('[StatsProvider] CF disk save error: $e');
     }
   }
 
-  Future<void> _loadCcFromDisk() async {
+  Future<void> _loadCcFromDisk(String uid) async {
     try {
+      final key = _getCcKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kCcPrefix);
-      final tsMs = prefs.getInt('${_kCcPrefix}_ts');
+      final raw = prefs.getString(key);
+      final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(tsMs),
-      );
+
+      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
       if (age > _kOtherMaxAge) return;
+
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final Map<DateTime, int> history = {};
       final rawHist = json['submissionCalendar'] as Map<String, dynamic>?;
       rawHist?.forEach((k, v) {
-        try {
-          history[DateTime.parse(k)] = (v as num).toInt();
-        } catch (_) {}
+        try { history[DateTime.parse(k)] = (v as num).toInt(); } catch (_) {}
       });
 
       _codechefStats = PlatformStats(
@@ -379,14 +374,14 @@ class StatsProvider extends ChangeNotifier {
         submissionCalendar: history,
       );
       _codechefLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
-      debugPrint('[StatsProvider] ✅ CC disk cache loaded');
     } catch (e) {
       debugPrint('[StatsProvider] CC disk load error: $e');
     }
   }
 
-  Future<void> _saveCcToDisk(PlatformStats stats) async {
+  Future<void> _saveCcToDisk(PlatformStats stats, String uid) async {
     try {
+      final key = _getCcKey(uid);
       final prefs = await SharedPreferences.getInstance();
       final histMap = <String, int>{};
       stats.submissionCalendar?.forEach((d, c) {
@@ -401,44 +396,37 @@ class StatsProvider extends ChangeNotifier {
         'ranking': stats.ranking,
         'submissionCalendar': histMap,
       };
-      await prefs.setString(_kCcPrefix, jsonEncode(data));
-      await prefs.setInt(
-        '${_kCcPrefix}_ts',
-        DateTime.now().millisecondsSinceEpoch,
-      );
+      await prefs.setString(key, jsonEncode(data));
+      await prefs.setInt('${key}_ts', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       debugPrint('[StatsProvider] CC disk save error: $e');
     }
   }
 
-  Future<void> _loadHrFromDisk() async {
+  Future<void> _loadHrFromDisk(String uid) async {
     try {
+      final key = _getHrKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kHrPrefix);
-      final tsMs = prefs.getInt('${_kHrPrefix}_ts');
+      final raw = prefs.getString(key);
+      final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
-      final age = DateTime.now().difference(
-        DateTime.fromMillisecondsSinceEpoch(tsMs),
-      );
+
+      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
       if (age > _kOtherMaxAge) return;
-      _hackerrankStats = HackerRankStats.fromJson(
-        jsonDecode(raw) as Map<String, dynamic>,
-      );
+
+      _hackerrankStats = HackerRankStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
       _hackerrankLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
-      debugPrint('[StatsProvider] ✅ HR disk cache loaded');
     } catch (e) {
       debugPrint('[StatsProvider] HR disk load error: $e');
     }
   }
 
-  Future<void> _saveHrToDisk(HackerRankStats stats) async {
+  Future<void> _saveHrToDisk(HackerRankStats stats, String uid) async {
     try {
+      final key = _getHrKey(uid);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_kHrPrefix, jsonEncode(stats.toJson()));
-      await prefs.setInt(
-        '${_kHrPrefix}_ts',
-        DateTime.now().millisecondsSinceEpoch,
-      );
+      await prefs.setString(key, jsonEncode(stats.toJson()));
+      await prefs.setInt('${key}_ts', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       debugPrint('[StatsProvider] HR disk save error: $e');
     }
@@ -578,6 +566,7 @@ class StatsProvider extends ChangeNotifier {
       // so that when the background refresh finishes the UI also updates with
       // the fresh, real solved-question count (fixes the "always shows N
       // questions" bug caused by stale cache not propagating to the provider).
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
         () => LeetcodeService().fetchData(
           username!,
@@ -587,7 +576,7 @@ class StatsProvider extends ChangeNotifier {
             if (_leetcodeLoading) return;
             _leetcodeStats = freshStats;
             _leetcodeLastFetch = DateTime.now();
-            _saveLcToDisk(freshStats); // Persist fresh data for next cold start.
+            if (uid != null) _saveLcToDisk(freshStats, uid); // Persist fresh data
             _calculateAnalytics();
             notifyListeners(); // Re-render UI with accurate counts.
           },
@@ -596,7 +585,7 @@ class StatsProvider extends ChangeNotifier {
       );
       _leetcodeStats = stats;
       _leetcodeLastFetch = DateTime.now();
-      await _saveLcToDisk(stats);
+      if (uid != null) await _saveLcToDisk(stats, uid);
       _calculateAnalytics();
     } catch (e) {
       _leetcodeError = _handleError(
@@ -643,13 +632,14 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
         () => CodeforcesService().fetchData(username!),
         platform: 'Codeforces',
       );
       _codeforcesStats = stats;
       _codeforcesLastFetch = DateTime.now();
-      await _saveCfToDisk(stats);
+      if (uid != null) await _saveCfToDisk(stats, uid);
     } catch (e) {
       _codeforcesError = _handleError(
         e,
@@ -690,13 +680,14 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
         () => CodeChefService().fetchData(username!),
         platform: 'CodeChef',
       );
       _codechefStats = stats;
       _codechefLastFetch = DateTime.now();
-      await _saveCcToDisk(stats);
+      if (uid != null) await _saveCcToDisk(stats, uid);
     } catch (e) {
       _codechefError = _handleError(
         e,
@@ -741,13 +732,14 @@ class StatsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
         () => HackerRankService().fetchData(username!),
         platform: 'HackerRank',
       );
       _hackerrankStats = stats;
       _hackerrankLastFetch = DateTime.now();
-      await _saveHrToDisk(stats);
+      if (uid != null) await _saveHrToDisk(stats, uid);
     } catch (e) {
       _hackerrankError = _handleError(
         e,
@@ -810,38 +802,53 @@ class StatsProvider extends ChangeNotifier {
   // Cache Management
   // ════════════════════════════════════════════════════════════════════════════
 
-  /// Clears all in-memory AND disk caches.
-  Future<void> clearAllCache() async {
+  /// Clears only in-memory caches and state (called on logout).
+  /// Disk cache is intentionally preserved so cached stats can be shown
+  /// immediately after re-login (with usernames re-loaded from Firestore).
+  void clearAllCache() {
     _leetcodeStats = null;
     _codeforcesStats = null;
     _codechefStats = null;
     _hackerrankStats = null;
-    _leetcodeLastFetch = null;
-    _codeforcesLastFetch = null;
-    _codechefLastFetch = null;
-    _hackerrankLastFetch = null;
+
     _leetcodeError = null;
     _codeforcesError = null;
     _codechefError = null;
     _hackerrankError = null;
-    _leetcodeUserNotFound = false;
-    _codeforcesUserNotFound = false;
-    _codechefUserNotFound = false;
-    _hackerrankUserNotFound = false;
-    _leetcodeRateLimited = false;
-    _codeforcesRateLimited = false;
-    _codechefRateLimited = false;
-    _hackerrankRateLimited = false;
 
-    // Also clear disk
+    _leetcodeLastFetch = null;
+    _codeforcesLastFetch = null;
+    _codechefLastFetch = null;
+    _hackerrankLastFetch = null;
+
+    _xpPoints = 0;
+    _topicStrengths = {};
+    _aiRecommendation = 'Connecting sources...';
+    _progressData = {};
+    _failedProblems = [];
+    _upcomingContests = [];
+    _attendedContests = [];
+    notifyListeners();
+  }
+
+  /// Clears in-memory cache and SURGICAL removal of DISK cache for CURRENT user.
+  /// This ensures that if another user logs in on this same device, they start
+  /// with a blank slate, and their data is isolated.
+  Future<void> clearDiskCache() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    clearAllCache();
+    
+    if (uid == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      for (final prefix in [_kLcPrefix, _kCfPrefix, _kCcPrefix, _kHrPrefix]) {
-        await prefs.remove(prefix);
-        await prefs.remove('${prefix}_ts');
-      }
+      await prefs.remove(_getLcKey(uid));
+      await prefs.remove('${_getLcKey(uid)}_ts');
+      await prefs.remove(_getCfKey(uid));
+      await prefs.remove('${_getCfKey(uid)}_ts');
+      await prefs.remove(_getCcKey(uid));
+      await prefs.remove('${_getCcKey(uid)}_ts');
+      await prefs.remove(_getHrKey(uid));
+      await prefs.remove('${_getHrKey(uid)}_ts');
     } catch (_) {}
-
-    notifyListeners();
   }
 }

@@ -167,18 +167,27 @@ class AuthProvider extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      // Clear memory caches in other providers first
-      Provider.of<StatsProvider>(context, listen: false).clearAllCache();
-      // clearProfile() is async — it clears the SharedPreferences flag
-      // so the next login goes through the full auth flow.
-      await Provider.of<ProfileProvider>(context, listen: false).clearProfile();
-
-      await _service.logout();
+      // 1. Clear local session flag immediately to trigger instant redirect in AuthWrapper
+      final savedUser = user;
       user = null;
-      error = null;
       isNewUser = false;
+      notifyListeners(); 
+
+      // 2. Perform background cleanup
+      // Clear memory AND disk caches so no data leakage between logins.
+      final stats = Provider.of<StatsProvider>(context, listen: false);
+      final profile = Provider.of<ProfileProvider>(context, listen: false);
+      
+      await Future.wait([
+        stats.clearDiskCache(),
+        profile.clearProfile(),
+        _service.logout(),
+      ]);
+
+      error = null;
     } catch (e) {
       error = e.toString().replaceFirst('Exception: ', '');
+      debugPrint("Logout cleanup error: $e");
     }
     isLoading = false;
     notifyListeners();
