@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:share_plus/share_plus.dart';
 import '../providers/resume_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
@@ -176,17 +177,40 @@ class ResumeScreen extends StatelessWidget {
                 children: [
                   const Text('AI Analysis Result', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   if (resume.generatedPdfPath != null)
-                    TextButton.icon(
-                      onPressed: () => _openPdf(context, resume.generatedPdfPath!),
-                      icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                      label: const Text('View PDF', style: TextStyle(color: Colors.red)),
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => _openPdf(context, resume.generatedPdfPath!),
+                          icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                          label: const Text('View PDF', style: TextStyle(color: Colors.red)),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => Share.shareXFiles(
+                            [XFile(resume.generatedPdfPath!)],
+                            subject: 'CodeSphere Resume Analysis',
+                          ),
+                          icon: const Icon(Icons.share, color: AppTheme.primary, size: 20),
+                          tooltip: 'Share Analysis',
+                        ),
+                      ],
                     ),
                 ],
               ),
               const SizedBox(height: 12),
+              
+              // ATS Score Card
+              if (resume.atsScore != null) ...[
+                _buildAtsScoreCard(theme, resume.atsScore!),
+                const SizedBox(height: 16),
+              ],
+
               _buildAISummaryCard(context, 'CANDIDATE SUMMARY', resume.resumeSummary!),
               const SizedBox(height: 16),
               _buildAISummaryCard(context, 'CODING EXPERTISE', resume.codingSummary!, isCoding: true),
+              const SizedBox(height: 16),
+              if (resume.recommendations != null)
+                _buildAISummaryCard(context, 'RECOMMENDATIONS FOR IMPROVEMENT', resume.recommendations!, icon: Icons.lightbulb_outline),
               const SizedBox(height: 32),
             ],
 
@@ -214,7 +238,56 @@ class ResumeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAISummaryCard(BuildContext context, String title, String content, {bool isCoding = false}) {
+  Widget _buildAtsScoreCard(ThemeData theme, String scoreStr) {
+    final score = int.tryParse(scoreStr) ?? 0;
+    final color = score > 80 ? Colors.green : (score > 50 ? Colors.orange : Colors.red);
+    
+    return ModernCard(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                height: 64,
+                width: 64,
+                child: CircularProgressIndicator(
+                  value: score / 100,
+                  strokeWidth: 8,
+                  backgroundColor: color.withOpacity(0.1),
+                  color: color,
+                ),
+              ),
+              Text(
+                '$score',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          const SizedBox(width: 24),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ATS Optimization Score',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Higher scores indicate better keyword matching and structure for automated screening.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAISummaryCard(BuildContext context, String title, String content, {bool isCoding = false, IconData? icon}) {
     return ModernCard(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -222,7 +295,7 @@ class ResumeScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(isCoding ? Icons.terminal : Icons.person, size: 16, color: AppTheme.accent),
+              Icon(icon ?? (isCoding ? Icons.terminal : Icons.person), size: 16, color: AppTheme.accent),
               const SizedBox(width: 8),
               Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppTheme.accent)),
             ],

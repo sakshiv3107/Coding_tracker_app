@@ -11,6 +11,8 @@ class ResumeAnalysisService {
     required String name,
     required String resumeSummary,
     required String codingSummary,
+    String? atsScore,
+    String? recommendations,
     Map<String, dynamic>? extraDetails,
   }) async {
     final pdf = pw.Document();
@@ -36,6 +38,9 @@ class ResumeAnalysisService {
             pw.SizedBox(height: 20),
             
             pw.Header(level: 1, text: 'Candidate Profile: $name'),
+            if (atsScore != null) 
+               pw.Text('ATS Score: $atsScore / 100', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            pw.SizedBox(height: 10),
             pw.Paragraph(
               text: resumeSummary,
               style: const pw.TextStyle(lineSpacing: 1.5),
@@ -48,6 +53,15 @@ class ResumeAnalysisService {
               style: const pw.TextStyle(lineSpacing: 1.5),
             ),
             pw.SizedBox(height: 20),
+
+            if (recommendations != null) ...[
+              pw.Header(level: 1, text: 'Recommendations for Improvement'),
+              pw.Paragraph(
+                text: recommendations,
+                style: const pw.TextStyle(lineSpacing: 1.5),
+              ),
+              pw.SizedBox(height: 20),
+            ],
 
             if (extraDetails != null) ...[
                pw.Header(level: 1, text: 'Platform Statistics'),

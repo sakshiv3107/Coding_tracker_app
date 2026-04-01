@@ -11,36 +11,58 @@ class InsightsService {
     GoalProvider goalProvider,
     GithubProvider githubProvider,
   ) async {
-    try {
-      final Map<String, dynamic> userData = {
-        'totalSolved': statsProvider.totalSolved,
-        'leetcodeSolved': statsProvider.leetcodeStats?.totalSolved ?? 0,
-        'codeforcesSolved': statsProvider.codeforcesStats?.totalSolved ?? 0,
-        'githubCommits': statsProvider.githubCommitCalendar.values.fold(0, (a, b) => a + b),
-        'goalProgress': goalProvider.goals.map((g) {
-          final progress = ProgressService.calculateProgress(
-            goal: g,
-            statsProvider: statsProvider,
-            githubProvider: githubProvider,
-          );
-          return {
-            'title': g.title,
-            'progress': '${(progress / g.targetValue * 100).toInt()}%',
-            'isCompleted': progress >= g.targetValue,
-          };
-        }).toList(),
-        'streak': statsProvider.leetcodeStats?.streak ?? 0,
-        'developerScore': statsProvider.developerScore?.score ?? 0,
-        'developerLevel': statsProvider.developerScore?.level ?? 'Beginner',
-        'topics': statsProvider.topicStrengths,
-      };
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final int solvedToday = statsProvider.leetcodeStats?.submissionCalendar[today] ?? 0;
 
-      // Call AI Service
-      final insights = await AIService.generateInsights(userData: userData);
-      return insights;
-    } catch (e) {
-      debugPrint('InsightsService Error: $e');
-      return ['Stay consistent and keep coding! 🔥', 'Keep pushing towards your goals! 🚀'];
+    // Calculate weekly progress (sum of last 7 days)
+    int weeklySolved = 0;
+    for (int i = 0; i < 7; i++) {
+        final d = today.subtract(Duration(days: i));
+        weeklySolved += statsProvider.leetcodeStats?.submissionCalendar[d] ?? 0;
     }
+
+    final int totalSolved = statsProvider.totalSolved;
+    final int leetcodeSolved = statsProvider.leetcodeStats?.totalSolved ?? 0;
+    final int codeforcesSolved = statsProvider.codeforcesStats?.totalSolved ?? 0;
+    final int githubCommits = statsProvider.githubCommitCalendar.values
+        .fold(0, (a, b) => a + b);
+    final int streak = statsProvider.leetcodeStats?.streak ?? 0;
+
+    final Map<String, dynamic> userData = {
+      'totalSolved': totalSolved,
+      'solvedToday': solvedToday,
+      'weeklySolved': weeklySolved,
+      'leetcodeSolved': leetcodeSolved,
+      'codeforcesSolved': codeforcesSolved,
+      'githubCommits': githubCommits,
+      'streak': streak,
+      'developerScore': statsProvider.developerScore?.score ?? 0,
+      'developerLevel': statsProvider.developerScore?.level ?? 'Beginner',
+      'topics': statsProvider.topicStrengths,
+      'goalProgress': goalProvider.goals.map((g) {
+        final progress = ProgressService.calculateProgress(
+          goal: g,
+          statsProvider: statsProvider,
+          githubProvider: githubProvider,
+        );
+        return {
+          'title': g.title,
+          'currentValue': progress,
+          'targetValue': g.targetValue,
+          'progress': '${(progress / g.targetValue * 100).clamp(0, 100).toInt()}%',
+          'isCompleted': progress >= g.targetValue,
+        };
+      }).toList(),
+    };
+
+    debugPrint('[InsightsService] Sending to AI → totalSolved=$totalSolved, '
+        'leetcode=$leetcodeSolved, cf=$codeforcesSolved, '
+        'github=$githubCommits, streak=$streak');
+
+    // AIService already handles failure gracefully and returns dynamic fallback
+    final insights = await AIService.generateInsights(userData: userData);
+    debugPrint('[InsightsService] Got ${insights.length} insights: $insights');
+    return insights;
   }
 }

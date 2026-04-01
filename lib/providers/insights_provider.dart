@@ -26,7 +26,7 @@ class InsightsProvider extends ChangeNotifier {
       _insights = await InsightsService.fetchDynamicInsights(stats, goals, github);
     } catch (e) {
       _error = e.toString();
-      _insights = ['Stay focused on your journey! 🚀'];
+      _insights = [];
     } finally {
       _isLoading = false;
       notifyListeners();
