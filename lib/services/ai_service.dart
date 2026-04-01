@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class AIService {
   static final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -22,10 +23,10 @@ I will provide you with two pieces of data:
 2. A summary of their coding profiles (LeetCode, HackerRank, etc.).
 
 Data 1 (Resume Text):
-$resumeText
+\$resumeText
 
 Data 2 (Coding Profile):
-$codingProfileData
+\$codingProfileData
 
 TASK:
 Generate two separate professional summaries in JSON format:
@@ -83,11 +84,95 @@ JSON ONLY. NO CHATTY TEXT. NO MARKDOWN BACKTICKS.
               'Failed to generate coding summary.',
         };
       } else {
-        throw Exception('AI analysis failed: ${response.body}');
+        throw Exception('AI analysis failed: \${response.body}');
       }
     } catch (e) {
-      throw Exception('AI Service Error: $e');
+      throw Exception('AI Service Error: \$e');
     }
   }
 
+  static Future<List<String>> generateInsights({
+    required Map<String, dynamic> userData,
+  }) async {
+    if (_apiKey.isEmpty) {
+      return [
+        'Connect your profiles to get AI-powered insights.',
+        'Try solving a new problem today!'
+      ];
+    }
+
+    final prompt = """
+You are a career coach and competitive programming expert.
+Analyze this user's coding activity and provide 3-4 short, punchy, and actionable insights or encouragements.
+
+User Data:
+${jsonEncode(userData)}
+
+Guidelines:
+1. Compare current activity with goals if provided.
+2. Identify strengths or weaknesses in topics/difficulty.
+3. Mention consistency or lack thereof.
+4. Keep each insight under 15 words.
+5. Use emojis.
+6. Return a JSON array of strings.
+
+Format: ["Insight 1", "Insight 2", ...]
+JSON ONLY. NO CHATTY TEXT. NO MARKDOWN BACKTICKS.
+""";
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl?key=$_apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.7,
+            'responseMimeType': 'application/json',
+          },
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final content = data['candidates'][0]['content']['parts'][0]['text'] as String;
+        final cleaned = content
+            .replaceAll(RegExp(r'```json\s*'), '')
+            .replaceAll(RegExp(r'```\s*'), '')
+            .trim();
+
+        final List<dynamic> result = jsonDecode(cleaned);
+        return result.map((e) => e.toString()).toList();
+      } else {
+        return _getFallbackInsights(userData);
+      }
+    } catch (e) {
+      debugPrint('AI Insights Error: $e');
+      return _getFallbackInsights(userData);
+    }
+  }
+
+  static List<String> _getFallbackInsights(Map<String, dynamic> data) {
+    final List<String> insights = [];
+    final totalSolved = data['totalSolved'] ?? 0;
+    
+    if (totalSolved == 0) {
+      insights.add("Start your journey by solving your first problem today! 🚀");
+    } else {
+      insights.add("You've solved $totalSolved problems so far. Keep it up! 📈");
+    }
+
+    final gitCommits = data['githubCommits'] ?? 0;
+    if (gitCommits > 0) {
+      insights.add("Great job on staying active on GitHub! 💻");
+    }
+
+    return insights.isNotEmpty ? insights : ["Keep coding and stay consistent! 🔥"];
+  }
 }

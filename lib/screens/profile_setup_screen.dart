@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/profile_provider.dart';
-import 'home/home_screen.dart'; // Needed for explicit post-save navigation
+import 'home/home_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -11,22 +13,67 @@ class ProfileSetupScreen extends StatefulWidget {
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
+  final nameCtrl = TextEditingController();
   final leetcodeCtrl = TextEditingController();
   final codechefCtrl = TextEditingController();
   final codeforcesCtrl = TextEditingController();
   final githubCtrl = TextEditingController();
   final hackerrankCtrl = TextEditingController();
 
+  String? _profilePicUrl;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
+    nameCtrl.dispose();
     leetcodeCtrl.dispose();
     codechefCtrl.dispose();
     codeforcesCtrl.dispose();
     githubCtrl.dispose();
     hackerrankCtrl.dispose();
     super.dispose();
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Photo Gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickAndUpload(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickAndUpload(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUpload(ImageSource source) async {
+    try {
+      final url = await context.read<ProfileProvider>().pickAndUploadImage(source);
+      if (url != null) {
+        setState(() => _profilePicUrl = url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      }
+    }
   }
 
   @override
@@ -40,33 +87,52 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Gradient Header
+              // ─── Header & Avatar ──────────────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.primaryContainer,
-                    ],
+                    colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
+                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
-                    Icon(Icons.code, size: 50, color: Colors.white),
-                    SizedBox(height: 12),
-                    Text(
-                      "Setup Coding Profile",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    GestureDetector(
+                      onTap: () => _showImageSourceActionSheet(context),
+                      child: Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: _profilePicUrl != null ? CachedNetworkImageProvider(_profilePicUrl!) : null,
+                              child: _profilePicUrl == null && !profileProvider.isLoading
+                                  ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                                  : (profileProvider.isLoading && _profilePicUrl == null)
+                                      ? const CircularProgressIndicator()
+                                      : null,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: theme.colorScheme.secondary,
+                              child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Setup Coding Profile",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -105,6 +171,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 ),
                               ),
                             ),
+                          _buildInputField(
+                            controller: nameCtrl,
+                            label: "Full Name",
+                            icon: Icons.person_outline_rounded,
+                          ),
+                          const SizedBox(height: 20),
                           _buildInputField(
                             controller: leetcodeCtrl,
                             label: "LeetCode Username",
@@ -155,7 +227,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 ? null
                                 : () async {
                                     if (_formKey.currentState!.validate()) {
+                                      final nav = Navigator.of(context);
+                                      final messenger = ScaffoldMessenger.of(
+                                        context,
+                                      );
+
                                       await profileProvider.saveProfile(
+                                        name: nameCtrl.text.trim(),
+                                        profilePic: _profilePicUrl,
                                         leetcode: leetcodeCtrl.text.trim(),
                                         codechef: codechefCtrl.text.trim(),
                                         codeforces: codeforcesCtrl.text.trim(),
@@ -173,15 +252,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         // redirect — push HomeScreen directly
                                         // and wipe the back-stack so the user
                                         // cannot navigate back to this screen.
-                                        Navigator.of(context).pushAndRemoveUntil(
+                                        nav.pushAndRemoveUntil(
                                           MaterialPageRoute(
                                             builder: (_) => const HomeScreen(),
                                           ),
                                           (route) => false,
                                         );
-                                      } else if (profileProvider.error != null) {
+                                      } else if (profileProvider.error !=
+                                          null) {
                                         // Show error feedback
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        messenger.showSnackBar(
                                           SnackBar(
                                             content: Text(
                                               "Error saving profile: ${profileProvider.error}",

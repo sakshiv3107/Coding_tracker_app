@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
@@ -208,25 +209,25 @@ class AppDrawer extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Text(
-              'v1.0.4 · CodeSphere',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                color: theme.colorScheme.onSurface.withOpacity(0.15),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+),
+Padding(
+padding: const EdgeInsets.only(bottom: 24),
+child: Text(
+'v1.0.4 · CodeSphere',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w900,
+letterSpacing: 2,
+color: theme.colorScheme.onSurface.withOpacity(0.15),
+),
+),
+),
+],
+),
+);
+}
 
-  // ── Header ────────────────────────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(
     BuildContext context,
@@ -272,13 +273,16 @@ class AppDrawer extends StatelessWidget {
                       ? AppTheme.surfaceDarkLighter
                       : Colors.grey[200],
                   backgroundImage: (pic != null && pic.isNotEmpty)
-                      ? NetworkImage(pic)
+                      ? CachedNetworkImageProvider(pic)
                       : null,
                   child: (pic == null || pic.isEmpty)
-                      ? Icon(
-                          Icons.person_rounded,
-                          color: theme.colorScheme.primary,
-                          size: 32,
+                      ? Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : 'D',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: theme.colorScheme.primary,
+                          ),
                         )
                       : null,
                 ),

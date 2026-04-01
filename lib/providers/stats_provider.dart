@@ -40,9 +40,8 @@ String _getCfKey(String uid) => 'sp_${uid}_cf_';
 String _getCcKey(String uid) => 'sp_${uid}_cc_';
 String _getHrKey(String uid) => 'sp_${uid}_hr_';
 
-const _kLcMaxAge = Duration(hours: 12); 
-const _kOtherMaxAge = Duration(hours: 6); 
-
+const _kLcMaxAge = Duration(hours: 12);
+const _kOtherMaxAge = Duration(hours: 6);
 
 // ─── Retry config ─────────────────────────────────────────────────────────────
 const _kMaxRetries = 2;
@@ -198,7 +197,10 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ── Contests ────────────────────────────────────────────────────────────────
-  Future<void> fetchUpcomingContests({String? cfHandle, String? lcHandle}) async {
+  Future<void> fetchUpcomingContests({
+    String? cfHandle,
+    String? lcHandle,
+  }) async {
     if (_contestsLoading) return; // dedup
     _contestsLoading = true;
     notifyListeners();
@@ -281,11 +283,15 @@ class StatsProvider extends ChangeNotifier {
       final raw = prefs.getString(key);
       final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
-      
-      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kLcMaxAge) return;
 
-      _leetcodeStats = LeetcodeStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      _leetcodeStats = LeetcodeStats.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
       _leetcodeLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
       _calculateAnalytics();
     } catch (e) {
@@ -312,7 +318,9 @@ class StatsProvider extends ChangeNotifier {
       final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
 
-      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
 
       final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -355,14 +363,18 @@ class StatsProvider extends ChangeNotifier {
       final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
 
-      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
 
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final Map<DateTime, int> history = {};
       final rawHist = json['submissionCalendar'] as Map<String, dynamic>?;
       rawHist?.forEach((k, v) {
-        try { history[DateTime.parse(k)] = (v as num).toInt(); } catch (_) {}
+        try {
+          history[DateTime.parse(k)] = (v as num).toInt();
+        } catch (_) {}
       });
 
       _codechefStats = PlatformStats(
@@ -411,10 +423,14 @@ class StatsProvider extends ChangeNotifier {
       final tsMs = prefs.getInt('${key}_ts');
       if (raw == null || tsMs == null) return;
 
-      final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(tsMs));
+      final age = DateTime.now().difference(
+        DateTime.fromMillisecondsSinceEpoch(tsMs),
+      );
       if (age > _kOtherMaxAge) return;
 
-      _hackerrankStats = HackerRankStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      _hackerrankStats = HackerRankStats.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
       _hackerrankLastFetch = DateTime.fromMillisecondsSinceEpoch(tsMs);
     } catch (e) {
       debugPrint('[StatsProvider] HR disk load error: $e');
@@ -516,22 +532,6 @@ class StatsProvider extends ChangeNotifier {
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // VALIDATION
-  // ════════════════════════════════════════════════════════════════════════════
-
-  bool _validateUsername(
-    String? username,
-    String platform,
-    void Function(String) setError,
-  ) {
-    if (username == null || username.trim().isEmpty) {
-      setError('$platform username required');
-      return false;
-    }
-    return true;
-  }
-
-  // ════════════════════════════════════════════════════════════════════════════
   // LeetCode
   // ════════════════════════════════════════════════════════════════════════════
 
@@ -579,14 +579,15 @@ class StatsProvider extends ChangeNotifier {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
         () => LeetcodeService().fetchData(
-          username!,
+          username,
           forceRefresh: forceRefresh,
           onBackgroundRefresh: (freshStats) {
             // Skip the update if we're already mid-load (race condition guard).
             if (_leetcodeLoading) return;
             _leetcodeStats = freshStats;
             _leetcodeLastFetch = DateTime.now();
-            if (uid != null) _saveLcToDisk(freshStats, uid); // Persist fresh data
+            if (uid != null){
+              _saveLcToDisk(freshStats, uid); }// Persist fresh data
             _calculateAnalytics();
             notifyListeners(); // Re-render UI with accurate counts.
           },
@@ -650,7 +651,7 @@ class StatsProvider extends ChangeNotifier {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
-        () => CodeforcesService().fetchData(username!),
+        () => CodeforcesService().fetchData(username),
         platform: 'Codeforces',
       );
       _codeforcesStats = stats;
@@ -708,7 +709,7 @@ class StatsProvider extends ChangeNotifier {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
-        () => CodeChefService().fetchData(username!),
+        () => CodeChefService().fetchData(username),
         platform: 'CodeChef',
       );
       _codechefStats = stats;
@@ -766,7 +767,7 @@ class StatsProvider extends ChangeNotifier {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final stats = await _withRetry(
-        () => HackerRankService().fetchData(username!),
+        () => HackerRankService().fetchData(username),
         platform: 'HackerRank',
       );
       _hackerrankStats = stats;
@@ -869,7 +870,7 @@ class StatsProvider extends ChangeNotifier {
   Future<void> clearDiskCache() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     clearAllCache();
-    
+
     if (uid == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();

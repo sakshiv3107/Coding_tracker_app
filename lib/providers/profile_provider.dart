@@ -1,19 +1,17 @@
 // lib/providers/profile_provider.dart
-//
-// KEY FIXES:
-//  1. UID Isolation: SharedPreferences cache keys are now prefixed with UID.
-//     This prevents data leakage when switching accounts on the same device.
-//  2. Background Sync: Instant local load from UID-cache, then background Firestore refresh.
-//  3. Persistence: Connected platform handles are recovered from UID-cache on app launch.
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../services/profile_service.dart';
+import '../services/storage_service.dart';
 import 'dart:convert';
 
 class ProfileProvider extends ChangeNotifier {
   final ProfileService _profileService = ProfileService();
+  final StorageService _storageService = StorageService();
 
   // ─── SharedPrefs Keys (isolated per user) ───────────────────────────────
   String _getProfileKey(String uid) => 'profile_data_$uid';
@@ -91,6 +89,8 @@ class ProfileProvider extends ChangeNotifier {
 
   // ── Save profile ──────────────────────────────────────────────────────────
   Future<void> saveProfile({
+    String? name,
+    String? profilePic,
     required String leetcode,
     required String codechef,
     required String codeforces,
@@ -105,7 +105,9 @@ class ProfileProvider extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      await _profileService.saveCodingProfile(
+      await _profileService.updateFullProfile(
+        name: name,
+        profilePic: profilePic,
         leetcode: leetcode,
         codechef: codechef,
         codeforces: codeforces,
@@ -119,6 +121,7 @@ class ProfileProvider extends ChangeNotifier {
         "codeforces": codeforces,
         "github": github,
         "hackerrank": hackerrank ?? "",
+        "profilePic": profilePic ?? "",
       };
 
       // ── Persist to User-Specific Cache ───────────────────────────────────
@@ -188,7 +191,43 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  // ── Clear profile (on logout) ─────────────────────────────────────────────
+  // ── Upload Profile Picture ──────────────────────────────────────────────
+  Future<String?> pickAndUploadImage(ImageSource source) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception("User not authenticated");
+
+    try {
+      isLoading = true;
+      error = null;
+      notifyListeners();
+
+      final File? image = await _storageService.pickImage(source);
+      if (image == null) return null;
+
+      final String downloadUrl = await _storageService.uploadProfilePicture(image);
+
+      // We DON'T update Firestore yet, just UI feedback or immediate update
+      // Logic inside provider could update local profile object too
+      if (profile != null) {
+        final updatedProfile = Map<String, String>.from(profile!);
+        updatedProfile["profilePic"] = downloadUrl;
+        profile = updatedProfile;
+        
+        // Cache immediately
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_getProfileKey(uid), json.encode(profile));
+      }
+      
+      return downloadUrl;
+    } catch (e) {
+      error = e.toString();
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> clearProfile() async {
     // We only clear memory state. 
     // Disk keys are UID-isolated, so they can stay as "cache" for this user.

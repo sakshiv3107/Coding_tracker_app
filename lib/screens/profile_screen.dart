@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
@@ -89,15 +90,20 @@ class ProfileScreen extends StatelessWidget {
                             child: CircleAvatar(
                               radius: 54,
                               backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                              child: Text(
-                                userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
-                                style: const TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primary,
-                                  letterSpacing: -1,
-                                ),
-                              ),
+                              backgroundImage: (profile.profile?["profilePic"]?.isNotEmpty == true)
+                                  ? CachedNetworkImageProvider(profile.profile!["profilePic"]!)
+                                  : null,
+                              child: (profile.profile?["profilePic"]?.isNotEmpty != true)
+                                  ? Text(
+                                      userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
+                                      style: const TextStyle(
+                                        fontSize: 42,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.primary,
+                                        letterSpacing: -1,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                         ),

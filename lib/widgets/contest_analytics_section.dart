@@ -53,8 +53,8 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
   bool _datesAreCollapsed(List<LeetCodeContestHistory> history) {
     if (history.length < 2) return false;
     final ms = history.map((h) => h.date.millisecondsSinceEpoch).toList();
-    final span = ms.reduce((a, b) => a > b ? a : b) -
-        ms.reduce((a, b) => a < b ? a : b);
+    final span =
+        ms.reduce((a, b) => a > b ? a : b) - ms.reduce((a, b) => a < b ? a : b);
     return span < 604800000; // less than 1 week = collapsed
   }
 
@@ -81,7 +81,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
   }
 
   Map<String, double> _yearLabels(
-      List<LeetCodeContestHistory> history, List<FlSpot> spots) {
+    List<LeetCodeContestHistory> history,
+    List<FlSpot> spots,
+  ) {
     final labels = <String, double>{};
     if (_datesAreCollapsed(history)) {
       if (spots.isNotEmpty) labels['#1'] = spots.first.x;
@@ -103,10 +105,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final history = stats.contestHistory ?? [];
 
-    final ratingText =
-        (stats.contestRating != null && stats.contestRating! > 0)
-            ? stats.contestRating!.toStringAsFixed(0)
-            : 'N/A';
+    final ratingText = (stats.contestRating != null && stats.contestRating! > 0)
+        ? stats.contestRating!.toStringAsFixed(0)
+        : 'N/A';
 
     return ModernCard(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
@@ -147,35 +148,38 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                   ),
                   const SizedBox(width: 32),
                   if (stats.highestRating != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Max Rating',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          stats.highestRating!.toStringAsFixed(0),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Max Rating',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            stats.highestRating!.toStringAsFixed(0),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
 
@@ -199,7 +203,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                           TextSpan(
                             text: _fmt(stats.globalRanking!),
                             style: const TextStyle(
-                                fontSize: 17, fontWeight: FontWeight.bold),
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           if (stats.topPercentage != null &&
                               stats.topPercentage! > 0)
@@ -219,7 +225,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                       Text(
                         'Top ${stats.topPercentage!.toStringAsFixed(1)}%',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500),
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                   ],
                 ),
@@ -241,7 +249,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                     Text(
                       '${stats.totalContests}',
                       style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -266,16 +276,17 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
       height: 60,
       alignment: Alignment.centerLeft,
       child: Text(
-        history_isEmpty_reason(stats),
+        historyIsEmptyReason(stats),
         style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
       ),
     );
   }
 
-  String history_isEmpty_reason(LeetcodeStats stats) {
+  String historyIsEmptyReason(LeetcodeStats stats) {
     final history = stats.contestHistory ?? [];
     if (history.isEmpty) return 'Contest history unavailable from API';
-    if (history.length == 1) return 'Only 1 contest found — need 2+ to draw chart';
+    if (history.length == 1){
+      return 'Only 1 contest found — need 2+ to draw chart';}
     return '';
   }
 
@@ -318,11 +329,14 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
                 leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -352,7 +366,9 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                 touchTooltipData: LineTouchTooltipData(
                   tooltipRoundedRadius: 10,
                   tooltipPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   getTooltipItems: (touched) => touched.map((s) {
                     int best = 0;
                     double bestDist = double.infinity;
@@ -367,9 +383,10 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                     return LineTooltipItem(
                       history[idx].rating.toStringAsFixed(0),
                       const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     );
                   }).toList(),
                 ),

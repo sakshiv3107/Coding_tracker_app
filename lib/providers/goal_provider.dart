@@ -5,6 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/goal.dart';
+import '../services/progress_service.dart';
+import '../services/notification_service.dart';
+import '../providers/stats_provider.dart';
+import '../providers/github_provider.dart';
 
 class GoalProvider with ChangeNotifier {
   static const String _kGoalsKey = 'user_dynamic_goals';
@@ -127,8 +131,34 @@ class GoalProvider with ChangeNotifier {
     }
   }
 
+  void checkProgressAndNotifyCompletion(StatsProvider stats, GithubProvider github) {
+    if (_goals.isEmpty) return;
+    
+    for (var goal in _goals) {
+      final current = ProgressService.calculateProgress(
+        goal: goal,
+        statsProvider: stats,
+        githubProvider: github,
+      );
+
+      final isNowCompleted = current >= goal.targetValue;
+      
+      // We can use a small local set to avoid double notifications during the same app session
+      if (isNowCompleted && !_completedNotified.contains(goal.id)) {
+        _completedNotified.add(goal.id);
+        NotificationService.showInstantNotification(
+          title: "🎉 Goal Completed!",
+          body: "You've reached your goal: ${goal.title}",
+        );
+      }
+    }
+  }
+
+  final Set<String> _completedNotified = {};
+
   void deleteGoal(String id) {
     _goals.removeWhere((g) => g.id == id);
+    _completedNotified.remove(id);
     _saveToDisk();
     _syncToFirestore();
     notifyListeners();

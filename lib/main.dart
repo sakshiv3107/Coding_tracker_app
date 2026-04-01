@@ -11,8 +11,10 @@ import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../providers/resume_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/insights_provider.dart';
 import '../services/notification_service.dart';
 import '../services/smart_reminder_service.dart';
+import '../services/background_task_service.dart';
 import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
@@ -32,8 +34,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Initialize Services
   await NotificationService.init();
   await SmartReminderService.init();
+  await BackgroundTaskService.init();
+  await BackgroundTaskService.schedulePeriodicTasks();
 
   runApp(
     MultiProvider(
@@ -43,12 +49,10 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => GithubProvider()),
-        // init() wires up the Firestore auth-listener and loads from disk.
-        // Without this call goals were never populated/synced.
         ChangeNotifierProvider(create: (_) => GoalProvider()..init()),
         ChangeNotifierProvider(create: (_) => ResumeProvider()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()),
-        // Stream provider for real-time auth state
+        ChangeNotifierProvider(create: (_) => InsightsProvider()),
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),
           initialData: null,

@@ -6,11 +6,12 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  
+
   static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
   static const String _kEnabledKey = 'notifications_enabled';
@@ -20,12 +21,16 @@ class NotificationService {
     try {
       tz.initializeTimeZones();
       final dynamic timeZoneResult = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = timeZoneResult is String ? timeZoneResult : timeZoneResult.toString();
-      
+      final String timeZoneName = timeZoneResult is String
+          ? timeZoneResult
+          : timeZoneResult.toString();
+
       try {
         tz.setLocalLocation(tz.getLocation(timeZoneName));
       } catch (e) {
-        debugPrint('NotificationService: Could not set local location for $timeZoneName. Falling back to UTC.');
+        debugPrint(
+          'NotificationService: Could not set local location for $timeZoneName. Falling back to UTC.',
+        );
         tz.setLocalLocation(tz.getLocation('UTC'));
       }
 
@@ -34,22 +39,26 @@ class NotificationService {
 
       const DarwinInitializationSettings initializationSettingsIOS =
           DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
 
-      const InitializationSettings initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS,
-      );
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+          );
 
       await _localNotifications.initialize(
         settings: initializationSettings,
-        onDidReceiveNotificationResponse: (details) {
+        onDidReceiveNotificationResponse: (NotificationResponse details) {
           // Handle notification click
         },
       );
+
+      // Handle permissions
+      await requestPermissions();
 
       if (Platform.isIOS) {
         await _fcm.requestPermission();
@@ -64,29 +73,76 @@ class NotificationService {
         // Handle background notification click
       });
 
-      // Background handler should be static or top-level
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
     } catch (e) {
       debugPrint('NotificationService init error: $e');
     }
   }
 
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'high_importance_channel',
-      'High Importance Notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
+  static Future<void> requestPermissions() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (status.isDenied) {
+        await Permission.notification.request();
+      }
+    } else if (Platform.isIOS) {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    }
+  }
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidDetails);
+  static Future<void> _showLocalNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidDetails,
+    );
 
     await _localNotifications.show(
       id: message.hashCode,
       title: message.notification?.title,
       body: message.notification?.body,
       notificationDetails: platformChannelSpecifics,
+    );
+  }
+
+  static Future<void> showInstantNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_kEnabledKey) ?? true)) return;
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'alerts',
+          'Alerts',
+          channelDescription: 'Goal and performance alerts',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await _localNotifications.show(
+      id: DateTime.now().millisecond,
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
+      payload: payload,
     );
   }
 
@@ -99,7 +155,8 @@ class NotificationService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final isEnabled = prefs.getBool(_kEnabledKey) ?? true;
-    final isPlatformEnabled = prefs.getBool('$_kPlatformPrefix${platform.toLowerCase()}') ?? true;
+    final isPlatformEnabled =
+        prefs.getBool('$_kPlatformPrefix${platform.toLowerCase()}') ?? true;
 
     if (!isEnabled || !isPlatformEnabled) return;
 
@@ -108,18 +165,20 @@ class NotificationService {
 
     final tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'contest_alerts',
-      'Contest Alerts',
-      channelDescription: 'Reminder for upcoming coding contests',
-      importance: Importance.max,
-      priority: Priority.high,
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'contest_alerts',
+          'Contest Alerts',
+          channelDescription: 'Reminder for upcoming coding contests',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidDetails,
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidDetails);
-
-    final notificationId = id + minutesBefore; // Simple way to generate unique IDs for 1h/10m warnings
+    final notificationId = id + minutesBefore;
 
     await _localNotifications.zonedSchedule(
       id: notificationId,
@@ -158,7 +217,5 @@ class NotificationService {
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `Firebase.initializeApp()` first.
   debugPrint("Handling a background message: ${message.messageId}");
 }

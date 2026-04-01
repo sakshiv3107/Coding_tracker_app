@@ -6,8 +6,9 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
+import '../providers/insights_provider.dart';
+import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
-// import '../theme/app_theme.dart';
 import '../widgets/unified_analytics_card.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
@@ -101,6 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (githubUser.isNotEmpty)
                 github.fetchGithubData(githubUser, forceRefresh: true),
               stats.fetchUpcomingContests(cfHandle: cfUser, lcHandle: leetcodeUser),
+              context.read<InsightsProvider>().refreshInsights(stats, context.read<GoalProvider>(), github),
             ]);
           },
           child: SingleChildScrollView(
@@ -239,18 +241,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const SizedBox(height: 16),
                 // ── AI Coding Insights ──────────────────────────────────────
-                AIInsightsCard(
-                  leetcodeSolved: stats.leetcodeStats?.totalSolved ?? 0,
-                  githubCommits:
-                      github.githubStats?.totalContributions ?? 0,
-                  tagStats: stats.leetcodeStats?.tagStats ?? {},
-                  easy: stats.leetcodeStats?.easy ?? 0,
-                  medium: stats.leetcodeStats?.medium ?? 0,
-                  hard: stats.leetcodeStats?.hard ?? 0,
-                  recommendation: stats.aiRecommendation,
-                ),
+                const AIInsightsCard(),
                 const SizedBox(height: 16),
-
+                
+                // Trigger goal check whenever we build (throttled by the widget tree)
+                Builder(builder: (ctx) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    context.read<GoalProvider>().checkProgressAndNotifyCompletion(stats, github);
+                    // Single initial fetch for insights if empty
+                    final insights = context.read<InsightsProvider>();
+                    if (insights.insights.isEmpty && !insights.isLoading) {
+                      insights.refreshInsights(stats, context.read<GoalProvider>(), github);
+                    }
+                  });
+                  return const SizedBox.shrink();
+                }),
               ],
 
               

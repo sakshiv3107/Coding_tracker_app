@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'modern_card.dart';
 import '../theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -58,10 +59,17 @@ class ProfileSummaryCard extends StatelessWidget {
                     radius: 38,
                     backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
                     backgroundImage: (profilePicUrl != null && profilePicUrl!.isNotEmpty) 
-                        ? NetworkImage(profilePicUrl!) 
+                        ? CachedNetworkImageProvider(profilePicUrl!) 
                         : null,
                     child: (profilePicUrl == null || profilePicUrl!.isEmpty)
-                        ? Icon(Icons.person_rounded, color: theme.colorScheme.primary, size: 40)
+                        ? Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'D',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
                         : null,
                   ),
                 ),
