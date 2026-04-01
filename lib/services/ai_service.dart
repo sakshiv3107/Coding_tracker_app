@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';

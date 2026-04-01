@@ -196,24 +196,27 @@ class AuthHeroLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        height: 90,
-        width: 90,
+        height: 100,
+        width: 100,
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primary, AppTheme.primaryLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(26),
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.35),
-              blurRadius: 24,
+              color: AppTheme.primary.withOpacity(0.2),
+              blurRadius: 30,
               offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: const Icon(Icons.code_rounded, size: 48, color: Colors.white),
+        child: Image.asset(
+          'assets/images/icon.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.code_rounded, size: 48, color: Colors.white),
+        ),
       ),
     );
   }
