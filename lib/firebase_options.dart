@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '168999871119',
     projectId: 'coding-tracker-app-d0224',
     authDomain: 'coding-tracker-app-d0224.firebaseapp.com',
-    storageBucket: 'coding-tracker-app-d0224.firebasestorage.app',
+    storageBucket: 'coding-tracker-app-d0224.appspot.com',
     measurementId: 'G-V3Y0C53YYP',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:168999871119:android:958fb24040ad1b001c06fa',
     messagingSenderId: '168999871119',
     projectId: 'coding-tracker-app-d0224',
-    storageBucket: 'coding-tracker-app-d0224.firebasestorage.app',
+    storageBucket: 'coding-tracker-app-d0224.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:168999871119:ios:877b317e8fca4e791c06fa',
     messagingSenderId: '168999871119',
     projectId: 'coding-tracker-app-d0224',
-    storageBucket: 'coding-tracker-app-d0224.firebasestorage.app',
+    storageBucket: 'coding-tracker-app-d0224.appspot.com',
     iosClientId: '168999871119-3k9l8t422lpcllrekbcn46e2bgbgkfp5.apps.googleusercontent.com',
     iosBundleId: 'com.example.codingTrackerApp',
   );
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     appId: '1:168999871119:ios:877b317e8fca4e791c06fa',
     messagingSenderId: '168999871119',
     projectId: 'coding-tracker-app-d0224',
-    storageBucket: 'coding-tracker-app-d0224.firebasestorage.app',
+    storageBucket: 'coding-tracker-app-d0224.appspot.com',
     iosClientId: '168999871119-3k9l8t422lpcllrekbcn46e2bgbgkfp5.apps.googleusercontent.com',
     iosBundleId: 'com.example.codingTrackerApp',
   );
@@ -84,7 +84,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '168999871119',
     projectId: 'coding-tracker-app-d0224',
     authDomain: 'coding-tracker-app-d0224.firebaseapp.com',
-    storageBucket: 'coding-tracker-app-d0224.firebasestorage.app',
+    storageBucket: 'coding-tracker-app-d0224.appspot.com',
     measurementId: 'G-YDWWHNTPWE',
   );
 }

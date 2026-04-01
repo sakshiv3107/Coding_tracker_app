@@ -70,9 +70,18 @@ Rules:
       final result = jsonDecode(cleaned) as Map<String, dynamic>;
 
       final atsScore = result['ats_score']?.toString() ?? 'N/A';
-      final resumeSummary = result['resume_summary']?.toString().trim() ?? '';
-      final codingSummary = result['coding_summary']?.toString().trim() ?? '';
-      final recommendations = result['recommendations']?.toString().trim() ?? '';
+
+      String formatAIField(dynamic field) {
+        if (field == null) return '';
+        if (field is List) {
+          return field.map((e) => e.toString().trim()).join('\n');
+        }
+        return field.toString().trim();
+      }
+
+      final resumeSummary = formatAIField(result['resume_summary']);
+      final codingSummary = formatAIField(result['coding_summary']);
+      final recommendations = formatAIField(result['recommendations']);
 
       if (resumeSummary.isEmpty || codingSummary.isEmpty) {
         throw Exception('AI returned empty summaries.');

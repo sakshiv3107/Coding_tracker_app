@@ -64,7 +64,13 @@ class StorageService {
       return downloadUrl;
     } catch (e) {
       debugPrint("Error uploading image: $e");
-      throw Exception("Failed to upload image. Please check your connection.");
+      if (e.toString().contains('storage/unauthorized')) {
+        throw Exception("Upload failed: Permission denied. Please ensure your storage rules are configured.");
+      }
+      if (e.toString().contains('storage/quota-exceeded')) {
+        throw Exception("Upload failed: Storage quota exceeded.");
+      }
+      throw Exception("Failed to upload image: $e");
     }
   }
 }
