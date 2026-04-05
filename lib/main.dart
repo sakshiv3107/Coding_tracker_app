@@ -28,6 +28,7 @@ import 'screens/contest_calendar_screen.dart';
 import 'firebase_options.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../services/ota_service.dart';
 
 
 Future<void> main() async {
@@ -73,9 +74,48 @@ Future<void> main() async {
 
 
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+  class _MyAppState extends State<MyApp> {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkUpdate();
+    });
+  }
+
+  void checkUpdate() async {
+    final data = await OTAService.checkForUpdate();
+
+    if (data != null && context.mounted) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Update Available 🚀"),
+          content: Text(data['changelog']),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Later"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                OTAService.startUpdate(data['apk_url']);
+              },
+              child: const Text("Update"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
