@@ -1,11 +1,89 @@
 import 'dart:convert';
-// import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class AIService {
   static String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
+
+  static const _model = 'gemini-2.5-flash';
+  static const _baseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent';
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Core REST caller
+  // ──────────────────────────────────────────────────────────────────────────
+
+  static Future<String> _callGemini(
+    String prompt, {
+    int maxOutputTokens = 1024,
+  }) async {
+    final uri = Uri.parse('$_baseUrl?key=$_apiKey');
+
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': prompt}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.7,
+        'maxOutputTokens': maxOutputTokens,
+      },
+    });
+
+    debugPrint('[AIService] POST $_baseUrl (maxTokens: $maxOutputTokens)');
+
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint('[AIService] HTTP ${response.statusCode}: ${response.body}');
+      throw Exception(
+          'Gemini API returned HTTP ${response.statusCode}: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    final candidates = data['candidates'] as List<dynamic>?;
+    if (candidates == null || candidates.isEmpty) {
+      throw Exception('Gemini returned no candidates.');
+    }
+
+    final text = candidates[0]['content']['parts'][0]['text'] as String?;
+    if (text == null || text.trim().isEmpty) {
+      throw Exception('Gemini returned empty text.');
+    }
+
+    return text.trim();
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Robust JSON extractor — strips markdown fences and finds first JSON block
+  // ──────────────────────────────────────────────────────────────────────────
+
+  static String _extractJson(String raw) {
+    // Strip markdown code fences
+    var cleaned = raw
+        .replaceAll(RegExp(r'```json\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'```\s*'), '')
+        .trim();
+
+    // Try to extract a JSON object {...}
+    final objMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleaned);
+    if (objMatch != null) return objMatch.group(0)!.trim();
+
+    // Try to extract a JSON array [...]
+    final arrMatch = RegExp(r'\[[\s\S]*\]').firstMatch(cleaned);
+    if (arrMatch != null) return arrMatch.group(0)!.trim();
+
+    return cleaned;
+  }
 
   // ──────────────────────────────────────────────────────────────────────────
   // Resume Analyzer
@@ -21,8 +99,9 @@ class AIService {
       );
     }
 
+    // Keep input short so there is enough token budget for the JSON output
     final trimmedResume =
-        resumeText.length > 8000 ? resumeText.substring(0, 8000) : resumeText;
+        resumeText.length > 6000 ? resumeText.substring(0, 6000) : resumeText;
 
     final prompt = '''
 You are an expert technical recruiter and resume analyst.
@@ -37,46 +116,48 @@ TASK:
 Return ONLY a valid JSON object with exactly these four keys:
 {
   "ats_score": <Integer from 1 to 100>,
-  "resume_summary": "A list of 4-6 concise bullet points (Skills, Experience, Highlights)",
-  "coding_summary": "A list of 2-4 concise bullet points (Rankings, Consistency)",
-  "recommendations": "A list of 3-4 actionable, high-impact bullet points for resume improvement (e.g., adding missing skills, re-formatting, or quantifying achievements)."
+  "resume_summary": ["Point 1", "Point 2", ...], 
+  "coding_summary": ["Point 1", "Point 2", ...],
+  "recommendations": ["Point 1", "Point 2", ...]
 }
 
-Rules:
-- USE simple bullet points with '-' or '•'.
-- NO markdown formatting (no bold/italics in the strings).
-- NO backticks around the JSON.
-- Valid JSON format only.
+Content Rules:
+- "resume_summary": 4-6 high-impact points highlighting skills and experience.
+- "coding_summary": 2-4 points on competitive programming and consistency.
+- "recommendations": 3-4 specific, actionable steps to improve the resume.
+- Use professional, active language. Quantify achievements where possible.
+- NO markdown formatting inside the strings.
+- Pure JSON only. No backticks.
 ''';
 
-    debugPrint('[AIService] Sending resume analysis request via Google Generative AI...');
+    debugPrint('[AIService] Sending resume analysis request...');
 
     try {
-      final model = GenerativeModel(
-        model: 'gemini-2.5-flash',
-        apiKey: _apiKey,
-      );
-      
-      final response = await model.generateContent([Content.text(prompt)]);
-      final rawText = response.text ?? '';
-      
+      // Use 8192 tokens so the full JSON response is never truncated
+      final rawText = await _callGemini(prompt, maxOutputTokens: 8192);
       debugPrint('[AIService] Raw AI response: $rawText');
 
-      final cleaned = rawText
-          .replaceAll(RegExp(r'```json\s*'), '')
-          .replaceAll(RegExp(r'```\s*'), '')
-          .trim();
-
+      final cleaned = _extractJson(rawText);
       final result = jsonDecode(cleaned) as Map<String, dynamic>;
 
       final atsScore = result['ats_score']?.toString() ?? 'N/A';
 
       String formatAIField(dynamic field) {
         if (field == null) return '';
+        List<String> items = [];
+        
         if (field is List) {
-          return field.map((e) => e.toString().trim()).join('\n');
+          items = field.map((e) => e.toString().trim()).toList();
+        } else {
+          // Fallback: split by common delimiters if AI returns a string
+          items = field.toString().split(RegExp(r'[\n•\-\*]'))
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
         }
-        return field.toString().trim();
+
+        // Prefix each with a clean bullet and join
+        return items.map((item) => '• $item').join('\n');
       }
 
       final resumeSummary = formatAIField(result['resume_summary']);
@@ -87,6 +168,8 @@ Rules:
         throw Exception('AI returned empty summaries.');
       }
 
+      debugPrint('[AIService] Resume analysis complete. ATS Score: $atsScore');
+
       return {
         'ats_score': atsScore,
         'resume_summary': resumeSummary,
@@ -94,7 +177,7 @@ Rules:
         'recommendations': recommendations,
       };
     } catch (e) {
-      debugPrint('[AIService] Exception: $e');
+      debugPrint('[AIService] analyzeResume error: $e');
       throw Exception('Gemini API error: $e');
     }
   }
@@ -112,119 +195,98 @@ Rules:
     }
 
     final prompt = '''
-You are a career coach and competitive programming expert. 
-Analyze the user's coding statistics and generate 3-4 short, personalized, data-driven insights.
+You are a senior coding mentor and performance analyst. 
+Analyze the user's coding statistics and generate exactly 2–3 short, data-driven, and actionable bullet-point insights.
 
-User Statistics:
+Categories to address (Pick 2–3):
+1. Solving Pattern: Analyze recent volume vs difficulty (Easy/Med/Hard).
+2. Consistency: Analyze streak, activity gaps, and GitHub commits.
+3. Growth Recommendation: Suggest specific next topic or difficulty based on strengths/weaknesses.
+
+User Data (JSON):
 ${jsonEncode(userData)}
 
 Rules:
-1. Base every insight on the actual numbers provided — reference specific values (e.g., "717 problems solved").
-2. Compare current activity vs goals if goal data is present.
-3. Identify strengths or gaps in topics/difficulty distribution.
-4. Highlight consistency, streaks, or inactivity patterns.
-5. Each insight must be under 18 words and include a relevant emoji.
-6. Return a JSON array of strings. No extra text. No markdown.
-
-Example format: ["Insight 1 🔥", "Insight 2 💻", "Insight 3 📈"]
+- Output only 2–3 concise points.
+- Each point MUST reference a specific number from the data (e.g. "8 Medium solved").
+- Keep points under 18 words and include a relevant emoji.
+- Return ONLY a JSON list of strings [""]. No markdown. No backticks.
 ''';
 
-    debugPrint('[AIService] Sending insights request via Google Generative AI...');
+    debugPrint('[AIService] Generating Smart Insights via Gemini...');
 
     try {
-      final model = GenerativeModel(
-        model: 'gemini-2.5-flash',
-        apiKey: _apiKey,
-      );
+      final rawText = await _callGemini(prompt);
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      final rawText = response.text ?? '';
-      
-      debugPrint('[AIService] Raw insights: $rawText');
-
-      final cleaned = rawText
-          .replaceAll(RegExp(r'```json\s*'), '')
-          .replaceAll(RegExp(r'```\s*'), '')
-          .trim();
-
+      final cleaned = _extractJson(rawText);
       final List<dynamic> result = jsonDecode(cleaned);
-      final insights = result.map((e) => e.toString()).toList();
+      final List<String> insights = result.map((e) => e.toString()).toList();
 
-      if (insights.isEmpty) throw Exception('Empty insights list');
-      return insights;
+      if (insights.isEmpty) throw Exception('Empty insights list returned.');
+
+      debugPrint('[AIService] Insights generated: ${insights.length}');
+      return insights.take(3).toList();
     } catch (e) {
-      debugPrint('[AIService] Insights error: $e');
+      debugPrint('[AIService] Insights API error: $e — using fallback.');
       return _buildFallbackInsights(userData);
     }
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // Data-driven fallback (uses real numbers — never shows generic messages)
+  // Rule-Based Fallback (mirrors AI style with real data)
   // ──────────────────────────────────────────────────────────────────────────
 
   static List<String> _buildFallbackInsights(Map<String, dynamic> data) {
-    final List<String> insights = [];
+    final insights = <String>[];
 
-    final totalSolved = (data['totalSolved'] as num?)?.toInt() ?? 0;
-    final solvedToday = (data['solvedToday'] as num?)?.toInt() ?? 0;
-    final weeklySolved = (data['weeklySolved'] as num?)?.toInt() ?? 0;
-    final leetcodeSolved = (data['leetcodeSolved'] as num?)?.toInt() ?? 0;
-    final codeforcesSolved = (data['codeforcesSolved'] as num?)?.toInt() ?? 0;
-    final githubCommits = (data['githubCommits'] as num?)?.toInt() ?? 0;
+    final solved = (data['totalSolved'] as num?)?.toInt() ?? 0;
+    final weekly = (data['weeklySolved'] as num?)?.toInt() ?? 0;
     final streak = (data['streak'] as num?)?.toInt() ?? 0;
-    final devScore = (data['developerScore'] as num?)?.toInt() ?? 0;
-    final devLevel = data['developerLevel']?.toString() ?? 'Beginner';
+    final github = (data['githubCommits'] as num?)?.toInt() ?? 0;
 
-    // 1. Consistency / Streak
-    if (solvedToday == 0) {
-      insights.add('No problems solved today yet. A quick Easy solve will keep the engine running! 🎯');
+    final topics = data['topics'] as Map<String, dynamic>? ?? {};
+    final weakTopics = (topics['weak'] as List?)?.cast<String>() ?? [];
+
+    final diff = data['difficulty'] as Map<String, dynamic>? ?? {};
+    final hard = (diff['hard'] as num?)?.toInt() ?? 0;
+    final med = (diff['medium'] as num?)?.toInt() ?? 0;
+
+    // 1. Solving Pattern Analysis
+    if (weekly > 10) {
+      insights.add(
+          'High momentum! You solved $weekly problems this week. Aim for ${weekly + 3} next cycle! 📈');
+    } else if (solved > 0) {
+      insights.add(
+          'You have solved $solved problems total — consistency is your next big challenge. 🛠️');
     } else {
-      insights.add('Great job! You solved $solvedToday problem${solvedToday > 1 ? "s" : ""} today. Keep it up! 🔥');
+      insights.add(
+          'Start your journey today! Solve 1 Easy problem to initialize your stats. 🚀');
     }
 
-    if (streak > 5) {
-      insights.add('Impressive $streak-day streak! Your consistency is putting you in the top 5% of learners. 🔥');
-    } else if (streak > 0) {
-      insights.add('$streak-day streak! Don\'t let it break — solve one more today. 💪');
-    }
-
-    // 2. Weekly Momentum
-    if (weeklySolved > 10) {
-      insights.add('Power week! $weeklySolved problems solved in the last 7 days. You\'re on fire. 🚀');
-    } else if (weeklySolved > 0) {
-      insights.add('Steadily growing: $weeklySolved solutions this week. Aim for ${weeklySolved + 2} by Sunday! 📈');
-    }
-
-    // 3. Platform mix / Total
-    if (totalSolved > 500) {
-      insights.add('Over 500 problems solved! You have the foundations of a Senior Engineer. 🏆');
-    } else if (leetcodeSolved > 0 && codeforcesSolved > 0) {
-      insights.add('Awesome platform spread between LeetCode and Codeforces. Versatility is key. 🌐');
-    }
-
-    // GitHub insight
-    if (githubCommits > 0) {
-      insights.add('$githubCommits GitHub contributions — keep building! 💻');
+    // 2. Consistency Analysis
+    if (streak > 0) {
+      insights.add(
+          'Solid $streak-day streak! Keep solving to hit the ${streak + 5} day milestone. 🔥');
+    } else if (github > 0) {
+      insights.add(
+          'Great balance: Your $github GitHub commits show project building maturity. 💻');
     } else {
-      insights.add('Push a project to GitHub to showcase your $devLevel skills publicly. 📂');
+      insights.add(
+          'No activity yet. Try solving 3 problems this week to build consistency. 📅');
     }
 
-    // Developer score
-    if (devScore > 0) {
-      insights.add('Developer Score: $devScore — Level: $devLevel. Keep climbing! ⭐');
+    // 3. Smart Suggestions
+    if (weakTopics.isNotEmpty) {
+      insights.add(
+          'Strategic focus: Target ${weakTopics.first} problems as it is your primary weakness. 🎯');
+    } else if (hard < 2) {
+      insights.add(
+          'Level up: You have $hard Hard solved. Solving 2 more will boost your rating. 🏆');
+    } else if (med > 10) {
+      insights.add(
+          'Confidence check: With $med Mediums, start attacking Hard problems to reach Top 1%. 💎');
     }
 
-    // Goal insights
-    final goalData = data['goalProgress'];
-    if (goalData is List && goalData.isNotEmpty) {
-      final incomplete = goalData.where((g) => g['isCompleted'] == false).toList();
-      if (incomplete.isNotEmpty) {
-        insights.add('${incomplete.length} goal${incomplete.length > 1 ? "s" : ""} in progress — stay focused! 🎯');
-      } else {
-        insights.add('All goals completed! Set a harder challenge. 🏅');
-      }
-    }
-
-    return insights.take(4).toList();
+    return insights.take(3).toList();
   }
 }

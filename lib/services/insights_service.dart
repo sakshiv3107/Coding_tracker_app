@@ -34,6 +34,11 @@ class InsightsService {
       'solvedToday': solvedToday,
       'weeklySolved': weeklySolved,
       'leetcodeSolved': leetcodeSolved,
+      'difficulty': {
+        'easy': statsProvider.leetcodeStats?.easy ?? 0,
+        'medium': statsProvider.leetcodeStats?.medium ?? 0,
+        'hard': statsProvider.leetcodeStats?.hard ?? 0,
+      },
       'codeforcesSolved': codeforcesSolved,
       'githubCommits': githubCommits,
       'streak': streak,
@@ -57,7 +62,7 @@ class InsightsService {
     };
 
     debugPrint('[InsightsService] Sending to AI → totalSolved=$totalSolved, '
-        'leetcode=$leetcodeSolved, cf=$codeforcesSolved, '
+        'difficulty=${userData['difficulty']}, '
         'github=$githubCommits, streak=$streak');
 
     // AIService already handles failure gracefully and returns dynamic fallback

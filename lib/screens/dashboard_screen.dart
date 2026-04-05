@@ -91,6 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             setState(() => _rateLimitBannerDismissed = false);
+            // 1. Refresh all profile data in parallel first
             await Future.wait([
               stats.fetchAllStats(
                 leetcode: leetcodeUser,
@@ -102,8 +103,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (githubUser.isNotEmpty)
                 github.fetchGithubData(githubUser, forceRefresh: true),
               stats.fetchUpcomingContests(cfHandle: cfUser, lcHandle: leetcodeUser),
-              context.read<InsightsProvider>().refreshInsights(stats, context.read<GoalProvider>(), github),
             ]);
+            
+            // 2. Generate fresh AI insights AFTER stats are updated
+            if (mounted) {
+              await context.read<InsightsProvider>().refreshInsights(
+                stats, 
+                context.read<GoalProvider>(), 
+                github
+              );
+            }
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -134,8 +143,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ── Career Accelerator Banner ───────────────────────────────
                 _buildCareerBanner(context),
                 const SizedBox(height: 16),
-
-
 
                 // ── Total Problems Solved ───────────────────────────────────
                 UnifiedAnalyticsCard(
@@ -208,7 +215,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                
                 // ── Achievements ────────────────────────────────────────────
                 if (unlockedAchievements.isNotEmpty) ...[
                   _buildAchievementsSection(
@@ -244,21 +250,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const AIInsightsCard(),
                 const SizedBox(height: 16),
                 
-                // Trigger goal check whenever we build (throttled by the widget tree)
+                // Trigger goal check Whenever stats are ready
                 Builder(builder: (ctx) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (stats.isLoading) return; // Wait for stats to be ready
+
                     context.read<GoalProvider>().checkProgressAndNotifyCompletion(stats, github);
-                    // Single initial fetch for insights if empty
+                    
                     final insights = context.read<InsightsProvider>();
-                    if (insights.insights.isEmpty && !insights.isLoading) {
+                    // Only refresh if empty AND stats are ready
+                    if (insights.insights.isEmpty && !insights.isLoading && stats.totalSolved > 0) {
                       insights.refreshInsights(stats, context.read<GoalProvider>(), github);
                     }
                   });
                   return const SizedBox.shrink();
                 }),
               ],
-
-              
             ),
           ),
         ),
