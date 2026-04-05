@@ -29,8 +29,9 @@ class AIService {
         }
       ],
       'generationConfig': {
-        'temperature': 0.7,
+        'temperature': 0.4, // Lower temperature for faster, more focused responses
         'maxOutputTokens': maxOutputTokens,
+        'responseMimeType': 'application/json', // Forces JSON mode for speed and reliability
       },
     });
 
@@ -115,19 +116,18 @@ $codingProfileData
 TASK:
 Return ONLY a valid JSON object with exactly these four keys:
 {
-  "ats_score": <Integer from 1 to 100>,
+  "ats_score": <Integer. BE CRITICAL and realistic. 90+ is ONLY for perfect templates. Average is 70-85.>, 
   "resume_summary": ["Point 1", "Point 2", ...], 
   "coding_summary": ["Point 1", "Point 2", ...],
   "recommendations": ["Point 1", "Point 2", ...]
 }
 
 Content Rules:
+- BE STRICT: Deduct points for generic phrases, poor formatting, or missing metrics.
 - "resume_summary": 4-6 high-impact points highlighting skills and experience.
-- "coding_summary": 2-4 points on competitive programming and consistency.
-- "recommendations": 3-4 specific, actionable steps to improve the resume.
-- Use professional, active language. Quantify achievements where possible.
-- NO markdown formatting inside the strings.
-- Pure JSON only. No backticks.
+- "recommendations": 3-4 specific, HARSHEST improvements (what's wrong?).
+- Use professional, active language. NO markdown.
+- Pure JSON only.
 ''';
 
     debugPrint('[AIService] Sending resume analysis request...');
@@ -157,7 +157,7 @@ Content Rules:
         }
 
         // Prefix each with a clean bullet and join
-        return items.map((item) => '• $item').join('\n');
+        return items.map((item) => '- $item').join('\n');
       }
 
       final resumeSummary = formatAIField(result['resume_summary']);
