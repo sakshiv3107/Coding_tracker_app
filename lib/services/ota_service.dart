@@ -5,7 +5,7 @@ import 'package:ota_update/ota_update.dart';
 
 class OTAService {
   static const String versionUrl =
-  "https://raw.githubusercontent.com/sakshiv3107/Coding_tracker_app/main/version.json";
+  "https://raw.githubusercontent.com/sakshiv3107/CodeSphere-Coding-Analytics-App/refs/heads/main/version.json";
 
   static Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
