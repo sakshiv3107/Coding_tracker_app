@@ -23,7 +23,7 @@ class ProfileService {
         'uid': currentUserId,
         'email': email,
         'name': name,
-        if (profilePic != null) 'profilePic': profilePic,
+        'profilePic': ?profilePic,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -51,7 +51,7 @@ class ProfileService {
           'codechef': codechef,
           'codeforces': codeforces,
           'github': github,
-          if (hackerrank != null) 'hackerrank': hackerrank,
+          'hackerrank': ?hackerrank,
         },
         'profileCompleted': true,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -150,14 +150,14 @@ class ProfileService {
 
     try {
       final updates = {
-        if (name != null) 'name': name,
-        if (profilePic != null) 'profilePic': profilePic,
+        'name': ?name,
+        'profilePic': ?profilePic,
         'profile': {
           'leetcode': leetcode,
           'codechef': codechef,
           'codeforces': codeforces,
           'github': github,
-          if (hackerrank != null) 'hackerrank': hackerrank,
+          'hackerrank': ?hackerrank,
         },
         'updatedAt': FieldValue.serverTimestamp(),
       };

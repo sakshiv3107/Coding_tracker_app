@@ -364,7 +364,8 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
               ),
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
-                  tooltipRoundedRadius: 10,
+                  getTooltipColor: (_) => isDark ? Colors.grey[800]! : Colors.white,
+                  tooltipBorderRadius: BorderRadius.circular(10),
                   tooltipPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 10,

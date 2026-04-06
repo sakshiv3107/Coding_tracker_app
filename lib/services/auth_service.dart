@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in/google_sign_in.dart' as gsi;
 import 'profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter/services.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -14,7 +13,7 @@ class AuthService {
   // The web client ID is picked up automatically from google-services.json.
   // If you need an idToken for a custom backend, re-add serverClientId after
   // registering your SHA-1 in the Firebase Console.
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
+  final gsi.GoogleSignIn _googleSignIn = gsi.GoogleSignIn(
     scopes: ['email', 'profile'],
   );
   final ProfileService _profileService = ProfileService();
@@ -129,40 +128,29 @@ class AuthService {
         "isNewUser": false,
       };
     } on FirebaseAuthException catch (e) {
-      // For 'invalid-credential' we disambiguate via fetchSignInMethodsForEmail
+      // In newer Firebase versions, fetchSignInMethodsForEmail is removed for security.
+      // We rely on standard error codes.
       if (e.code == 'invalid-credential' ||
           e.code == 'wrong-password' ||
           e.code == 'user-not-found') {
-        final methods = await _tryFetchSignInMethods(email);
-        if (methods == null || methods.isEmpty) {
-          throw Exception("User not registered. Sign up now.");
-        } else {
-          throw Exception("Incorrect password. Please try again.");
-        }
+        throw Exception("Invalid email or password. Please try again.");
       }
       throw Exception(_handleFirebaseException(e));
     }
   }
 
-  /// Safely fetch sign-in methods; returns null on error (network etc.)
-  Future<List<String>?> _tryFetchSignInMethods(String email) async {
-    try {
-      return await _firebaseAuth.fetchSignInMethodsForEmail(email);
-    } catch (_) {
-      return null;
-    }
-  }
+
 
   // Google Sign In — returns isNewUser flag
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final gsi.GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         throw Exception("Google sign in cancelled");
       }
 
-      final GoogleSignInAuthentication googleAuth =
+      final gsi.GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
@@ -197,25 +185,6 @@ class AuthService {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(_handleFirebaseException(e));
-    } on PlatformException catch (e) {
-      if (e.code == 'sign_in_failed') {
-        final msg = e.message ?? '';
-        if (msg.contains('ApiException: 10')) {
-          throw Exception(
-            'Google Sign-In configuration error (code 10).\n'
-            'To fix this:\n'
-            '1. Go to Firebase Console → Project Settings → Your Android App\n'
-            '2. Add debug SHA-1: 62:A6:D5:38:77:E3:29:2E:A9:9E:31:9B:4B:72:FC:21:F8:1B:72:20\n'
-            '3. Download the updated google-services.json\n'
-            '4. Enable Google Sign-In in Firebase Console → Authentication → Sign-in method',
-          );
-        }
-        if (msg.contains('ApiException: 12501')) {
-          // User cancelled — not an error
-          throw Exception('Google sign in cancelled');
-        }
-      }
-      throw Exception('Google Sign-In failed: ${e.message ?? e.toString()}');
     } catch (e) {
       final msg = e.toString();
       if (msg.contains('cancelled') || msg.contains('canceled')) {

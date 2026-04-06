@@ -64,8 +64,8 @@ class _SignupScreenState extends State<SignupScreen>
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const ProfileSetupScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
+          pageBuilder: (_, _, _) => const ProfileSetupScreen(),
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: 400.ms,
         ),
@@ -82,10 +82,10 @@ class _SignupScreenState extends State<SignupScreen>
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => auth.isNewUser
+          pageBuilder: (_, _, _) => auth.isNewUser
               ? const ProfileSetupScreen()
               : const _HomeRedirect(),
-          transitionsBuilder: (_, anim, __, child) =>
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: 400.ms,
         ),

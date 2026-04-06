@@ -386,7 +386,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required TextEditingController controller,
     required String label,
     required String hint,
-    required IconData icon,
+    required dynamic icon, // Changed from IconData to dynamic
     String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
@@ -417,7 +417,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
                 fontWeight: FontWeight.w600,
               ),
-              prefixIcon: Icon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6)),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: icon is IconData 
+                  ? Icon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6))
+                  : FaIcon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6)),
+              ),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,

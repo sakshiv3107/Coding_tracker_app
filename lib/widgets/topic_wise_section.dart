@@ -97,8 +97,8 @@ class TopicWiseSection extends StatelessWidget {
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
-              tooltipBgColor: isDark ? Colors.grey[800]! : Colors.white,
-              tooltipRoundedRadius: 8,
+              getTooltipColor: (_) => isDark ? Colors.grey[800]! : Colors.white,
+              tooltipBorderRadius: BorderRadius.circular(8),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '${data[groupIndex].key}\n',
@@ -136,25 +136,21 @@ class TopicWiseSection extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
                   if (index >= 0 && index < data.length) {
-                    final label = data[index].key;
-                    // Truncate long labels
-                    final displayLabel = label.length > 5 ? '${label.substring(0, 4)}..' : label;
-                    return SideTitleWidget(
-                      axisSide: meta.axisSide,
-                      space: 8,
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        displayLabel, 
+                        data[index].key,
                         style: TextStyle(
-                          fontSize: 10, 
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     );
                   }
                   return const SizedBox.shrink();
                 },
-                reservedSize: 24,
+                reservedSize: 40,
               ),
             ),
             leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),

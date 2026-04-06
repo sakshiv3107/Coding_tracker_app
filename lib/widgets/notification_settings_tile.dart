@@ -95,7 +95,7 @@ class _NotificationSettingsTileState extends State<NotificationSettingsTile> {
     );
   }
 
-  Widget _buildPlatformToggle(String name, IconData icon, Color color, bool value, Function(bool) onChanged) {
+  Widget _buildPlatformToggle(String name, dynamic icon, Color color, bool value, Function(bool) onChanged) { // Changed to dynamic
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(

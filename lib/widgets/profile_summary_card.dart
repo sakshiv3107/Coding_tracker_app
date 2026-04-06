@@ -34,7 +34,7 @@ class ProfileSummaryCard extends StatelessWidget {
           Positioned(
             right: -10,
             bottom: -10,
-            child: Icon(
+            child: FaIcon(
               FontAwesomeIcons.solidUserCircle,
               size: 100,
               color: theme.colorScheme.primary.withOpacity(0.05),
@@ -119,7 +119,7 @@ class ProfileSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _smallBadge(IconData icon, String label, Color color) {
+  Widget _smallBadge(dynamic icon, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -130,7 +130,9 @@ class ProfileSummaryCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: color),
+          icon is IconData 
+              ? Icon(icon, size: 10, color: color)
+              : FaIcon(icon, size: 10, color: color),
           const SizedBox(width: 6),
           Text(
             label,

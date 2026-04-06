@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/stats_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/contest_service.dart';
@@ -52,36 +51,46 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 16),
-                  Text('Contest Calendar',
-                      style: theme.textTheme.headlineMedium),
+                  Text(
+                    'Contest Calendar',
+                    style: theme.textTheme.headlineMedium,
+                  ),
                 ],
               ),
             ),
 
             Expanded(
-              child: stats.contestsLoading &&
+              child:
+                  stats.contestsLoading &&
                       stats.upcomingContests.isEmpty &&
                       stats.attendedContests.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : RefreshIndicator(
                       onRefresh: () async => _refresh(),
-                      child: (stats.upcomingContests.isEmpty &&
+                      child:
+                          (stats.upcomingContests.isEmpty &&
                               stats.attendedContests.isEmpty)
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
                               children: [
                                 SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.6,
                                   child: Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.event_busy_rounded,
-                                            size: 64,
-                                            color: Colors.grey.withOpacity(0.5)),
+                                        Icon(
+                                          Icons.event_busy_rounded,
+                                          size: 64,
+                                          color: Colors.grey.withOpacity(0.5),
+                                        ),
                                         const SizedBox(height: 16),
-                                        const Text('No contests found',
-                                            style: TextStyle(color: Colors.grey)),
+                                        const Text(
+                                          'No contests found',
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
                                         const SizedBox(height: 8),
                                         TextButton(
                                           onPressed: _refresh,
@@ -95,21 +104,27 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
                             )
                           : ListView(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 8),
+                                horizontal: 24,
+                                vertical: 8,
+                              ),
                               children: [
                                 if (stats.attendedContests.isNotEmpty) ...[
                                   _SectionHeader(title: 'Previously Attended'),
                                   const SizedBox(height: 16),
-                                  ...stats.attendedContests.map((c) =>
-                                      _ContestListItem(
-                                          contest: c, isPast: true)),
+                                  ...stats.attendedContests.map(
+                                    (c) => _ContestListItem(
+                                      contest: c,
+                                      isPast: true,
+                                    ),
+                                  ),
                                   const SizedBox(height: 32),
                                 ],
                                 if (stats.upcomingContests.isNotEmpty) ...[
                                   _SectionHeader(title: 'Upcoming Contests'),
                                   const SizedBox(height: 16),
-                                  ...stats.upcomingContests
-                                      .map((c) => _ContestListItem(contest: c)),
+                                  ...stats.upcomingContests.map(
+                                    (c) => _ContestListItem(contest: c),
+                                  ),
                                 ],
                               ],
                             ),
@@ -158,15 +173,15 @@ class _ContestListItem extends StatelessWidget {
     switch (contest.platform.toLowerCase()) {
       case 'codeforces':
         platformColor = Colors.blueAccent;
-        platformIcon = FontAwesomeIcons.code;
+        platformIcon = Icons.code_rounded;
         break;
       case 'leetcode':
         platformColor = AppTheme.leetCodeYellow;
-        platformIcon = FontAwesomeIcons.terminal;
+        platformIcon = Icons.terminal_rounded;
         break;
       case 'codechef':
         platformColor = const Color(0xFFE08D2D);
-        platformIcon = FontAwesomeIcons.bowlFood;
+        platformIcon = Icons.ramen_dining_rounded;
         break;
       default:
         platformColor = theme.colorScheme.primary;
@@ -179,9 +194,10 @@ class _ContestListItem extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.grey.withOpacity(0.12)),
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.grey.withOpacity(0.12),
+        ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
@@ -198,13 +214,13 @@ class _ContestListItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Side accent bar
-              Container(
-                width: 6,
-                color: platformColor,
-              ),
+              Container(width: 6, color: platformColor),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 20.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -225,7 +241,9 @@ class _ContestListItem extends StatelessWidget {
                           if (isPast)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.green.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(12),
@@ -233,8 +251,11 @@ class _ContestListItem extends StatelessWidget {
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.check_circle_rounded,
-                                      size: 13, color: Colors.green),
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 13,
+                                    color: Colors.green,
+                                  ),
                                   SizedBox(width: 5),
                                   Text(
                                     'COMPLETED',
@@ -250,7 +271,9 @@ class _ContestListItem extends StatelessWidget {
                           else if (contest.startsSoon)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(12),
@@ -258,8 +281,11 @@ class _ContestListItem extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.fireplace_rounded,
-                                      size: 13, color: Colors.orange),
+                                  const Icon(
+                                    Icons.fireplace_rounded,
+                                    size: 13,
+                                    color: Colors.orange,
+                                  ),
                                   const SizedBox(width: 5),
                                   const Text(
                                     'Starts Soon',
@@ -293,14 +319,18 @@ class _ContestListItem extends StatelessWidget {
                             flex: 3,
                             child: _ContestDetailLabel(
                               icon: Icons.calendar_month_rounded,
-                              label: DateFormat('MMM d, yyyy').format(contest.startTime),
+                              label: DateFormat(
+                                'MMM d, yyyy',
+                              ).format(contest.startTime),
                             ),
                           ),
                           Expanded(
                             flex: 2,
                             child: _ContestDetailLabel(
                               icon: Icons.access_time_filled_rounded,
-                              label: DateFormat('hh:mm a').format(contest.startTime),
+                              label: DateFormat(
+                                'hh:mm a',
+                              ).format(contest.startTime),
                             ),
                           ),
                           _ContestDetailLabel(

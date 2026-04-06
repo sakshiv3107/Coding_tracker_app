@@ -120,7 +120,7 @@ class _SplashScreen extends StatelessWidget {
               child: Image.asset(
                 'assets/images/icon.png',
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(Icons.code_rounded, color: Colors.white, size: 48),
+                errorBuilder: (_, _, _) => const Icon(Icons.code_rounded, color: Colors.white, size: 48),
               ),
             ).animate(onPlay: (c) => c.repeat(reverse: true))
              .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.2))

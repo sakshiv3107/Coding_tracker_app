@@ -173,7 +173,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
   Widget _platformCard({
     required BuildContext context,
     required String title,
-    required IconData icon,
+    required dynamic icon, // Changed to dynamic
     required Color color,
     required String mainStat,
     required String subStat,
@@ -203,7 +203,7 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                 ? Colors.redAccent
                 : color;
 
-    final IconData stateIcon = isRateLimited
+    final dynamic stateIcon = isRateLimited
         ? FontAwesomeIcons.clock
         : isNotSet
             ? Icons.info_outline_rounded
@@ -231,7 +231,9 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                     color: stateColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: FaIcon(stateIcon, color: stateColor, size: 18),
+                  child: stateIcon is IconData 
+                      ? Icon(stateIcon, color: stateColor, size: 18)
+                      : FaIcon(stateIcon, color: stateColor, size: 18),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,

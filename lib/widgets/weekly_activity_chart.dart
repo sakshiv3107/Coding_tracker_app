@@ -78,7 +78,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     super.dispose();
   }
 
-  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +138,8 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                   maxY: maxVal * 1.3,
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
-                      tooltipRoundedRadius: 10,
+                      getTooltipColor: (_) => isDark ? Colors.grey[800]! : Colors.white,
+                      tooltipBorderRadius: BorderRadius.circular(10),
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final day = _weeklyActivity.days[groupIndex];
                         String label = '';
@@ -171,13 +172,17 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
-                          if (value.toInt() < 0 || value.toInt() >= _dayLabels.length) return const SizedBox();
-                          return Text(
-                            _dayLabels[value.toInt()],
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade500,
+                          const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                          final index = value.toInt() % 7;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              days[index],
+                              style: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black45,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 10,
+                              ),
                             ),
                           );
                         },

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class NotConnectedWidget extends StatelessWidget {
   final String platformName;
-  final IconData icon;
+  final dynamic icon;
   final Color color;
 
   const NotConnectedWidget({
@@ -30,11 +31,9 @@ class NotConnectedWidget extends StatelessWidget {
                   color: color.withOpacity(0.05),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 80,
-                  color: color.withOpacity(0.2),
-                ),
+                child: icon is IconData 
+                  ? Icon(icon, size: 80, color: color.withOpacity(0.2))
+                  : FaIcon(icon, size: 80, color: color.withOpacity(0.2)),
               ),
               const SizedBox(height: 32),
               Text(

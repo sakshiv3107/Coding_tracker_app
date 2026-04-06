@@ -94,7 +94,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                             sections: _buildPieSections(theme),
                           ),
                         ),
-                        Icon(FontAwesomeIcons.circleNodes, color: theme.colorScheme.primary.withOpacity(0.3), size: 20),
+                        FaIcon(FontAwesomeIcons.circleNodes, color: theme.colorScheme.primary.withOpacity(0.3), size: 20),
                       ],
                     ),
                   ),
@@ -183,7 +183,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStat(String label, int value, IconData icon, Color color) {
+  Widget _buildQuickStat(String label, dynamic value, dynamic icon, Color color) { // Changed to dynamic
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -193,7 +193,9 @@ class UnifiedAnalyticsCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 14),
+          icon is IconData 
+              ? Icon(icon, color: color, size: 14)
+              : FaIcon(icon, color: color, size: 14),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

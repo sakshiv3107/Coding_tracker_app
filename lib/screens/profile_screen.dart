@@ -57,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => const EditProfileScreen()),
                         );
                       },
-                      icon: const Icon(FontAwesomeIcons.penToSquare, size: 16),
+                      icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 16),
                       style: IconButton.styleFrom(
                         backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
                         foregroundColor: AppTheme.primary,
@@ -324,7 +324,7 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -346,7 +346,9 @@ class _SettingsTile extends StatelessWidget {
           color: AppTheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppTheme.primary, size: 18),
+        child: icon is IconData 
+            ? Icon(icon, color: AppTheme.primary, size: 18)
+            : FaIcon(icon, color: AppTheme.primary, size: 18),
       ),
       title: Text(
         title, 
@@ -360,10 +362,10 @@ class _SettingsTile extends StatelessWidget {
           fontWeight: FontWeight.w600,
         )
       ),
-      trailing: Icon(
+      trailing: const FaIcon(
         FontAwesomeIcons.chevronRight, 
         size: 12, 
-        color: AppTheme.textSecondaryDark.withValues(alpha: 0.2)
+        color: Colors.grey
       ),
       onTap: onTap,
     );

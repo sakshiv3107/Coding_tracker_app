@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 import 'modern_card.dart';
 
 class PremiumSectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final IconData? icon;
+  final dynamic icon; // Changed from IconData? to dynamic
   final Color? iconColor;
   final Widget? trailing;
 
@@ -33,7 +34,9 @@ class PremiumSectionHeader extends StatelessWidget {
                 color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 20, color: iconColor ?? theme.colorScheme.primary),
+              child: icon is IconData 
+                  ? Icon(icon, size: 20, color: iconColor ?? theme.colorScheme.primary)
+                  : FaIcon(icon, size: 20, color: iconColor ?? theme.colorScheme.primary),
             ),
             const SizedBox(width: 12),
           ],
@@ -58,7 +61,7 @@ class PremiumSectionHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
@@ -68,7 +71,7 @@ class PremiumSectionHeader extends StatelessWidget {
 class PremiumStatCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final dynamic icon; // Changed from IconData to dynamic
   final Color color;
   final String? trend;
   final bool isTrendPositive;
@@ -105,7 +108,9 @@ class PremiumStatCard extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: color, size: 22),
+                child: icon is IconData 
+                    ? Icon(icon, color: color, size: 22)
+                    : FaIcon(icon, color: color, size: 22),
               ),
               if (trend != null)
                 Container(
@@ -165,7 +170,7 @@ class PremiumStatCard extends StatelessWidget {
 class PremiumGradientButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final IconData? icon;
+  final dynamic icon; // Changed from IconData? to dynamic
   final List<Color>? gradient;
 
   const PremiumGradientButton({
@@ -208,7 +213,9 @@ class PremiumGradientButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20, color: Colors.white),
+              icon is IconData 
+                  ? Icon(icon, size: 20, color: Colors.white)
+                  : FaIcon(icon, size: 20, color: Colors.white),
               const SizedBox(width: 12),
             ],
             Text(

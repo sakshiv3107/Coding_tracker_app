@@ -90,7 +90,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            setState(() => _rateLimitBannerDismissed = false);
+            final insightsProvider = context.read<InsightsProvider>();
+            final goalProvider = context.read<GoalProvider>();
+
             // 1. Refresh all profile data in parallel first
             await Future.wait([
               stats.fetchAllStats(
@@ -107,9 +109,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             
             // 2. Generate fresh AI insights AFTER stats are updated
             if (mounted) {
-              await context.read<InsightsProvider>().refreshInsights(
+              await insightsProvider.refreshInsights(
                 stats, 
-                context.read<GoalProvider>(), 
+                goalProvider, 
                 github
               );
             }

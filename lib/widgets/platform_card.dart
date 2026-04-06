@@ -35,11 +35,9 @@ class PlatformCard extends StatelessWidget {
                   color: data.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: FaIcon(
-                  data.icon,
-                  color: data.color,
-                  size: 24,
-                ),
+                child: data.icon is IconData 
+                  ? Icon(data.icon, color: data.color, size: 24)
+                  : FaIcon(data.icon, color: data.color, size: 24),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

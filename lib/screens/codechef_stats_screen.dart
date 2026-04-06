@@ -259,7 +259,7 @@ class _ProfileHeader extends StatelessWidget {
                     child: Image.network(
                       stats.avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, color: Colors.white, size: 32),
+                      errorBuilder: (_, _, _) => const Icon(Icons.person_rounded, color: Colors.white, size: 32),
                     ),
                   )
                 : const Icon(Icons.restaurant_menu_rounded, color: Colors.white, size: 32),

@@ -69,8 +69,8 @@ class _LoginScreenState extends State<LoginScreen>
       Navigator.pushAndRemoveUntil(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const ProfileSetupScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
+          pageBuilder: (_, _, _) => const ProfileSetupScreen(),
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
@@ -83,73 +83,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  void _showForgotPassword() {
-    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
-    final sheetFormKey = GlobalKey<FormState>();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Form(
-              key: sheetFormKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Center(
-                    child: Container(
-                      width: 40, height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('Reset Identity', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Colors.white)),
-                  const SizedBox(height: 8),
-                  Text("Enter your email to receive a recovery link.", style: TextStyle(color: Colors.white.withOpacity(0.6))),
-                  const SizedBox(height: 24),
-                  _buildField(controller: emailCtrl, hint: 'email@example.com', icon: Icons.email_outlined),
-                  const SizedBox(height: 24),
-                  AuthGradientButton(
-                    label: 'Send Recovery Link',
-                    icon: Icons.send_rounded,
-                    onTap: () async {
-                      if (!sheetFormKey.currentState!.validate()) return;
-                      final email = emailCtrl.text.trim();
-                      Navigator.pop(ctx);
-                      final auth = context.read<AuthProvider>();
-                      final ok = await auth.resetPassword(email);
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(ok ? '✅ Link sent to $email.' : '❌ Failed: ${auth.error ?? "Unknown error"}'),
-                          backgroundColor: ok ? AppTheme.secondary : Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen>
         border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
         boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.15), blurRadius: 40, spreadRadius: 10)],
       ),
-      child: Image.asset('assets/images/icon.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.code_rounded, color: Colors.white, size: 50)),
+      child: Image.asset('assets/images/icon.png', fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.code_rounded, color: Colors.white, size: 50)),
     );
   }
 

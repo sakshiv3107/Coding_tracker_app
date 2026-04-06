@@ -87,8 +87,6 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                     child: Row(
                       children: [
                         _buildBackButton(context),
-                        const SizedBox(width: 8),
-                        _buildMenuButton(context),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -365,7 +363,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
   Widget _buildDetailedStatCard(
     String title,
     int value,
-    IconData icon,
+    dynamic icon,
     Color color, {
     String subtitle = '',
   }) {
@@ -376,7 +374,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
+              icon is IconData 
+                  ? Icon(icon, color: color, size: 20)
+                  : FaIcon(icon, color: color, size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -458,7 +458,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
           Positioned(
             right: -20,
             top: -20,
-            child: Icon(
+            child: FaIcon(
               FontAwesomeIcons.code,
               size: 140,
               color: AppTheme.leetCodeYellow.withOpacity(0.04),
@@ -502,7 +502,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            const FaIcon(
                               FontAwesomeIcons.bolt,
                               size: 10,
                               color: AppTheme.leetCodeYellow,
@@ -529,7 +529,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                       ),
                       Row(
                         children: [
-                          Icon(
+                          FaIcon(
                             FontAwesomeIcons.at,
                             size: 12,
                             color: theme.colorScheme.onSurface.withOpacity(0.4),

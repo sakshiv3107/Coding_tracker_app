@@ -7,7 +7,7 @@ class UserPlatformData {
   final int? rating;
   final String? ranking;
   final bool isConnected;
-  final IconData icon;
+  final dynamic icon;
   final Color color;
   final String? profileUrl;
 
@@ -23,7 +23,7 @@ class UserPlatformData {
     this.profileUrl,
   });
 
-  factory UserPlatformData.empty(String platform, IconData icon, Color color) {
+  factory UserPlatformData.empty(String platform, dynamic icon, Color color) {
     return UserPlatformData(
       platformName: platform,
       username: 'Not Connected',

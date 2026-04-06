@@ -354,7 +354,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
   Widget _pageItem(
     BuildContext context, {
     required String title,
-    required IconData icon,
+    required dynamic icon, // Changed to dynamic
     required int pageIndex,
     required bool isDark,
     double iconSize = 22,
@@ -384,7 +384,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
   Widget _pushItem(
     BuildContext context, {
     required String title,
-    required IconData icon,
+    required dynamic icon, // Changed to dynamic
     required String route,
     required bool isDark,
     double iconSize = 22,
@@ -412,7 +412,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
   Widget _actionItem(
     BuildContext context, {
     required String title,
-    required IconData icon,
+    required dynamic icon, // Changed to dynamic
     required Color color,
     required VoidCallback onTap,
   }) {
@@ -422,7 +422,9 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
       child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(icon, size: 22, color: color),
+        leading: icon is IconData 
+            ? Icon(icon, size: 22, color: color)
+            : FaIcon(icon, size: 22, color: color),
         title: Text(
           title,
           style: TextStyle(
@@ -438,7 +440,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
   Widget _tile(
     BuildContext context, {
     required String title,
-    required IconData icon,
+    required dynamic icon, // Changed to dynamic
     required double iconSize,
     required bool isActive,
     required bool isDark,
@@ -457,13 +459,21 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
       child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(
-          icon,
-          size: iconSize,
-          color: isActive
-              ? theme.colorScheme.primary
-              : theme.colorScheme.onSurface.withOpacity(0.45),
-        ),
+        leading: icon is IconData 
+            ? Icon(
+                icon,
+                size: iconSize,
+                color: isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.45),
+              )
+            : FaIcon(
+                icon,
+                size: iconSize,
+                color: isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.45),
+              ),
         title: Text(
           title,
           style: TextStyle(
