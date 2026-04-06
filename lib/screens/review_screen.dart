@@ -55,7 +55,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         _messageController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Thank you for your feedback!'),
+            content: const Text('Thank you for your feedback! It has been successfully submitted.'),
             backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -64,7 +64,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not open email app. Please try again.'),
+            content: Text('Failed to submit feedback. Please check your connection and try again.'),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),

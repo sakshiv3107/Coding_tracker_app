@@ -89,7 +89,7 @@ class PlatformCard extends StatelessWidget {
             children: [
               _buildStat(
                 context,
-                label: data.platformName=='Github'?'COMMITS':'SOLVED',
+                label: data.platformName=='GitHub'?'COMMITS':'SOLVED',
                 value: data.solvedCount.toString(),
                 icon: Icons.done_all_rounded,
               ),
