@@ -2,20 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import '../screens/auth_wrapper.dart';
-import '../providers/auth_provider.dart';
-import '../providers/profile_provider.dart';
-import '../providers/stats_provider.dart';
-import '../providers/github_provider.dart';
-import '../providers/goal_provider.dart';
-import '../providers/achievement_provider.dart';
-import '../providers/resume_provider.dart';
-import '../providers/theme_provider.dart';
-import '../providers/insights_provider.dart';
-import '../services/notification_service.dart';
-import '../services/smart_reminder_service.dart';
-import '../services/background_task_service.dart';
-import '../services/ota_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:ota_update/ota_update.dart';
+
+// Screens
+import 'screens/auth_wrapper.dart';
 import 'screens/leetcode_stats_screen.dart';
 import 'screens/github_stats_screen.dart';
 import 'screens/codeforces_stats_screen.dart';
@@ -26,10 +17,27 @@ import 'screens/hackerrank_stats_screen.dart';
 import 'screens/resume_screen.dart';
 import 'screens/contest_calendar_screen.dart';
 import 'screens/activity_tracking_screen.dart';
+import 'screens/review_screen.dart';
+
+// Providers
+import 'providers/auth_provider.dart';
+import 'providers/profile_provider.dart';
+import 'providers/stats_provider.dart';
+import 'providers/github_provider.dart';
+import 'providers/goal_provider.dart';
+import 'providers/achievement_provider.dart';
+import 'providers/resume_provider.dart';
+import 'providers/theme_provider.dart';
+import 'providers/insights_provider.dart';
+
+// Services
+import 'services/notification_service.dart';
+import 'services/smart_reminder_service.dart';
+import 'services/background_task_service.dart';
+import 'services/ota_service.dart';
+
 import 'firebase_options.dart';
-import '../theme/app_theme.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:ota_update/ota_update.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,8 +80,6 @@ Future<void> main() async {
   );
 }
 
-// ─── MyApp ────────────────────────────────────────────────────────────────────
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -87,11 +93,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme(themeProvider.primaryColor),
       darkTheme: AppTheme.darkTheme(themeProvider.primaryColor),
       themeMode: themeProvider.themeMode,
-
-      // ✅ Use home: with a wrapper that triggers the update check
-      //    AFTER MaterialApp's Navigator is ready.
       home: const _AppEntry(),
-
       routes: {
         '/leetcode_stats': (context) => const CodingStatsScreen(),
         '/github_stats': (context) => const GitHubStatsScreen(),
@@ -103,14 +105,11 @@ class MyApp extends StatelessWidget {
         '/resume': (context) => const ResumeScreen(),
         '/contests': (context) => const ContestCalendarScreen(),
         '/activity_heatmap': (context) => const ActivityTrackingScreen(),
+        '/review': (context) => const ReviewScreen(),
       },
-    );
+    ); // Added a copyWith just to ensure a fresh state if possible
   }
 }
-
-// ─── _AppEntry ────────────────────────────────────────────────────────────────
-// Thin wrapper that lives INSIDE MaterialApp's navigator tree.
-// This means showDialog() will always find a valid Navigator.
 
 class _AppEntry extends StatefulWidget {
   const _AppEntry();
@@ -123,7 +122,6 @@ class _AppEntryState extends State<_AppEntry> {
   @override
   void initState() {
     super.initState();
-    // Wait one frame so the Navigator is fully mounted, then check for updates.
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
   }
 
@@ -142,8 +140,6 @@ class _AppEntryState extends State<_AppEntry> {
   Widget build(BuildContext context) => const AuthWrapper();
 }
 
-// ─── _UpdateDialog ────────────────────────────────────────────────────────────
-
 class _UpdateDialog extends StatefulWidget {
   final Map<String, dynamic> data;
   const _UpdateDialog({required this.data});
@@ -153,7 +149,7 @@ class _UpdateDialog extends StatefulWidget {
 }
 
 class _UpdateDialogState extends State<_UpdateDialog> {
-  double? _progress; // null = not started, 0–100 = in progress
+  double? _progress;
   String _status = '';
   bool _isDownloading = false;
   bool _hasFailed = false;
@@ -174,13 +170,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               _progress = double.tryParse(event.value ?? '0');
               _status = 'Downloading... ${event.value ?? 0}%';
             case OtaStatus.INSTALLING:
-              _progress = null; // indeterminate while installing
+              _progress = null;
               _status = 'Installing update…';
             case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
               _isDownloading = false;
               _hasFailed = true;
-              _status =
-                  'Permission denied.\nEnable "Install unknown apps" in Settings.';
+              _status = 'Permission denied.\nEnable "Install unknown apps" in Settings.';
             case OtaStatus.ALREADY_RUNNING_ERROR:
               _status = 'Update already in progress.';
             case OtaStatus.INTERNAL_ERROR:
@@ -220,7 +215,6 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Version badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -237,64 +231,24 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Changelog
           Text(
             widget.data['changelog'] ?? 'Bug fixes and improvements.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-
-          // Progress section
           if (_isDownloading || _hasFailed) ...[
             const SizedBox(height: 20),
-            if (_isDownloading)
-              _progress != null
-                  ? LinearProgressIndicator(
-                      value: _progress! / 100,
-                      borderRadius: BorderRadius.circular(4),
-                    )
-                  : const LinearProgressIndicator(
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
+            if (_progress != null)
+              LinearProgressIndicator(value: _progress! / 100, backgroundColor: colorScheme.surfaceVariant),
             const SizedBox(height: 8),
-            Text(
-              _status,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _hasFailed ? colorScheme.error : null,
-                  ),
-            ),
+            Text(_status, style: TextStyle(fontSize: 12, color: _hasFailed ? Colors.red : colorScheme.onSurface)),
           ],
         ],
       ),
       actions: [
-        // "Later" — only when not actively downloading
         if (!_isDownloading)
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Later'),
-          ),
-
-        // "Retry" — shown after failure
-        if (_hasFailed)
-          ElevatedButton.icon(
-            onPressed: _startUpdate,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Retry'),
-          )
-
-        // "Update" — initial state
-        else if (!_isDownloading)
-          ElevatedButton(
-            onPressed: _startUpdate,
-            child: const Text('Update Now'),
-          ),
-
-        // "Hide" — while downloading (lets it continue in background)
-        if (_isDownloading)
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hide'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later')),
+        if (!_isDownloading || _hasFailed)
+          ElevatedButton(onPressed: _startUpdate, child: Text(_hasFailed ? 'Retry' : 'Update Now')),
       ],
     );
   }

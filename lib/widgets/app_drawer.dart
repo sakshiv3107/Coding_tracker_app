@@ -139,6 +139,19 @@ class AppDrawer extends StatelessWidget {
                   route: '/settings',
                   isDark: isDark,
                 ),
+
+                const SizedBox(height: 24),
+                // ── FEEDBACK ────────────────────────────────────────────────
+                _sectionLabel('FEEDBACK & SUPPORT'),
+                _pushItem(
+                  context,
+                  title: 'Feedback and Review',
+                  icon: Icons.rate_review_rounded,
+                  route: '/review',
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 12),
                 _actionItem(
                   context,
                   title: 'Sign Out',

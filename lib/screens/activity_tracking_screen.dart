@@ -109,7 +109,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
       return;
     }
 
-    int current = 0;
+    // int current = 0;
     int max = 0;
     int temp = 1;
 

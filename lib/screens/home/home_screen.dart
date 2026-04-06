@@ -43,7 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return const GoalsScreen();
       case 4:
-        return const ProfileScreen();
+        return ProfileScreen(
+          onBack: () {
+            if (_selectedIndex != 0) {
+              setState(() => _selectedIndex = 0);
+            }
+          },
+        );
       default:
         return const DashboardScreen();
     }

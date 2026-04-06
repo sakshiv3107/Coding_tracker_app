@@ -14,7 +14,8 @@ import '../widgets/premium_widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onBack;
+  const ProfileScreen({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +40,8 @@ class ProfileScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    _buildBackButton(context, isDark),
+                    const SizedBox(width: 20),
                     Expanded(
                       child: Text(
                         'Account Settings',
@@ -199,7 +202,40 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-
+  Widget _buildBackButton(BuildContext context, bool isDark) {
+    final theme = Theme.of(context);
+    final canPop = Navigator.canPop(context);
+    if (!canPop && onBack == null) {
+      return const SizedBox(width: 40, height: 40); // Placeholder to maintain layout balance
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: () {
+          if (onBack != null) {
+            onBack!();
+          } else if (canPop) {
+            Navigator.pop(context);
+          }
+        },
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 16,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
   Widget _buildPlatformGrid(BuildContext context, ProfileProvider profile, StatsProvider stats) {
     final List<UserPlatformData> platforms = [
       UserPlatformData(

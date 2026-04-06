@@ -98,7 +98,7 @@ class ActivityHeatmap extends StatelessWidget {
                 final date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
                 final monthName = DateFormat('MMM').format(date);
                 return _buildMonthBlock(context, monthName, entry.value);
-              }).toList(),
+              }),
             ],
           ),
         ),
