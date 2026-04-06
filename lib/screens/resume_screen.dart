@@ -207,11 +207,11 @@ class ResumeScreen extends StatelessWidget {
 
               _buildAISummaryCard(context, 'CANDIDATE SUMMARY', resume.resumeSummary!),
               const SizedBox(height: 16),
-              _buildAISummaryCard(context, 'CODING EXPERTISE', resume.codingSummary!, isCoding: true),
-              const SizedBox(height: 16),
               if (resume.recommendations != null)
                 _buildAISummaryCard(context, 'RECOMMENDATIONS FOR IMPROVEMENT', resume.recommendations!, icon: Icons.lightbulb_outline),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              _buildAISummaryCard(context, 'CODING EXPERTISE', resume.codingSummary!, isCoding: true),
+              const SizedBox(height: 32),      
             ],
 
             // ── C. Portfolio Stats Grid ──────────────────────────────────

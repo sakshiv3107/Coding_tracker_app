@@ -116,7 +116,10 @@ class _SignupScreenState extends State<SignupScreen>
                     child: Row(
                       children: [
                         IconButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            context.read<AuthProvider>().clearError();
+                            Navigator.pop(context);
+                          },
                           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.white.withOpacity(0.05),
@@ -250,7 +253,10 @@ class _SignupScreenState extends State<SignupScreen>
                             const SizedBox(height: 48),
                             Center(
                               child: GestureDetector(
-                                onTap: () => Navigator.pop(context),
+                                onTap: () {
+                                  context.read<AuthProvider>().clearError();
+                                  Navigator.pop(context);
+                                },
                                 child: RichText(
                                   text: TextSpan(
                                     style: TextStyle(color: Colors.white.withOpacity(0.5)),

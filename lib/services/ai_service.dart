@@ -29,7 +29,7 @@ class AIService {
         }
       ],
       'generationConfig': {
-        'temperature': 0.4, // Lower temperature for faster, more focused responses
+        'temperature': 0.1, // Near-deterministic for consistent scoring and analysis
         'maxOutputTokens': maxOutputTokens,
         'responseMimeType': 'application/json', // Forces JSON mode for speed and reliability
       },
@@ -105,7 +105,7 @@ class AIService {
         resumeText.length > 6000 ? resumeText.substring(0, 6000) : resumeText;
 
     final prompt = '''
-You are an expert technical recruiter and resume analyst.
+You are an expert technical recruiter and resume analyst. Your task is to provide a consistent and objective ATS (Applicant Tracking System) score and analysis.
 
 DATA 1 – Resume Text:
 $trimmedResume
@@ -116,16 +116,25 @@ $codingProfileData
 TASK:
 Return ONLY a valid JSON object with exactly these four keys:
 {
-  "ats_score": <Integer. BE CRITICAL and realistic. 90+ is ONLY for perfect templates. Average is 70-85.>, 
+  "ats_score": <Integer (0-100). Follow the strict rubric below.>, 
   "resume_summary": ["Point 1", "Point 2", ...], 
   "coding_summary": ["Point 1", "Point 2", ...],
   "recommendations": ["Point 1", "Point 2", ...]
 }
 
-Content Rules:
-- BE STRICT: Deduct points for generic phrases, poor formatting, or missing metrics.
+SCORING RUBRIC (Strictly follow this for "ats_score"):
+- Start with a Base Score of 100.
+- Deduct 10 points if no quantifiable metrics (e.g., %, \$, "reduced latency by Xms") are found in work experience.
+- Deduct 10 points if the resume is mostly generic phrases (e.g., "Team player", "Hard worker") without proof.
+- Deduct 10 points for missing or weak "Skills" section (languages, frameworks, tools).
+- Deduct 5 points for lack of links (GitHub, Portfolio, LinkedIn).
+- Deduct 10 points if the coding profile data (Data 2) shows low activity or no significant achievements.
+- Deduct 5 points for poor structural flow or dense blocks of text.
+
+Rules:
+- BE STRICT and OBJECTIVE. Analyzing the same data must yield the same score.
 - "resume_summary": 4-6 high-impact points highlighting skills and experience.
-- "recommendations": 3-4 specific, HARSHEST improvements (what's wrong?).
+- "recommendations": 3-4 specific, actionable improvements.
 - Use professional, active language. NO markdown.
 - Pure JSON only.
 ''';

@@ -146,6 +146,21 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   const SizedBox(height: 20),
                                   _buildPasswordField(),
+                                  const SizedBox(height: 12),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: GestureDetector(
+                                      onTap: () => _showForgotPasswordDialog(context),
+                                      child: Text(
+                                        'Forgot Password?',
+                                        style: TextStyle(
+                                          color: AppTheme.primaryLight.withOpacity(0.8),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                   const SizedBox(height: 32),
 
                                   _PressEffect(
@@ -178,9 +193,12 @@ class _LoginScreenState extends State<LoginScreen>
                           children: [
                             Text("New to the network? ", style: TextStyle(color: Colors.white.withOpacity(0.4))),
                             GestureDetector(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
-                              child: const Text('Initialize Account', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
-                            ),
+                               onTap: () {
+                                 context.read<AuthProvider>().clearError();
+                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen()));
+                               },
+                               child: const Text('Initialize Account', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+                             ),
                           ],
                         ).animate().fadeIn(delay: 900.ms),
                       ],
@@ -247,6 +265,103 @@ class _LoginScreenState extends State<LoginScreen>
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final auth = context.watch<AuthProvider>();
+            
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: AlertDialog(
+                backgroundColor: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: BorderSide(color: Colors.white.withOpacity(0.1))),
+                title: Text('Reset Password', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+                content: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Enter your email address and we will send you a link to reset your password.',
+                        style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: emailCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Email Address',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                          prefixIcon: Icon(Icons.alternate_email_rounded, size: 20, color: Colors.white.withOpacity(0.4)),
+                          filled: true, fillColor: Colors.white.withOpacity(0.04),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.primaryLight)),
+                        ),
+                        validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                      ),
+                      if (auth.error != null) ...[
+                        const SizedBox(height: 16),
+                        Text(auth.error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                      ]
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      auth.clearError();
+                      Navigator.pop(context);
+                    },
+                    child: Text('Cancel', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                  ),
+                  ElevatedButton(
+                    onPressed: auth.isLoading ? null : () async {
+                      if (formKey.currentState!.validate()) {
+                        final success = await auth.resetPassword(emailCtrl.text.trim());
+                        if (success && context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Password reset link sent to your email(Check spam folder if not found)'),
+                              backgroundColor: AppTheme.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: auth.isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Send Link'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      // Clear any errors that might have been shown in the dialog
+      if (context.mounted) {
+        context.read<AuthProvider>().clearError();
+      }
+    });
   }
 }
 
