@@ -4,7 +4,7 @@ import '../providers/profile_provider.dart';
 import '../providers/github_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
-import '../widgets/submission_heatmap.dart';
+import '../widgets/activity_heatmap.dart';
 import '../models/github_stats.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 //import '../widgets/animations/animated_stat_counter.dart';
@@ -152,11 +152,11 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                         delay: const Duration(milliseconds: 200),
                         child: Column(
                           children: [
-                            SubmissionHeatmap(
-                              datasets:
-                                  github.githubStats?.contributionCalendar ??
-                                  {},
+                            ActivityHeatmap(
+                              data: github.githubStats?.contributionCalendar ?? {},
                               baseColor: const Color(0xFF2EA44F),
+                              label: 'Contribution Activity',
+                              tooltipLabel: 'contributions',
                             ),
                             const SizedBox(height: 16),
                           ],

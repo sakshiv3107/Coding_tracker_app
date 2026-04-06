@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
+import 'activity_heatmap.dart';
 import 'modern_card.dart';
 // import '../theme/app_theme.dart';
 
@@ -15,6 +15,8 @@ class CodingHeatmap extends StatelessWidget {
 
     return ModernCard(
       padding: const EdgeInsets.all(24),
+      isGlass: true,
+      showShadow: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,27 +41,37 @@ class CodingHeatmap extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          HeatMap(
-            datasets: datasets,
-            colorMode: ColorMode.opacity,
-            showText: false,
-            scrollable: true,
-            size: 18,
-            borderRadius: 4,
-            startDate: DateTime.now().subtract(const Duration(days: 365)),
-            endDate: DateTime.now(),
-            colorsets: {
-              1: theme.colorScheme.primary.withOpacity(0.2),
-              2: theme.colorScheme.primary.withOpacity(0.4),
-              3: theme.colorScheme.primary.withOpacity(0.6),
-              4: theme.colorScheme.primary.withOpacity(0.8),
-              5: theme.colorScheme.primary,
-            },
-            onClick: (value) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(value.toString())),
-              );
-            },
+          ActivityHeatmap(
+            data: datasets,
+            baseColor: theme.colorScheme.primary,
+            label: '',
+            tooltipLabel: 'activities',
+            showStats: false,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/activity_heatmap'),
+              icon: Icon(Icons.analytics_rounded, size: 16, color: theme.colorScheme.primary),
+              label: Text(
+                'Explore Detailed Activity Report',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
           ),
         ],
       ),

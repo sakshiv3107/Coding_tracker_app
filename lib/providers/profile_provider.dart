@@ -25,6 +25,13 @@ class ProfileProvider extends ChangeNotifier {
   bool _profileCompleted = false;
 
   bool get isProfileCompleted => _profileCompleted || profile != null;
+  
+  // ── Getters for platform handles ──────────────────────────────────────────
+  String? get leetcodeHandle => profile?['leetcode'];
+  String? get githubHandle => profile?['github'];
+  String? get codeforcesHandle => profile?['codeforces'];
+  String? get codechefHandle => profile?['codechef'];
+  String? get hackerrankHandle => profile?['hackerrank'];
 
   // ── Initialize profile ────────────────────────────────────────────────────
   Future<void> initializeProfile() async {

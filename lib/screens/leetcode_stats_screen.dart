@@ -8,7 +8,7 @@ import '../providers/github_provider.dart';
 // import '../models/leetcode_stats.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
-import '../widgets/submission_heatmap.dart';
+import '../widgets/activity_heatmap.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
 import '../widgets/skeleton_loading.dart';
@@ -280,9 +280,11 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       ],
       FadeSlideTransition(
         delay: const Duration(milliseconds: 280),
-        child: SubmissionHeatmap(
-          datasets: lc.submissionCalendar,
+        child: ActivityHeatmap(
+          data: lc.submissionCalendar,
           baseColor: AppTheme.leetCodeYellow,
+          label: 'Submission Activity',
+          tooltipLabel: 'submissions',
         ),
       ),
       const SizedBox(height: 24),
