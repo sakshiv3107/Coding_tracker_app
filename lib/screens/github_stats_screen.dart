@@ -98,7 +98,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _buildRefreshButton(github.isLoading),
+                      _buildRefreshButton(github.isLoading, theme),
                     ],
                   ),
                 ),
@@ -291,22 +291,22 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
     );
   }
 
-  Widget _buildRefreshButton(bool isLoading) {
+  Widget _buildRefreshButton(bool isLoading, ThemeData theme) {
     return IconButton.filledTonal(
       onPressed: isLoading ? null : _refreshStats,
       icon: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppTheme.primary,
+                color: theme.colorScheme.primary,
               ),
             )
           : const FaIcon(FontAwesomeIcons.rotate, size: 16),
       style: IconButton.styleFrom(
-        backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-        foregroundColor: AppTheme.primary,
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        foregroundColor: theme.colorScheme.primary,
         padding: const EdgeInsets.all(12),
       ),
     );
@@ -384,10 +384,10 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.accent],
+                      colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
                     ),
                   ),
                   child: CircleAvatar(
@@ -411,7 +411,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                       Text(
                         '@${stats.login}',
                         style: TextStyle(
-                          color: AppTheme.primary,
+                          color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
                         ),

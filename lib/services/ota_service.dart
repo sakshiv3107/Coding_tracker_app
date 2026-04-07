@@ -27,19 +27,28 @@ class OTAService {
 
   /// Returns true if [remote] is strictly newer than [current].
   static bool _isNewer(String remote, String current) {
-    final r = remote.split('.').map(int.parse).toList();
-    final c = current.split('.').map(int.parse).toList();
-    for (int i = 0; i < 3; i++) {
-      final rv = i < r.length ? r[i] : 0;
-      final cv = i < c.length ? c[i] : 0;
-      if (rv > cv) return true;
-      if (rv < cv) return false;
+    try {
+      // Remove possible version suffixes like +3
+      final cleanRemote = remote.split('+')[0];
+      final cleanCurrent = current.split('+')[0];
+
+      final r = cleanRemote.split('.').map((s) => int.tryParse(s) ?? 0).toList();
+      final c = cleanCurrent.split('.').map((s) => int.tryParse(s) ?? 0).toList();
+
+      for (int i = 0; i < 3; i++) {
+        final rv = i < r.length ? r[i] : 0;
+        final cv = i < c.length ? c[i] : 0;
+        if (rv > cv) return true;
+        if (rv < cv) return false;
+      }
+    } catch (e) {
+      debugPrint("Version comparison error: $e");
     }
-    return false; // equal
+    return false;
   }
 
   /// Returns a stream of [OtaEvent] for progress tracking.
   static Stream<OtaEvent> startUpdate(String apkUrl) {
-    return OtaUpdate().execute(apkUrl, destinationFilename: 'CodeSphere.apk');
+    return OtaUpdate().execute(apkUrl);
   }
 }

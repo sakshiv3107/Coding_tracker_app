@@ -9,7 +9,6 @@ import '../providers/resume_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/responsive_card.dart';
 
@@ -58,7 +57,7 @@ class ResumeScreen extends StatelessWidget {
                         ? Icons.check_circle_rounded 
                         : Icons.cloud_upload_outlined, 
                     size: 48, 
-                    color: resume.resumePath != null || resume.resumeUrl != null ? Colors.green : AppTheme.primary
+                    color: resume.resumePath != null || resume.resumeUrl != null ? Colors.green : theme.colorScheme.primary
                   ),
                   const SizedBox(height: 12),
                   const Text('Upload your Resume', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -89,7 +88,7 @@ class ResumeScreen extends StatelessWidget {
                           },
                           icon: const Icon(Icons.picture_as_pdf_rounded),
                           label: const Text('Pick PDF'),
-                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                          style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -100,8 +99,8 @@ class ResumeScreen extends StatelessWidget {
                           label: const Text('Add Link'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.surface,
-                            foregroundColor: AppTheme.primary,
-                            side: const BorderSide(color: AppTheme.primary),
+                            foregroundColor: theme.colorScheme.primary,
+                            side: BorderSide(color: theme.colorScheme.primary),
                           ),
                         ),
                       ),
@@ -112,7 +111,7 @@ class ResumeScreen extends StatelessWidget {
                     ListTile(
                       leading: Icon(
                         resume.isPdf ? Icons.picture_as_pdf : Icons.link,
-                        color: AppTheme.accent,
+                        color: theme.colorScheme.tertiary,
                       ),
                       title: Text(
                         resume.isPdf ? 'PDF Uploaded' : 'Link Added',
@@ -144,7 +143,7 @@ class ResumeScreen extends StatelessWidget {
                           icon: const Icon(Icons.auto_awesome_rounded),
                           label: Text(resume.resumeSummary == null ? 'Analyze Resume' : 'Re-analyze'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.accent,
+                            backgroundColor: theme.colorScheme.tertiary,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -158,12 +157,12 @@ class ResumeScreen extends StatelessWidget {
 
             // ── B. AI Results & Processing ──────────────────────────────
             if (resume.isAnalyzing) ...[
-              const Center(
+              Center(
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: AppTheme.accent),
-                    SizedBox(height: 16),
-                    Text('Analysing skills & generating PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
+                    CircularProgressIndicator(color: theme.colorScheme.tertiary),
+                    const SizedBox(height: 16),
+                    const Text('Analysing skills & generating PDF...', style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -190,7 +189,7 @@ class ResumeScreen extends StatelessWidget {
                             [XFile(resume.generatedPdfPath!)],
                             subject: 'CodeSphere Resume Analysis',
                           ),
-                          icon: const Icon(Icons.share, color: AppTheme.primary, size: 20),
+                          icon: Icon(Icons.share, color: theme.colorScheme.primary, size: 20),
                           tooltip: 'Share Analysis',
                         ),
                       ],
@@ -295,9 +294,9 @@ class ResumeScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon ?? (isCoding ? Icons.terminal : Icons.person), size: 16, color: AppTheme.accent),
+              Icon(icon ?? (isCoding ? Icons.terminal : Icons.person), size: 16, color: Theme.of(context).colorScheme.tertiary),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppTheme.accent)),
+              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Theme.of(context).colorScheme.tertiary)),
             ],
           ),
           const SizedBox(height: 12),

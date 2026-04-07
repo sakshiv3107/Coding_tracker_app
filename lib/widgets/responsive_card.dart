@@ -23,7 +23,7 @@ class ResponsiveCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = color ?? AppTheme.primary;
+    final accentColor = color ?? theme.colorScheme.primary;
 
     return ModernCard(
       padding: padding ?? const EdgeInsets.all(16),

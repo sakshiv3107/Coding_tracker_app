@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ota_update/ota_update.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Screens
 import 'screens/auth_wrapper.dart';
@@ -154,50 +155,79 @@ class _UpdateDialogState extends State<_UpdateDialog> {
   bool _isDownloading = false;
   bool _hasFailed = false;
 
-  void _startUpdate() {
-    setState(() {
-      _isDownloading = true;
-      _hasFailed = false;
-      _status = 'Starting download...';
-    });
 
-    OTAService.startUpdate(widget.data['apk_url']).listen(
-      (OtaEvent event) {
-        if (!mounted) return;
-        setState(() {
-          switch (event.status) {
-            case OtaStatus.DOWNLOADING:
-              _progress = double.tryParse(event.value ?? '0');
-              _status = 'Downloading... ${event.value ?? 0}%';
-            case OtaStatus.INSTALLING:
-              _progress = null;
-              _status = 'Installing update…';
-            case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-              _isDownloading = false;
-              _hasFailed = true;
-              _status = 'Permission denied.\nEnable "Install unknown apps" in Settings.';
-            case OtaStatus.ALREADY_RUNNING_ERROR:
-              _status = 'Update already in progress.';
-            case OtaStatus.INTERNAL_ERROR:
-              _isDownloading = false;
-              _hasFailed = true;
-              _status = 'Internal error. Please try again.';
-            default:
-              _status = 'Status: ${event.status}';
-          }
-        });
-      },
-      onError: (e) {
-        if (!mounted) return;
-        setState(() {
-          _isDownloading = false;
-          _hasFailed = true;
-          _status = 'Download failed. Check your connection.';
-        });
-        debugPrint('OTA error: $e');
-      },
-    );
+
+void _startUpdate() async {
+  // ✅ Check & request "Install unknown apps" permission first
+  if (!await Permission.requestInstallPackages.isGranted) {
+    final status = await Permission.requestInstallPackages.request();
+    if (!status.isGranted) {
+      setState(() {
+        _hasFailed = true;
+        _status = 'Permission denied.\nGo to Settings → Install unknown apps → allow CodeSphere.';
+      });
+      // Open settings so user can enable it
+      await openAppSettings();
+      return;
+    }
   }
+
+  setState(() {
+    _isDownloading = true;
+    _hasFailed = false;
+    _status = 'Starting download...';
+  });
+
+  OTAService.startUpdate(widget.data['apk_url']).listen(
+    (OtaEvent event) {
+      if (!mounted) return;
+      setState(() {
+        switch (event.status) {
+          case OtaStatus.DOWNLOADING:
+            _progress = double.tryParse(event.value ?? '0');
+            _status = 'Downloading... ${event.value ?? 0}%';
+            break;
+          case OtaStatus.INSTALLING:
+            _progress = null;
+            _isDownloading = false;
+            _status = 'Installing update…';
+            break;
+          case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+            _isDownloading = false;
+            _hasFailed = true;
+            _status = 'Permission denied.\nEnable "Install unknown apps" in Settings.';
+            openAppSettings(); // Auto-open settings
+            break;
+          case OtaStatus.DOWNLOAD_ERROR:
+            _isDownloading = false;
+            _hasFailed = true;
+            _status = 'Download failed. Check your internet.';
+            break;
+          case OtaStatus.CHECKSUM_ERROR:
+            _isDownloading = false;
+            _hasFailed = true;
+            _status = 'File corruption detected. Please retry.';
+            break;
+          case OtaStatus.INTERNAL_ERROR:
+            _isDownloading = false;
+            _hasFailed = true;
+            _status = 'Internal error. Please try again.';
+            break;
+          default:
+            _status = 'Status: ${event.status}';
+        }
+      });
+    },
+    onError: (e) {
+      if (!mounted) return;
+      setState(() {
+        _isDownloading = false;
+        _hasFailed = true;
+        _status = 'Download failed. Check your connection.';
+      });
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {

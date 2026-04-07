@@ -62,8 +62,8 @@ class ProfileScreen extends StatelessWidget {
                       },
                       icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 16),
                       style: IconButton.styleFrom(
-                        backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                        foregroundColor: AppTheme.primary,
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        foregroundColor: theme.colorScheme.primary,
                       ),
                     ),
                   ],
@@ -84,10 +84,10 @@ class ProfileScreen extends StatelessWidget {
                           tag: 'profile_avatar',
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.accent],
+                                colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
                               ),
                             ),
                             child: CircleAvatar(
@@ -99,10 +99,10 @@ class ProfileScreen extends StatelessWidget {
                               child: (profile.profile?["profilePic"]?.isNotEmpty != true)
                                   ? Text(
                                       userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 42,
                                         fontWeight: FontWeight.w900,
-                                        color: AppTheme.primary,
+                                        color: theme.colorScheme.primary,
                                         letterSpacing: -1,
                                       ),
                                     )
@@ -379,12 +379,12 @@ class _SettingsTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.1),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: icon is IconData 
-            ? Icon(icon, color: AppTheme.primary, size: 18)
-            : FaIcon(icon, color: AppTheme.primary, size: 18),
+            ? Icon(icon, color: Theme.of(context).colorScheme.primary, size: 18)
+            : FaIcon(icon, color: Theme.of(context).colorScheme.primary, size: 18),
       ),
       title: Text(
         title, 

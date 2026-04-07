@@ -84,39 +84,41 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                 sliver: SliverToBoxAdapter(
-                    child: Row(
-                      children: [
-                        _buildBackButton(context),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'LeetCode',
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 24,
-                                  letterSpacing: -1,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    children: [
+                      _buildBackButton(context),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'LeetCode',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 24,
+                                letterSpacing: -1,
                               ),
-                              Text(
-                                'Analytics Dashboard',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Analytics Dashboard',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.5,
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
                               ),
-                            ],
-                          ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        _buildRefreshButton(stats.leetcodeLoading),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildRefreshButton(stats.leetcodeLoading),
+                    ],
+                  ),
                 ),
               ),
 
@@ -191,7 +193,10 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
               // ── Main Content ──────────────────────────────────────────
               else if (stats.leetcodeStats != null)
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate(
                       _buildContent(stats, profile, github),
@@ -211,6 +216,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     GithubProvider github,
   ) {
     final lc = stats.leetcodeStats;
+    final theme = Theme.of(context);
     if (lc == null) return [const SizedBox.shrink()];
 
     return [
@@ -300,13 +306,13 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       if ((lc.contestRating != null && lc.contestRating! > 0) ||
           lc.globalRanking != null ||
           (lc.contestHistory != null && lc.contestHistory!.isNotEmpty)) ...[
-        const FadeSlideTransition(
-          delay: Duration(milliseconds: 320),
+        FadeSlideTransition(
+          delay: const Duration(milliseconds: 320),
           child: PremiumSectionHeader(
             title: 'Contest Performance',
             subtitle: 'Global standing and rating history',
             icon: FontAwesomeIcons.trophy,
-            iconColor: AppTheme.accent,
+            iconColor: theme.colorScheme.tertiary,
           ),
         ),
         const SizedBox(height: 12),
@@ -376,7 +382,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
         children: [
           Row(
             children: [
-              icon is IconData 
+              icon is IconData
                   ? Icon(icon, color: color, size: 20)
                   : FaIcon(icon, color: color, size: 20),
               const SizedBox(width: 8),
@@ -473,10 +479,13 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                 // Avatar with premium ring
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [AppTheme.leetCodeYellow, AppTheme.accent],
+                      colors: [
+                        AppTheme.leetCodeYellow,
+                        theme.colorScheme.tertiary,
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -541,7 +550,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
                             username,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.7,
+                              ),
                             ),
                           ),
                         ],
@@ -688,5 +699,4 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       ),
     );
   }
-
 }
