@@ -1,3 +1,4 @@
+// lib/services/ai_service.dart
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -8,10 +9,10 @@ class AIService {
   // 🔑 Now using GROQ key instead of Gemini
   static String get _apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
 
-  // ⏳ Cooldown (reused for Groq rate limits)
+  // ⏳ Cooldown
   static DateTime? _cooldownUntil;
 
-  // 📡 Status stream (unchanged)
+  // 📡 Status stream
   static final _statusController = StreamController<String>.broadcast();
   static Stream<String> get statusStream => _statusController.stream;
 
@@ -20,7 +21,7 @@ class AIService {
     if (!_statusController.isClosed) _statusController.add(msg);
   }
 
-  // 🔒 Queue system (unchanged)
+  // 🔒 Queue system
   static bool _isCalling = false;
   static final _waitQueue = <Completer<void>>[];
 
@@ -41,15 +42,11 @@ class AIService {
     }
   }
 
-  // ─────────────────────────────────────────────────────────
-  // 🔥 CORE CALL (NOW USING GROQ)
-  // ─────────────────────────────────────────────────────────
   static Future<String> _callGemini(
     String prompt, {
     int maxOutputTokens = 1024,
   }) async {
     return _safeCall(() async {
-      // ⛔ Cooldown check
       if (_cooldownUntil != null &&
           DateTime.now().isBefore(_cooldownUntil!)) {
         final secs =
@@ -81,7 +78,6 @@ class AIService {
             )
             .timeout(const Duration(seconds: 20));
 
-        // ✅ SUCCESS
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           final text = data['choices'][0]['message']['content'];
@@ -95,57 +91,57 @@ class AIService {
           return text.trim();
         }
 
-        // ⚠️ RATE LIMIT
         if (response.statusCode == 429) {
           _cooldownUntil =
               DateTime.now().add(const Duration(seconds: 30));
           throw Exception('Rate limited. Please wait ~30 seconds.');
         }
 
-        // ❌ Other errors
         throw Exception(
             'Groq API error ${response.statusCode}: ${response.body}');
       } on TimeoutException {
         throw Exception('Request timed out. Try again.');
       } catch (e) {
-        final msg = e.toString();
-
-        if (msg.contains('SocketException')) {
-          throw Exception('Network error. Check connection.');
-        }
-
         rethrow;
       }
     });
   }
 
-  // ─────────────────────────────────────────────────────────
-  // 🧠 JSON CLEANER (unchanged)
-  // ─────────────────────────────────────────────────────────
   static String _extractJson(String raw) {
-    final cleaned = raw
+    // 1. Remove markdown blocks
+    String cleaned = raw
         .replaceAll(RegExp(r'```json\s*', caseSensitive: false), '')
         .replaceAll(RegExp(r'```\s*'), '')
         .trim();
 
-    final objMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleaned);
-    return objMatch?.group(0) ?? cleaned;
+    // 2. Try to find the start and end of a JSON array or object
+    final firstRect = cleaned.indexOf('[');
+    final lastRect = cleaned.lastIndexOf(']');
+    final firstCurly = cleaned.indexOf('{');
+    final lastCurly = cleaned.lastIndexOf('}');
+
+    // Prioritize the block that seems most like the outer-most JSON structure
+    if (firstRect != -1 && lastRect != -1 && (firstCurly == -1 || firstRect < firstCurly)) {
+      if (lastRect > firstRect) {
+        return cleaned.substring(firstRect, lastRect + 1);
+      }
+    } else if (firstCurly != -1 && lastCurly != -1) {
+      if (lastCurly > firstCurly) {
+        return cleaned.substring(firstCurly, lastCurly + 1);
+      }
+    }
+
+    return cleaned;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // 📄 RESUME ANALYSIS (unchanged logic)
-  // ─────────────────────────────────────────────────────────
   static Future<Map<String, String>> analyzeResume({
     required String resumeText,
     required String codingProfileData,
   }) async {
-    if (_apiKey.isEmpty) {
-      throw Exception('Missing GROQ_API_KEY in .env');
-    }
+    if (_apiKey.isEmpty) throw Exception('Missing GROQ_API_KEY in .env');
 
     _emit('Preparing resume analysis...');
 
-    // Groq has much higher context — use more of the resume for better analysis
     final trimmedResume =
         resumeText.length > 3000 ? resumeText.substring(0, 3000) : resumeText;
 
@@ -154,78 +150,36 @@ class AIService {
         : codingProfileData;
 
     final prompt = '''
-You are a senior technical recruiter at a top tech company (Google/Amazon/Microsoft level).
-Carefully read the FULL resume text below and perform a detailed analysis.
+You are a senior technical recruiter. Analyze the resume and candidate stats.
+Return ONLY raw JSON.
 
-RESUME TEXT:
-$trimmedResume
+RESUME: $trimmedResume
+STATS: $trimmedStats
 
-CANDIDATE CODING STATS:
-$trimmedStats
-
-Your task — return ONLY a raw JSON object (no markdown, no code fences, no explanation):
-
-ATS SCORE RULES (be accurate, not generous):
-- Start at 75 as baseline for any structured tech resume
-- Add 1-5 points for: quantified achievements (numbers/%), strong action verbs, relevant keywords (algorithms, data structures, system design, cloud), GitHub/LeetCode links present
-- Add 1-5 points for: clear sections (Education, Experience, Projects, Skills), clean formatting, no spelling errors visible
-- Subtract 5-15 points for: missing quantification, vague descriptions ("worked on", "helped with"), no links, missing skills section, generic objective statement
-- Typical good tech resume: 72-88. Only give 90+ for truly exceptional resumes.
-
-RECOMMENDATIONS RULES (this is the most important part):
-- Each recommendation MUST reference something SPECIFIC from this resume (quote a job title, project name, skill, or exact phrase you see in the resume text)
-- Do NOT give generic advice like "add more metrics" — instead say "The '${resumeText.split('\n').firstWhere((l) => l.length > 5, orElse: () => 'your experience')}' entry lacks measurable impact — add numbers like team size, user count, or % improvement"
-- Focus on what is MISSING or WEAK in THIS specific resume, not general tips
-- Give 4 concrete, actionable recommendations
-
-Return this exact JSON structure:
+JSON structure:
 {
-  "ats_score": <integer between 60 and 95>,
-  "resume_summary": [
-    "<specific strength from resume — name what makes it strong>",
-    "<specific skill or experience that stands out>",
-    "<specific achievement or project worth highlighting>"
-  ],
-  "coding_summary": [
-    "<insight about their coding stats relative to their experience level>",
-    "<specific observation about their strongest platform or skill>"
-  ],
-  "recommendations": [
-    "<specific improvement referencing actual resume content — e.g. 'Your [project/role] description says X, add Y to make it stronger'>",
-    "<specific missing element — e.g. 'No GitHub/portfolio link found — add it to the header'>",
-    "<specific keyword gap — e.g. 'Skills section missing [technology seen in job descriptions for your role]'>",
-    "<specific formatting or content fix — e.g. 'The [section] has no quantified results — add numbers'>"
-  ]
+  "ats_score": <int>,
+  "resume_summary": ["string"],
+  "coding_summary": ["string"],
+  "recommendations": ["string"]
 }''';
-
-
 
     try {
       final raw = await _callGemini(prompt, maxOutputTokens: 1500);
       final cleaned = _extractJson(raw);
       final result = jsonDecode(cleaned) as Map<String, dynamic>;
 
-      if (result['ats_score'] == null || result['resume_summary'] == null) {
-        throw Exception('Incomplete analysis. Please try again.');
-      }
-
       String formatList(dynamic field) {
         if (field is List) {
-          return field
-              .map((e) => e.toString().trim())
-              .where((e) => e.isNotEmpty)
-              .map((e) => '• $e')
-              .join('\n');
+          return field.map((e) => '• $e').join('\n');
         }
         return field.toString().trim();
       }
 
-      // Clamp ATS score to realistic range
       final rawScore = (result['ats_score'] as num?)?.toInt() ?? 75;
-      final atsScore = rawScore.clamp(60, 95);
 
       return {
-        'ats_score': atsScore.toString(),
+        'ats_score': rawScore.clamp(60, 95).toString(),
         'resume_summary': formatList(result['resume_summary'] ?? []),
         'coding_summary': formatList(result['coding_summary'] ?? []),
         'recommendations': formatList(result['recommendations'] ?? []),
@@ -236,37 +190,129 @@ Return this exact JSON structure:
     }
   }
 
-
-  // ─────────────────────────────────────────────────────────
-  // ⚡ INSIGHTS (unchanged logic)
-  // ─────────────────────────────────────────────────────────
   static Future<List<String>> generateInsights({
     required Map<String, dynamic> userData,
   }) async {
     try {
-      final prompt = '''
-Give exactly 2 short coding insights.
-Return ONLY JSON array.
-
-Stats: ${jsonEncode(userData)}
-''';
-
+      final prompt = 'Give 2 short coding insights for: ${jsonEncode(userData)}. Return ONLY JSON array of strings.';
       final raw = await _callGemini(prompt, maxOutputTokens: 200);
       final cleaned = _extractJson(raw);
-
       final decoded = jsonDecode(cleaned);
-
-      if (decoded is List) {
-        return decoded.map((e) => e.toString()).take(2).toList();
-      }
-
-      throw Exception('Invalid format');
+      if (decoded is List) return decoded.map((e) => e.toString()).take(2).toList();
+      return ['📈 Keep practice consistent.'];
     } catch (e) {
-      debugPrint('[AIService] fallback insights: $e');
-      return [
-        '📈 Keep solving consistently.',
-        '🚀 Try harder problems gradually.',
-      ];
+      return ['📈 Keep practice consistent.', '🚀 Try harder problems.'];
+    }
+  }
+
+  static Future<List<dynamic>> generateStructuredInsights({
+    required Map<String, dynamic> userData,
+  }) async {
+    final prompt = '''
+Analyze these coding statistics and return EXACTLY 3 personalized insights.
+Return ONLY a raw JSON array of objects. NO conversational text, NO preamble, NO markdown blocks.
+
+Structure:
+[
+  {
+    "id": "unique_id",
+    "title": "Short Title",
+    "reason": "Why this insight?",
+    "impact": "What to do?",
+    "confidence": "High/Medium",
+    "topic": "Primary Topic",
+    "type": "weakness/strength/slowness/errorRate",
+    "emoji": "💡"
+  }
+]
+
+Data: ${jsonEncode(userData)}
+''';
+    try {
+      final raw = await _callGemini(prompt, maxOutputTokens: 800);
+      final cleaned = _extractJson(raw);
+      return jsonDecode(cleaned) as List<dynamic>;
+    } catch (e) {
+      debugPrint('[AIService] generateStructuredInsights error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<dynamic> generateActionPlan({
+    required String topic,
+    required String insightTitle,
+    required String insightId,
+    required double weaknessLevel,
+  }) async {
+    final prompt = '''
+Generate a 3-step action plan for the topic "$topic" based on the weakness "$insightTitle".
+Return ONLY a raw JSON object. NO conversational text.
+
+Structure:
+{
+  "steps": ["Step 1", "Step 2", "Step 3"],
+  "resources": [{"title": "Name", "url": "URL"}],
+  "estimatedTime": "2 weeks"
+}
+''';
+    try {
+      final raw = await _callGemini(prompt, maxOutputTokens: 500);
+      final cleaned = _extractJson(raw);
+      return jsonDecode(cleaned);
+    } catch (e) {
+      debugPrint('[AIService] generateActionPlan error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<dynamic>> generateRecommendations({
+    required List<dynamic> insights,
+    required Map<String, dynamic> topicStats,
+    required int totalSolved,
+    required Map<String, int> difficultyBreakdown,
+    required List<dynamic> recentSubmissions,
+  }) async {
+    final prompt = '''
+Generate 3 personalized coding recommendations based on recent performance.
+Return ONLY a raw JSON array of objects. NO conversational text.
+
+Structure:
+[
+  {
+    "id": "rec_id",
+    "title": "Actionable Title",
+    "description": "Short description",
+    "type": "focus/improve/challenge/balance",
+    "topic": "Topic Name",
+    "priority": 1
+  }
+]
+
+Context:
+Total Solved: $totalSolved
+Insights: ${jsonEncode(insights)}
+Recent Submissions: ${jsonEncode(recentSubmissions)}
+''';
+    try {
+      final raw = await _callGemini(prompt, maxOutputTokens: 600);
+      final cleaned = _extractJson(raw);
+      return jsonDecode(cleaned) as List<dynamic>;
+    } catch (e) {
+      debugPrint('[AIService] generateRecommendations error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<String>> classifyProblem(String title) async {
+    final prompt = 'Classify "$title" into 1-3 topics. Return ONLY a raw JSON array of strings. NO text.';
+    try {
+      final raw = await _callGemini(prompt, maxOutputTokens: 100);
+      final cleaned = _extractJson(raw);
+      final decoded = jsonDecode(cleaned);
+      if (decoded is List) return decoded.map((e) => e.toString()).toList();
+      return ['General'];
+    } catch (e) {
+      return ['General'];
     }
   }
 }

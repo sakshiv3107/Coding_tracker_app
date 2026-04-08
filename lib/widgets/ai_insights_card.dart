@@ -60,6 +60,24 @@ class AIInsightsCard extends StatelessWidget {
                 style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
               ),
             ),
+          
+          if (insights.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/ai_insights'),
+                child: Text(
+                  'View full coach →',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
