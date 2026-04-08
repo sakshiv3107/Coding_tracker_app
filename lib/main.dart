@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ota_update/ota_update.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 // Screens
 import 'screens/auth_wrapper.dart';
@@ -41,6 +42,7 @@ import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
+  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   try {
@@ -109,6 +111,15 @@ class MyApp extends StatelessWidget {
         '/review': (context) => const ReviewScreen(),
       },
     ); // Added a copyWith just to ensure a fresh state if possible
+  }
+}
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
   }
 }
 

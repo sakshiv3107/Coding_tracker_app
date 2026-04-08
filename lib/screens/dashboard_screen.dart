@@ -90,6 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
+            // Capture before any await (use_build_context_synchronously)
             final insightsProvider = context.read<InsightsProvider>();
             final goalProvider = context.read<GoalProvider>();
 
@@ -106,16 +107,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 github.fetchGithubData(githubUser, forceRefresh: true),
               stats.fetchUpcomingContests(cfHandle: cfUser, lcHandle: leetcodeUser),
             ]);
-            
+
             // 2. Generate fresh AI insights AFTER stats are updated
             if (mounted) {
-              await insightsProvider.refreshInsights(
-                stats, 
-                goalProvider, 
-                github
-              );
+              // forceRefresh bypasses the 4-hour cache on manual pull-to-refresh
+              await insightsProvider.forceRefresh(stats, goalProvider, github);
             }
           },
+
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -251,22 +250,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ── AI Coding Insights ──────────────────────────────────────
                 const AIInsightsCard(),
                 const SizedBox(height: 16),
-                
-                // Trigger goal check Whenever stats are ready
+
+                // Trigger goal check whenever stats are ready
                 Builder(builder: (ctx) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (stats.isLoading) return; // Wait for stats to be ready
-
+                    if (stats.isLoading) return;
                     context.read<GoalProvider>().checkProgressAndNotifyCompletion(stats, github);
-                    
-                    final insights = context.read<InsightsProvider>();
-                    // Only refresh if empty AND stats are ready
-                    if (insights.insights.isEmpty && !insights.isLoading && stats.totalSolved > 0) {
-                      insights.refreshInsights(stats, context.read<GoalProvider>(), github);
-                    }
                   });
                   return const SizedBox.shrink();
                 }),
+
+                // One-shot insights loader: only calls AI if cache is empty.
+                // Wrapped in its own StatefulWidget so it fires ONCE on mount,
+                // not on every dashboard rebuild.
+                _InsightsLoader(stats: stats, github: github),
               ],
             ),
           ),
@@ -538,4 +535,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       target[d] = (target[d] ?? 0) + e.value;
     }
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Fires insights fetch ONCE on mount — not on every rebuild.
+// Using a StatefulWidget ensures initState runs exactly once per widget
+// lifetime, unlike Builder+postFrameCallback which reruns every rebuild.
+// ──────────────────────────────────────────────────────────────────────────────
+class _InsightsLoader extends StatefulWidget {
+  final StatsProvider stats;
+  final GithubProvider github;
+
+  const _InsightsLoader({required this.stats, required this.github});
+
+  @override
+  State<_InsightsLoader> createState() => _InsightsLoaderState();
+}
+
+class _InsightsLoaderState extends State<_InsightsLoader> {
+  @override
+  void initState() {
+    super.initState();
+    // Defer until after the first frame so providers are fully ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.stats.isLoading || widget.stats.totalSolved == 0) return;
+
+      final insights = context.read<InsightsProvider>();
+      final goals = context.read<GoalProvider>();
+
+      // refreshInsights respects the 4-hour cache — skips API if still fresh
+      insights.refreshInsights(widget.stats, goals, widget.github);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

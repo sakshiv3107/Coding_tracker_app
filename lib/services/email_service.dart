@@ -17,7 +17,7 @@ class EmailService {
       final publicKey = dotenv.env['EMAILJS_PUBLIC_KEY'] ?? '';
 
       if (serviceId.isEmpty || templateId.isEmpty || publicKey.isEmpty) {
-        print('EmailJS credentials not configured');
+        // print('EmailJS credentials not configured');
         return false;
       }
 
@@ -42,7 +42,7 @@ class EmailService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error sending email: $e');
+      // print('Error sending email: $e');
       return false;
     }
   }

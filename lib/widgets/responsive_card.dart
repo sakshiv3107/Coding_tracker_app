@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'modern_card.dart';
-import '../theme/app_theme.dart';
 
 class ResponsiveCard extends StatelessWidget {
   final String label;
