@@ -1,7 +1,6 @@
 // lib/widgets/insight/focus_problems_card.dart
 import 'package:flutter/material.dart';
 import '../../models/insight_model.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -30,19 +29,21 @@ class FocusProblemsCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              "Daily Focus Problems",
+              'Daily Focus Problems',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             IconButton(
               onPressed: isLoading ? null : onRefresh,
-              icon: Icon(
-                Icons.refresh_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
+              icon: Icon(Icons.refresh_rounded, size: 18, color: theme.colorScheme.primary),
               visualDensity: VisualDensity.compact,
+              tooltip: 'Refresh suggestions',
             ),
           ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Based on your recent submissions',
+          style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.45)),
         ),
         const SizedBox(height: 12),
         if (isLoading)
@@ -63,16 +64,16 @@ class FocusProblemsCard extends StatelessWidget {
     Color diffColor;
     switch (p.difficulty.toLowerCase()) {
       case 'easy':
-        diffColor = Colors.green;
+        diffColor = const Color(0xFF22C55E);
         break;
       case 'medium':
-        diffColor = Colors.amber;
+        diffColor = const Color(0xFFF59E0B);
         break;
       case 'hard':
-        diffColor = Colors.red;
+        diffColor = const Color(0xFFEF4444);
         break;
       default:
-        diffColor = Colors.blue;
+        diffColor = theme.colorScheme.primary;
     }
 
     return Container(
@@ -81,17 +82,16 @@ class FocusProblemsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withOpacity(0.05),
-        ),
+        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
@@ -106,45 +106,64 @@ class FocusProblemsCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                p.difficulty,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: diffColor,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: diffColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  p.difficulty,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: diffColor,
+                  ),
                 ),
               ),
               const Spacer(),
-              _TopicBadge(topic: p.topicTag),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.08)),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  p.topicTag,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
+          // Problem name
           Text(
             p.problemName,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 6),
-          Text(
-            p.aiReason,
-            style: TextStyle(
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonal(
-              onPressed: () => _launchURL(p.url),
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+          // AI reason — no button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 12,
+                  color: theme.colorScheme.primary.withOpacity(0.6)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  p.aiReason,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    height: 1.4,
+                  ),
                 ),
-                visualDensity: VisualDensity.compact,
               ),
-              child: const Text("Solve →", style: TextStyle(fontSize: 12)),
-            ),
+            ],
           ),
         ],
       ),
@@ -156,13 +175,10 @@ class FocusProblemsCard extends StatelessWidget {
       baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       highlightColor: Theme.of(context).colorScheme.surface,
       child: Container(
-        height: 120,
+        height: 100,
         margin: const EdgeInsets.only(bottom: 12),
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -175,92 +191,52 @@ class FocusProblemsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.errorContainer.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.error.withOpacity(0.15)),
       ),
       child: Column(
         children: [
           Text(
-            "Couldn't fetch AI suggestions.",
-            style: TextStyle(
-              color: theme.colorScheme.error,
-              fontWeight: FontWeight.bold,
-            ),
+            'Couldn\'t fetch AI suggestions.',
+            style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold, fontSize: 13),
           ),
-          TextButton(onPressed: onRefresh, child: const Text("Retry")),
+          TextButton(onPressed: onRefresh, child: const Text('Retry')),
         ],
       ),
     );
   }
 
   Widget _buildFallback(BuildContext context) {
-    final fallbackProblems = [
+    final fallbacks = [
       FocusProblem(
-        problemName: "Two Sum",
-        platform: "LeetCode",
-        difficulty: "Easy",
-        topicTag: "Arrays",
-        aiReason: "Suggestions unavailable. Starting with a classic.",
-        url: "https://leetcode.com/problems/two-sum/",
+        problemName: 'Two Sum', platform: 'LeetCode', difficulty: 'Easy',
+        topicTag: 'Arrays', aiReason: 'A foundational array problem — great for warming up.',
+        url: 'https://leetcode.com/problems/two-sum/',
       ),
       FocusProblem(
-        problemName: "Add Two Numbers",
-        platform: "LeetCode",
-        difficulty: "Medium",
-        topicTag: "Linked List",
-        aiReason: "Daily practice recommendation.",
-        url: "https://leetcode.com/problems/add-two-numbers/",
+        problemName: 'Longest Substring Without Repeating Characters',
+        platform: 'LeetCode', difficulty: 'Medium', topicTag: 'Sliding Window',
+        aiReason: 'Builds sliding-window intuition critical for strings.',
+        url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
       ),
       FocusProblem(
-        problemName: "Median of Two Sorted Arrays",
-        platform: "LeetCode",
-        difficulty: "Hard",
-        topicTag: "Binary Search",
-        aiReason: "Challenge for today.",
-        url: "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+        problemName: 'Word Search', platform: 'LeetCode', difficulty: 'Medium',
+        topicTag: 'Backtracking', aiReason: 'Classic backtracking — reinforces DFS on a grid.',
+        url: 'https://leetcode.com/problems/word-search/',
       ),
     ];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8.0),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
-            "Curated suggestions (AI offline)",
-            style: TextStyle(fontSize: 11),
+            'Curated suggestions (AI offline)',
+            style: TextStyle(fontSize: 11, color: Colors.grey.withOpacity(0.6)),
           ),
         ),
-        ...fallbackProblems.map((p) => _buildProblemCard(context, p)),
+        ...fallbacks.map((p) => _buildProblemCard(context, p)),
       ],
-    );
-  }
-
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-}
-
-class _TopicBadge extends StatelessWidget {
-  final String topic;
-  const _TopicBadge({required this.topic});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.1)),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        topic,
-        style: TextStyle(
-          fontSize: 9,
-          color: theme.colorScheme.onSurface.withOpacity(0.6),
-        ),
-      ),
     );
   }
 }

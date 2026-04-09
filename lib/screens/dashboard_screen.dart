@@ -14,7 +14,7 @@ import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
 import '../widgets/coding_heatmap.dart';
 import '../widgets/skill_radar_chart.dart';
-import '../widgets/ai_insights_card.dart';
+// import '../widgets/ai_insights_card.dart';
 import '../widgets/weekly_activity_chart.dart';
 import '../widgets/skeleton_loading.dart';
 
@@ -246,9 +246,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                const SizedBox(height: 16),
-                // ── AI Coding Insights ──────────────────────────────────────
-                const AIInsightsCard(),
                 const SizedBox(height: 16),
 
                 // Trigger goal check whenever stats are ready

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 import '../../models/insight_model.dart';
 
 class WeeklyReportCard extends StatelessWidget {
@@ -24,13 +25,7 @@ class WeeklyReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (isLoading) {
-      return _buildShimmer(context);
-    }
-
-    if (report == null && errorMessage == null) {
-      return _buildPlaceholder(context);
-    }
+    if (isLoading) return _buildShimmer(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -42,98 +37,238 @@ class WeeklyReportCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ────────────────────────────────────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "Weekly Report Card",
+                'Weekly Report',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-              Text(
-                "Week ${snapshot.weekNumber}",
-                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(context, "Solved", "${snapshot.solvedThisWeek}"),
-              _buildStatItem(context, "Streak", snapshot.streakDelta >= 0 ? "+${snapshot.streakDelta}" : "${snapshot.streakDelta}"),
-              _buildStatItem(context, "Top Platform", snapshot.bestPlatform),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (errorMessage != null)
-            _buildError(context)
-          else ...[
-            Text(
-              report?['summary'] ?? "You've had a productive week. Keep focusing on medium problems to sharpen your algorithm skills.",
-              style: const TextStyle(fontSize: 13, height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "FOCUS: ${report?['focus'] ?? 'Target 3 Hard problems this week.'}",
-                style: TextStyle(
-                  fontSize: 12, 
-                  fontWeight: FontWeight.bold, 
-                  color: theme.colorScheme.onSecondaryContainer
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_fmt(snapshot.weekStart)} – ${_fmt(snapshot.weekEnd)}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                "Generated on ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
-                style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Stats grid ────────────────────────────────────────────────────
+          _buildStatsGrid(context),
+
+          const SizedBox(height: 16),
+
+          // ── Topics covered ────────────────────────────────────────────────
+          if (snapshot.topicsCovered.isNotEmpty) ...[
+            Text(
+              'Topics Covered',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                letterSpacing: 0.5,
               ),
             ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: snapshot.topicsCovered.map((t) => _chip(context, t)).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // ── AI Summary / Generate button ──────────────────────────────────
+          if (report == null && errorMessage == null)
+            _buildGenerateButton(context)
+          else if (errorMessage != null)
+            _buildError(context)
+          else ...[
+            const Divider(height: 24, thickness: 0.5),
+            Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 14, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'AI Coach Summary',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: onGenerate,
+                  style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
+                  child: const Text('Refresh', style: TextStyle(fontSize: 11)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              report?['summary'] ??
+                  'Great week! Keep the momentum going.',
+              style: const TextStyle(fontSize: 13, height: 1.5),
+            ),
+            if (report?['focus'] != null && report!['focus']!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.12)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.arrow_forward_rounded,
+                        size: 14, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Next Week: ${report!['focus']!}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ],
       ),
     ).animate().fadeIn(delay: 600.ms);
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value) {
-    return Column(
+  // ── Stats grid ─────────────────────────────────────────────────────────────
+  Widget _buildStatsGrid(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.6,
       children: [
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10)),
+        _statCell(context, '${snapshot.solvedThisWeek}', 'Solved', Icons.check_circle_outline_rounded, Colors.green),
+        _statCell(context, '${snapshot.totalSubmissions}', 'Submissions', Icons.upload_outlined, Colors.blue),
+        _statCell(context, '${snapshot.streakDelta}', 'Streak Days', Icons.local_fire_department_rounded, Colors.deepOrange),
+        _statCell(context, '${snapshot.easyThisWeek}', 'Easy', null, const Color(0xFF22C55E)),
+        _statCell(context, '${snapshot.mediumThisWeek}', 'Medium', null, const Color(0xFFF59E0B)),
+        _statCell(context, '${snapshot.hardThisWeek}', 'Hard', null, const Color(0xFFEF4444)),
       ],
     );
   }
 
-  Widget _buildPlaceholder(BuildContext context) {
+  Widget _statCell(BuildContext context, String value, String label,
+      IconData? icon, Color color) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(24),
-      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.12)),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.assessment_outlined, size: 40, color: theme.colorScheme.onSurface.withOpacity(0.1)),
-          const SizedBox(height: 16),
-          const Text("Ready for your weekly wrap-up?", style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: onGenerate, 
-            child: const Text("Generate Report", style: TextStyle(fontSize: 12))
+          if (icon != null) Icon(icon, size: 14, color: color),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              color: theme.colorScheme.onSurface.withOpacity(0.45),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _chip(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label,
+          style: TextStyle(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withOpacity(0.65),
+          )),
+    );
+  }
+
+  Widget _buildGenerateButton(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        const Divider(height: 24, thickness: 0.5),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.auto_awesome_rounded,
+                  size: 28, color: theme.colorScheme.onSurface.withOpacity(0.1)),
+              const SizedBox(height: 10),
+              const Text(
+                'Get your AI-powered weekly recap',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: onGenerate,
+                child: const Text('Generate AI Summary', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        const Divider(height: 24),
+        Text('AI report failed.',
+            style: TextStyle(color: theme.colorScheme.error, fontSize: 12)),
+        TextButton(onPressed: onGenerate, child: const Text('Retry')),
+      ],
     );
   }
 
@@ -142,24 +277,12 @@ class WeeklyReportCard extends StatelessWidget {
       baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       highlightColor: Theme.of(context).colorScheme.surface,
       child: Container(
-        height: 220,
+        height: 260,
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
 
-  Widget _buildError(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text("AI report generation failed", style: TextStyle(color: theme.colorScheme.error, fontSize: 12)),
-        const SizedBox(height: 4),
-        TextButton(onPressed: onGenerate, child: const Text("Retry")),
-      ],
-    );
-  }
+  String _fmt(DateTime d) => DateFormat('MMM d').format(d);
 }

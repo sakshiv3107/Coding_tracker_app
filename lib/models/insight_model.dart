@@ -192,8 +192,12 @@ class WeeklySnapshot {
   final int easyThisWeek;
   final int mediumThisWeek;
   final int hardThisWeek;
+  final int totalSubmissions;
   final int streakDelta;
   final String bestPlatform;
+  final List<String> topicsCovered;
+  final DateTime weekStart;
+  final DateTime weekEnd;
 
   WeeklySnapshot({
     required this.weekNumber,
@@ -201,9 +205,24 @@ class WeeklySnapshot {
     required this.easyThisWeek,
     required this.mediumThisWeek,
     required this.hardThisWeek,
+    this.totalSubmissions = 0,
     required this.streakDelta,
     required this.bestPlatform,
-  });
+    this.topicsCovered = const [],
+    DateTime? weekStart,
+    DateTime? weekEnd,
+  })  : weekStart = weekStart ?? _lastSunday(),
+        weekEnd = weekEnd ?? _nextSaturday();
+
+  static DateTime _lastSunday() {
+    final now = DateTime.now();
+    return now.subtract(Duration(days: now.weekday % 7));
+  }
+
+  static DateTime _nextSaturday() {
+    final sun = _lastSunday();
+    return sun.add(const Duration(days: 6));
+  }
 
   Map<String, dynamic> toJson() => {
         'weekNumber': weekNumber,
@@ -211,8 +230,10 @@ class WeeklySnapshot {
         'easyThisWeek': easyThisWeek,
         'mediumThisWeek': mediumThisWeek,
         'hardThisWeek': hardThisWeek,
+        'totalSubmissions': totalSubmissions,
         'streakDelta': streakDelta,
         'bestPlatform': bestPlatform,
+        'topicsCovered': topicsCovered,
       };
 }
 
@@ -267,13 +288,48 @@ class MistakePattern {
   final String patternName;
   final int count;
   final String severity; // "red" | "amber" | "blue"
+  final String detail;   // Specific problem titles or patterns detected
   String? aiTip;
 
   MistakePattern({
     required this.patternName,
     required this.count,
     required this.severity,
+    this.detail = '',
     this.aiTip,
   });
 }
 
+class CoachGoal {
+  final String id;
+  final String title;
+  final int target;
+  final String type; // "problems" | "rating" | "streak" | "custom"
+  final DateTime createdAt;
+
+  CoachGoal({
+    required this.id,
+    required this.title,
+    required this.target,
+    required this.type,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'target': target,
+    'type': type,
+    'createdAt': createdAt.millisecondsSinceEpoch,
+  };
+
+  factory CoachGoal.fromJson(Map<String, dynamic> json) => CoachGoal(
+    id: json['id'] ?? '',
+    title: json['title'] ?? '',
+    target: json['target'] ?? 0,
+    type: json['type'] ?? 'problems',
+    createdAt: json['createdAt'] != null
+        ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'])
+        : DateTime.now(),
+  );
+}

@@ -27,7 +27,6 @@ class InsightService {
     if (_apiKey.isEmpty) {
       throw InsightException('GROQ_API_KEY not found in .env');
     }
-
     try {
       final response = await http
           .post(
@@ -53,11 +52,9 @@ class InsightService {
         if (text.trim().isEmpty) throw InsightException('Empty response from AI.');
         return text.trim();
       }
-
       if (response.statusCode == 429) {
         throw InsightException('AI is rate-limited. Please wait and retry.');
       }
-
       debugPrint('[InsightService] Error ${response.statusCode}: ${response.body}');
       throw InsightException('Couldn\'t reach AI coach. Check your connection.');
     } on TimeoutException {
@@ -70,17 +67,11 @@ class InsightService {
     }
   }
 
-  // ── Strip markdown fences from JSON responses ───────────────────────────────
-  static String _stripFences(String raw) {
-    return raw
+  static String _extractJson(String raw) {
+    final cleaned = raw
         .replaceAll(RegExp(r'```json\s*', caseSensitive: false), '')
         .replaceAll(RegExp(r'```\s*'), '')
         .trim();
-  }
-
-  // ── Extract first JSON array from raw text ──────────────────────────────────
-  static String _extractJson(String raw) {
-    final cleaned = _stripFences(raw);
     final firstBracket = cleaned.indexOf('[');
     final lastBracket = cleaned.lastIndexOf(']');
     if (firstBracket != -1 && lastBracket > firstBracket) {
@@ -104,7 +95,6 @@ class InsightService {
 
     String insight = '';
     String nudge = '';
-
     for (var line in lines) {
       if (line.trim().toUpperCase().startsWith('NUDGE:')) {
         nudge = line.trim().substring(6).trim();
@@ -112,25 +102,30 @@ class InsightService {
         insight = insight.isEmpty ? line.trim() : '$insight ${line.trim()}';
       }
     }
-
     return {'insight': insight, 'nudge': nudge};
   }
 
-  // ── Focus Problems ──────────────────────────────────────────────────────────
-  static Future<List<FocusProblem>> getFocusProblems(StatsSnapshot stats) async {
+  // ── Focus Problems — based on RECENT submission topics ──────────────────────
+  static Future<List<FocusProblem>> getFocusProblems({
+    required List<String> recentTopics,
+    required List<String> weakTopics,
+    required int totalSolved,
+    required int mediumSolved,
+    required int hardSolved,
+  }) async {
+    final topics = recentTopics.isNotEmpty ? recentTopics : weakTopics;
     final prompt = 'You are a competitive programming coach. '
-        'The programmer\'s weak topics are: ${stats.topWeakTopics.join(", ")}. '
-        'They have solved ${stats.totalSolved} problems total '
-        '(${stats.mediumSolved} medium, ${stats.hardSolved} hard). '
-        'Suggest exactly 3 problems to practice today. '
-        'Respond ONLY with a valid JSON array, no markdown, no explanation:\n'
+        'The programmer recently worked on: ${topics.join(", ")}. '
+        'Their weak areas are: ${weakTopics.join(", ")}. '
+        'They have solved $totalSolved problems total ($mediumSolved medium, $hardSolved hard). '
+        'Suggest exactly 3 next-step problems that build directly on their recent activity. '
+        'Respond ONLY with a valid JSON array, no markdown, no preamble:\n'
         '[{"problemName":"...","platform":"LeetCode|Codeforces|CodeChef","difficulty":"Easy|Medium|Hard",'
-        '"topicTag":"...","aiReason":"one sentence why this problem","url":"direct problem URL"}]';
+        '"topicTag":"...","aiReason":"one sentence why this problem fits their recent work"}]';
 
-    final response = await _callGroq(prompt, maxTokens: 600, temperature: 0.6);
+    final response = await _callGroq(prompt, maxTokens: 600, temperature: 0.5);
     try {
-      final jsonStr = _extractJson(response);
-      final List<dynamic> list = jsonDecode(jsonStr);
+      final List<dynamic> list = jsonDecode(_extractJson(response));
       return list.map((item) => FocusProblem.fromJson(item as Map<String, dynamic>)).toList();
     } catch (e) {
       debugPrint('[InsightService] JSON Parse Error: $e\nResponse: $response');
@@ -138,27 +133,33 @@ class InsightService {
     }
   }
 
-  // ── Mistake Tip ─────────────────────────────────────────────────────────────
-  static Future<String> getMistakeTip(String patternName) async {
-    final prompt = 'A competitive programmer keeps hitting $patternName errors in their submissions. '
-        'Give one specific, actionable technique to fix this in 2–3 sentences. Be direct and technical.';
-    return await _callGroq(prompt, maxTokens: 200, temperature: 0.7);
+  // ── Mistake Tip (topic-specific) ────────────────────────────────────────────
+  static Future<String> getMistakeTip(String errorType) async {
+    final prompt = 'A competitive programmer is repeatedly getting $errorType. '
+        'Give one precise, actionable debugging or coding technique to fix this. '
+        '2-3 sentences max. Include a specific example or pattern to watch for.';
+    return await _callGroq(prompt, maxTokens: 180, temperature: 0.6);
   }
 
   // ── Weekly Report ───────────────────────────────────────────────────────────
   static Future<Map<String, String>> getWeeklyReport(WeeklySnapshot stats) async {
-    final prompt = 'A programmer solved ${stats.solvedThisWeek} problems this week '
-        '(Easy:${stats.easyThisWeek}, Medium:${stats.mediumThisWeek}, Hard:${stats.hardThisWeek}). '
-        'Their streak changed by ${stats.streakDelta} days. Best platform: ${stats.bestPlatform}. '
-        'Write a 3-sentence weekly performance summary, then on a new line write: '
-        'FOCUS: followed by one specific recommendation for next week in 15 words or fewer.';
+    final topicsList = stats.topicsCovered.isNotEmpty
+        ? stats.topicsCovered.join(', ')
+        : 'various topics';
+    final prompt = 'A programmer this week (Sun–Sat): '
+        'solved ${stats.solvedThisWeek} problems '
+        '(Easy:${stats.easyThisWeek}, Medium:${stats.mediumThisWeek}, Hard:${stats.hardThisWeek}), '
+        'made ${stats.totalSubmissions} total submissions, '
+        'covered topics: $topicsList, '
+        'streak: ${stats.streakDelta} days, best platform: ${stats.bestPlatform}. '
+        'Write a 2-sentence performance summary evaluating their week. '
+        'Then on a new line write: FOCUS: followed by one specific goal for next week in 15 words or fewer.';
 
-    final response = await _callGroq(prompt, maxTokens: 250, temperature: 0.8);
+    final response = await _callGroq(prompt, maxTokens: 200, temperature: 0.7);
     final lines = response.split('\n').where((l) => l.trim().isNotEmpty).toList();
 
     String summary = '';
     String focus = '';
-
     for (var line in lines) {
       if (line.trim().toUpperCase().startsWith('FOCUS:')) {
         focus = line.trim().substring(6).trim();
@@ -166,7 +167,6 @@ class InsightService {
         summary = summary.isEmpty ? line.trim() : '$summary ${line.trim()}';
       }
     }
-
     return {'summary': summary, 'focus': focus};
   }
 
@@ -177,15 +177,14 @@ class InsightService {
   ) async {
     if (_apiKey.isEmpty) throw InsightException('GROQ_API_KEY not found in .env');
 
-    final systemMessage = 'You are an expert competitive programming coach embedded in the '
-        'CodeSphere analytics app. The user\'s stats are: '
+    final systemMessage = 'You are an expert competitive programming coach in the '
+        'CodeSphere analytics app. User stats: '
         'total solved: ${stats.totalSolved}, streak: ${stats.streak} days, '
         'easy: ${stats.easySolved}, medium: ${stats.mediumSolved}, hard: ${stats.hardSolved}, '
         'weak topics: ${stats.topWeakTopics.join(", ")}. '
-        'Give concise, actionable advice. When suggesting problems, name specific '
-        'LeetCode/Codeforces problems. Keep responses under 150 words unless the user asks for a detailed plan.';
+        'Be concise and actionable. Name specific LeetCode/Codeforces problems when suggesting. '
+        'Keep responses under 150 words unless a detailed plan is requested.';
 
-    // Build messages array with system prompt  
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemMessage},
       ...history.map((m) => {
@@ -216,11 +215,9 @@ class InsightService {
         return data['choices']?[0]?['message']?['content']?.toString().trim()
             ?? 'I encountered an error. Please try again.';
       }
-
       if (response.statusCode == 429) {
-        throw InsightException('AI is rate-limited. Please wait a moment and retry.');
+        throw InsightException('AI is rate-limited. Please wait a moment.');
       }
-
       throw InsightException('Couldn\'t reach AI coach.');
     } on TimeoutException {
       throw InsightException('Request timed out. Please try again.');

@@ -31,7 +31,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
   static const _leetcodeColor = Color(0xFFFFA116); // LeetCode yellow
   static const _githubColor = Color(0xFF6C63FF);
   static const _hackerrankColor = Color(0xFF2EC866);
-  static const _codechefColor = Color(0xFFE08D2D);
+  static const _codechefColor = Color.fromARGB(255, 45, 188, 224);
 
   @override
   void initState() {
