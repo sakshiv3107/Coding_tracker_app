@@ -6,7 +6,6 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
-import '../providers/insights_provider.dart';
 import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../widgets/unified_analytics_card.dart';
@@ -14,7 +13,6 @@ import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
 import '../widgets/coding_heatmap.dart';
 import '../widgets/skill_radar_chart.dart';
-// import '../widgets/ai_insights_card.dart';
 import '../widgets/weekly_activity_chart.dart';
 import '../widgets/skeleton_loading.dart';
 
@@ -90,11 +88,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            // Capture before any await (use_build_context_synchronously)
-            final insightsProvider = context.read<InsightsProvider>();
             final goalProvider = context.read<GoalProvider>();
 
-            // 1. Refresh all profile data in parallel first
+            // Refresh all profile data in parallel first
             await Future.wait([
               stats.fetchAllStats(
                 leetcode: leetcodeUser,
@@ -108,10 +104,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               stats.fetchUpcomingContests(cfHandle: cfUser, lcHandle: leetcodeUser),
             ]);
 
-            // 2. Generate fresh AI insights AFTER stats are updated
             if (mounted) {
-              // forceRefresh bypasses the 4-hour cache on manual pull-to-refresh
-              await insightsProvider.forceRefresh(stats, goalProvider, github);
+              goalProvider.checkProgressAndNotifyCompletion(stats, github);
             }
           },
 
@@ -256,11 +250,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   });
                   return const SizedBox.shrink();
                 }),
-
-                // One-shot insights loader: only calls AI if cache is empty.
-                // Wrapped in its own StatefulWidget so it fires ONCE on mount,
-                // not on every dashboard rebuild.
-                _InsightsLoader(stats: stats, github: github),
               ],
             ),
           ),
@@ -534,38 +523,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Fires insights fetch ONCE on mount — not on every rebuild.
-// Using a StatefulWidget ensures initState runs exactly once per widget
-// lifetime, unlike Builder+postFrameCallback which reruns every rebuild.
-// ──────────────────────────────────────────────────────────────────────────────
-class _InsightsLoader extends StatefulWidget {
-  final StatsProvider stats;
-  final GithubProvider github;
-
-  const _InsightsLoader({required this.stats, required this.github});
-
-  @override
-  State<_InsightsLoader> createState() => _InsightsLoaderState();
-}
-
-class _InsightsLoaderState extends State<_InsightsLoader> {
-  @override
-  void initState() {
-    super.initState();
-    // Defer until after the first frame so providers are fully ready
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (widget.stats.isLoading || widget.stats.totalSolved == 0) return;
-
-      final insights = context.read<InsightsProvider>();
-      final goals = context.read<GoalProvider>();
-
-      // refreshInsights respects the 4-hour cache — skips API if still fresh
-      insights.refreshInsights(widget.stats, goals, widget.github);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}

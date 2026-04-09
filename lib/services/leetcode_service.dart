@@ -154,11 +154,15 @@ class LeetcodeService {
         totalProblems
         contest { title startTime }
       }
-      recentSubmissionList(username: $username, limit: 15) {
+      recentSubmissionList(username: $username, limit: 50) {
         title
         titleSlug
         statusDisplay
-        lang
+        timestamp
+      }
+      recentAcSubmissionList(username: $username, limit: 50) {
+        title
+        titleSlug
         timestamp
       }
     }
@@ -316,23 +320,67 @@ class LeetcodeService {
       }
     }
 
-    // ── Recent submissions
-    final List<Submission> recentSubmissions = [];
-    final recentList = data?["recentSubmissionList"] as List?;
-    if (recentList != null) {
-      for (final item in recentList) {
+    // ── Recent submissions (Total)
+    final Map<String, Submission> merged = {};
+    
+    // First, process all submissions to get the full list (including fails)
+    final totalList = data?["recentSubmissionList"] as List?;
+    if (totalList != null) {
+      for (final item in totalList) {
         try {
           final i = item as Map<String, dynamic>;
-          recentSubmissions.add(Submission(
+          final time = _toInt(i["timestamp"]);
+          final slug = i["titleSlug"]?.toString() ?? "";
+          final key = "${slug}_$time";
+          
+          merged[key] = Submission(
             title: i["title"]?.toString() ?? "Problem",
-            titleSlug: i["titleSlug"]?.toString() ?? "",
+            titleSlug: slug,
             status: i["statusDisplay"]?.toString() ?? "Completed",
             lang: i["lang"]?.toString() ?? "",
-            timestamp: DateTime.fromMillisecondsSinceEpoch((_toInt(i["timestamp"])) * 1000),
-          ));
+            timestamp: DateTime.fromMillisecondsSinceEpoch(time * 1000),
+          );
         } catch (_) {}
       }
     }
+
+    // Second, process AC list to add difficulty info
+    final acList = data?["recentAcSubmissionList"] as List?;
+    if (acList != null) {
+      for (final item in acList) {
+        try {
+          final i = item as Map<String, dynamic>;
+          final time = _toInt(i["timestamp"]);
+          final slug = i["titleSlug"]?.toString() ?? "";
+          final key = "${slug}_$time";
+          
+          if (merged.containsKey(key)) {
+            // Update existing entry with difficulty
+            final existing = merged[key]!;
+            merged[key] = Submission(
+              title: existing.title,
+              titleSlug: existing.titleSlug,
+              status: existing.status,
+              difficulty: i["difficulty"]?.toString() ?? existing.difficulty,
+              lang: existing.lang,
+              timestamp: existing.timestamp,
+            );
+          } else {
+            // Add new if not present
+            merged[key] = Submission(
+              title: i["title"]?.toString() ?? "Problem",
+              titleSlug: slug,
+              status: "Accepted",
+              difficulty: i["difficulty"]?.toString(),
+              timestamp: DateTime.fromMillisecondsSinceEpoch(time * 1000),
+            );
+          }
+        } catch (_) {}
+      }
+    }
+
+    final List<Submission> recentSubmissions = merged.values.toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     // ── Badges
     final List<LeetCodeBadge> badges = [];

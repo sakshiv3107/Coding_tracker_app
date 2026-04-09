@@ -87,14 +87,11 @@ class WeeklyReportCard extends StatelessWidget {
               runSpacing: 6,
               children: snapshot.topicsCovered.map((t) => _chip(context, t)).toList(),
             ),
-            const SizedBox(height: 16),
           ],
 
-          // ── AI Summary / Generate button ──────────────────────────────────
-          if (report == null && errorMessage == null)
-            _buildGenerateButton(context)
-          else if (errorMessage != null)
-            _buildError(context)
+          // ── AI Summary ──────────────────────────────────
+          if (errorMessage != null)
+             _buildError(context)
           else ...[
             const Divider(height: 24, thickness: 0.5),
             Row(
@@ -111,45 +108,54 @@ class WeeklyReportCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                TextButton(
+                IconButton(
                   onPressed: onGenerate,
-                  style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact),
-                  child: const Text('Refresh', style: TextStyle(fontSize: 11)),
+                  icon: const Icon(Icons.refresh_rounded, size: 14),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Regenerate Summary',
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              report?['summary'] ??
-                  'Great week! Keep the momentum going.',
+              report?['summary'] ?? (isLoading ? 'Analyzing week...' : 'No activity detected this week to summarize.'),
               style: const TextStyle(fontSize: 13, height: 1.5),
             ),
             if (report?['focus'] != null && report!['focus']!.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.12)),
+                  color: theme.colorScheme.primary.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
                 ),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.arrow_forward_rounded,
-                        size: 14, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Next Week: ${report!['focus']!}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
+                    Row(
+                      children: [
+                        Icon(Icons.bolt_rounded, size: 14, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'NEXT WEEK PLAN',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                            letterSpacing: 0.5,
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      report!['focus']!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
                       ),
                     ),
                   ],

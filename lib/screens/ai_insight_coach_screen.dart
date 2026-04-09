@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../providers/stats_provider.dart';
+import '../providers/profile_provider.dart';
 import '../models/insight_model.dart';
 import '../services/insight_service.dart';
 import '../widgets/insight/daily_insight_banner.dart';
@@ -63,6 +64,7 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
 
   // ── Readiness score ────────────────────────────────────────────────────────
   int _readinessScore = 0;
+  String? _readinessVerdict;
   Map<String, int> _readinessSubScores = {
     'Consistency': 0, 'Breadth': 0, 'Mix': 0, 'Recent': 0,
   };
@@ -164,13 +166,11 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
         .toList();
 
     // Use tag stats to infer topics worked on recently
-    // Top solved tags more likely correspond to recent work
     final topTags = tagStats.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     final recentTopics = <String>{};
 
-    // Map top LeetCode tags to our display names
     for (final tag in topTags.take(6)) {
       for (final entry in _topicAliases.entries) {
         if (entry.value.any((a) => a.toLowerCase() == tag.key.toLowerCase())) {
@@ -179,7 +179,6 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
       }
     }
 
-    // Heuristic guess from problem titles
     for (final title in recentAccepted) {
       if (title.contains('tree') || title.contains('trie')) recentTopics.add('Trees');
       if (title.contains('graph') || title.contains('path')) recentTopics.add('Graphs');
@@ -192,6 +191,18 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     }
 
     return recentTopics.take(4).toList();
+  }
+
+  List<String> _getRecentProblemNames(StatsProvider stats) {
+    final lc = stats.leetcodeStats;
+    final subs = lc?.recentSubmissions ?? [];
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+    
+    return subs
+        .where((s) => s.timestamp.isAfter(sevenDaysAgo) && s.status.toLowerCase().contains('accept'))
+        .map((s) => s.title)
+        .take(15)
+        .toList();
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -222,11 +233,29 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
         .length;
     final recency = ((recent7 / 7) * 25).clamp(0.0, 25.0).toInt();
 
+    String verdict;
+    final totalReadiness = (consistency + breadth + mix + recency).clamp(0, 100);
+    
+    if (totalReadiness >= 85) {
+      verdict = 'Peak performance! You are highly prepared for competitive success.';
+    } else if (totalReadiness >= 70) {
+      verdict = 'Great form. Focus on maintaining your daily streak to build more consistency.';
+    } else if (totalReadiness >= 50) {
+      verdict = 'Solid foundation. Work on Hard problems to improve your difficulty mix.';
+    } else if (breadth < 15) {
+      verdict = 'Broaden your horizons. Try switching topics more frequently.';
+    } else if (recency < 10) {
+      verdict = 'Warm up. Your recent solve rate is a bit low for contest performance.';
+    } else {
+      verdict = 'Keep practicing. Consistency and difficulty mix are your key areas of growth.';
+    }
+
     setState(() {
       _readinessSubScores = {
         'Consistency': consistency, 'Breadth': breadth, 'Mix': mix, 'Recent': recency,
       };
-      _readinessScore = (consistency + breadth + mix + recency).clamp(0, 100);
+      _readinessScore = totalReadiness;
+      _readinessVerdict = verdict;
     });
   }
 
@@ -338,18 +367,42 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
         .toList();
 
     int easy = 0, medium = 0, hard = 0, solved = 0, totalSubs = 0;
+    // We track problem titles to avoid double-counting repeats
+    final seenAccepted = <String>{};
     for (final s in thisWeekSubs) {
       totalSubs++;
       if (s.status.toLowerCase().contains('accept')) {
+        final slug = (s.titleSlug ?? s.title).toLowerCase();
+        if (seenAccepted.contains(slug)) continue; // skip re-submissions
+        seenAccepted.add(slug);
         solved++;
         final diff = (s.difficulty ?? '').toLowerCase();
-        if (diff == 'easy') easy++;
-        else if (diff == 'medium') medium++;
-        else if (diff == 'hard') hard++;
+        if (diff == 'easy') {
+          easy++;
+        } else if (diff == 'medium') {
+          medium++;
+        } else if (diff == 'hard') {
+          hard++;
+        }
       }
     }
 
-    // Topics covered this week — infer from accepted problem titles
+    // If difficulty is missing for all, use tag-based heuristic
+    if (solved > 0 && easy == 0 && medium == 0 && hard == 0) {
+      // Infer from LeetCode tag stats: compare solved in hard topics vs easy ones
+      final hardTopicCount = _resolveTag(tagStats, 'Dynamic Programming') +
+          _resolveTag(tagStats, 'Graphs') +
+          _resolveTag(tagStats, 'Greedy');
+      final easyTopicCount = _resolveTag(tagStats, 'Arrays') +
+          _resolveTag(tagStats, 'Strings');
+      final total = (hardTopicCount + easyTopicCount).clamp(1, 999999);
+      hard = ((hardTopicCount / total) * solved).round();
+      easy = ((easyTopicCount / total) * solved).round();
+      medium = solved - easy - hard;
+      if (medium < 0) medium = 0;
+    }
+
+    // Topics covered this week — infer from accepted problem titles AND tag stats
     final topicsCovered = <String>{};
     for (final s in thisWeekSubs) {
       if (!s.status.toLowerCase().contains('accept')) continue;
@@ -363,16 +416,6 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
       if (t.contains('greedy') || t.contains('jump') || t.contains('interval')) topicsCovered.add('Greedy');
       if (t.contains('bit') || t.contains('xor')) topicsCovered.add('Bit Manipulation');
       if (t.contains('math') || t.contains('prime') || t.contains('gcd')) topicsCovered.add('Math');
-    }
-
-    // Also pull top tag stats for supplementary coverage
-    final topTags = tagStats.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    for (final tag in topTags.take(3)) {
-      for (final entry in _topicAliases.entries) {
-        if (entry.value.any((a) => a.toLowerCase() == tag.key.toLowerCase())) {
-          topicsCovered.add(entry.key);
-        }
-      }
     }
 
     return WeeklySnapshot(
@@ -486,20 +529,22 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     if (mounted) setState(() => _weeklySnapshot = weekly);
 
     await Future.wait([
-      _loadDailyInsight(snapshot),
+      _loadDailyInsight(snapshot, stats),
       _loadFocusProblems(snapshot, stats),
+      _generateWeeklyReport(),
       _fetchCodeforcesContest(),
       _loadGoals(),
     ]);
   }
 
-  Future<void> _loadDailyInsight(StatsSnapshot snapshot) async {
+  Future<void> _loadDailyInsight(StatsSnapshot snapshot, StatsProvider stats) async {
     if (!mounted) return;
     setState(() { _bannerLoading = true; _bannerError = null; });
     try {
       final prefs = await SharedPreferences.getInstance();
       final today = DateTime.now();
-      final key = 'coach_banner_${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      // v2 key busts old cache that had generic 'graph problems' advice
+      final key = 'coach_banner_v2_${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       final ci = prefs.getString('${key}_insight');
       final cn = prefs.getString('${key}_nudge');
@@ -509,7 +554,9 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
         return;
       }
 
-      final result = await InsightService.getDailyInsight(snapshot);
+      final recentProblemNames = _getRecentProblemNames(stats);
+      final result = await InsightService.getDailyInsight(
+        snapshot, recentProblemNames: recentProblemNames);
       if (!mounted) return;
       await prefs.setString('${key}_insight', result['insight'] ?? '');
       await prefs.setString('${key}_nudge', result['nudge'] ?? '');
@@ -524,9 +571,12 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     setState(() { _focusLoading = true; _focusError = null; });
     try {
       final recentTopics = _extractRecentTopics(stats);
+      final recentProblemNames = _getRecentProblemNames(stats);
+      
       final problems = await InsightService.getFocusProblems(
         recentTopics: recentTopics,
         weakTopics: snapshot.topWeakTopics,
+        recentProblemNames: recentProblemNames,
         totalSolved: snapshot.totalSolved,
         mediumSolved: snapshot.mediumSolved,
         hardSolved: snapshot.hardSolved,
@@ -557,8 +607,9 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final weekNum = _currentWeekNumber();
-      final cs = prefs.getString('wk_summary_$weekNum');
-      final cf = prefs.getString('wk_focus_$weekNum');
+      // v2 cache key to bust stale summaries after prompt upgrades
+      final cs = prefs.getString('wk_summary_v2_$weekNum');
+      final cf = prefs.getString('wk_focus_v2_$weekNum');
       if (cs != null && cf != null && cs.isNotEmpty) {
         if (mounted) setState(() { _weeklyReport = {'summary': cs, 'focus': cf}; _weeklyLoading = false; });
         return;
@@ -567,8 +618,8 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
       final snapshot = _weeklySnapshot ?? _buildWeeklySnapshot(stats);
       final result = await InsightService.getWeeklyReport(snapshot);
       if (!mounted) return;
-      await prefs.setString('wk_summary_$weekNum', result['summary'] ?? '');
-      await prefs.setString('wk_focus_$weekNum', result['focus'] ?? '');
+      await prefs.setString('wk_summary_v2_$weekNum', result['summary'] ?? '');
+      await prefs.setString('wk_focus_v2_$weekNum', result['focus'] ?? '');
       setState(() { _weeklyReport = result; _weeklyLoading = false; });
     } catch (e) {
       if (mounted) setState(() { _weeklyError = e.toString(); _weeklyLoading = false; });
@@ -581,7 +632,9 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     final snapshot = _buildSnapshot(stats);
     setState(() { _chatHistory.add({'role': 'user', 'content': message}); _chatTyping = true; _chatError = null; });
     try {
-      final response = await InsightService.getChatResponse(_chatHistory, snapshot);
+      final recentProblemNames = _getRecentProblemNames(stats);
+      final response = await InsightService.getChatResponse(
+        _chatHistory, snapshot, recentProblemNames: recentProblemNames);
       if (mounted) setState(() { _chatHistory.add({'role': 'model', 'content': response}); _chatTyping = false; });
     } catch (e) {
       if (mounted) setState(() { _chatError = 'Couldn\'t reach AI coach.'; _chatTyping = false; });
@@ -699,7 +752,7 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
                   nudge: _bannerNudge,
                   isLoading: _bannerLoading,
                   errorMessage: _bannerError,
-                  onRetry: () => _loadDailyInsight(_buildSnapshot(stats)),
+                  onRetry: () => _loadDailyInsight(_buildSnapshot(stats), stats),
                 ),
                 const SizedBox(height: 24),
 
@@ -749,6 +802,7 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
                 const SizedBox(height: 12),
                 ContestReadinessCard(
                   score: _readinessScore,
+                  verdict: _readinessVerdict,
                   subScores: _readinessSubScores,
                   upcomingContest: _upcomingContest,
                   upcomingContestTime: _upcomingContestTime,
@@ -786,8 +840,23 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
   }
 
   Future<void> _onRefresh() async {
-    // Also trigger StatsProvider refresh if needed
-    await context.read<StatsProvider>().fetchAllStats();
+    final profile = context.read<ProfileProvider>();
+    final stats = context.read<StatsProvider>();
+
+    final leetcodeUser = profile.profile?['leetcode'] ?? '';
+    final cfUser = profile.profile?['codeforces'] ?? '';
+    final ccUser = profile.profile?['codechef'] ?? '';
+    final hrUser = profile.profile?['hackerrank'] ?? '';
+
+    // Pass existing handles so fetchAllStats doesn't wipe them
+    await stats.fetchAllStats(
+      leetcode: leetcodeUser,
+      codeforces: cfUser,
+      codechef: ccUser,
+      hackerrank: hrUser,
+      forceRefresh: true,
+    );
+    
     await _initData();
   }
 

@@ -30,9 +30,6 @@ import 'providers/goal_provider.dart';
 import 'providers/achievement_provider.dart';
 import 'providers/resume_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/insights_provider.dart';
-import 'providers/ai_insights_provider.dart';
-import 'screens/ai_insights_screen.dart';
 import 'screens/ai_insight_coach_screen.dart';
 
 // Services
@@ -75,8 +72,6 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => GoalProvider()..init()),
         ChangeNotifierProvider(create: (_) => ResumeProvider()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()),
-        ChangeNotifierProvider(create: (_) => InsightsProvider()),
-        ChangeNotifierProvider(create: (_) => AIInsightsProvider()..init()),
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),
           initialData: null,
@@ -113,7 +108,6 @@ class MyApp extends StatelessWidget {
         '/contests': (context) => const ContestCalendarScreen(),
         '/activity_heatmap': (context) => const ActivityTrackingScreen(),
         '/review': (context) => const ReviewScreen(),
-        '/ai_insights': (context) => const AIInsightsScreen(),
         '/ai-coach': (context) => const AIInsightCoachScreen(),
       },
     ); // Added a copyWith just to ensure a fresh state if possible

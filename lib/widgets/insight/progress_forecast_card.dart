@@ -118,8 +118,8 @@ class ProgressForecastCard extends StatelessWidget {
 
   Widget _buildGoalRow(BuildContext context, CoachGoal goal, double dailyRate) {
     final theme = Theme.of(context);
+    final now = DateTime.now();
 
-    // Determine the current value based on goal type
     int current;
     switch (goal.type) {
       case 'problems': current = totalSolved; break;
@@ -131,81 +131,182 @@ class ProgressForecastCard extends StatelessWidget {
     final progress = goal.target > 0 ? (current / goal.target).clamp(0.0, 1.0) : 0.0;
     final gap = (goal.target - current).clamp(0, 999999);
     
-    // ETA only makes sense for problems/rating if we can estimate progress rate.
-    // For now we only estimate for problems based on monthly pace.
-    final eta = (goal.type == 'problems' && dailyRate > 0 && gap > 0) 
-        ? (gap / dailyRate).ceil() 
-        : null;
+    // Calculate days remaining if targetDate exists
+    final daysRemaining = goal.targetDate != null 
+        ? goal.targetDate!.difference(now).inDays 
+        : 30; // Default to 30 day window for pace calculation if no date
 
-    Color progressColor;
-    if (progress >= 1.0) progressColor = Colors.green;
-    else if (progress >= 0.8) progressColor = Colors.lightGreen;
-    else if (progress >= 0.5) progressColor = Colors.amber;
-    else progressColor = theme.colorScheme.primary;
+    final reqVelocity = daysRemaining > 0 ? gap / daysRemaining : gap.toDouble();
+    final isAhead = dailyRate >= reqVelocity;
+    final etaDays = (dailyRate > 0 && gap > 0) ? (gap / dailyRate).ceil() : null;
+
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    if (progress >= 1.0) {
+      statusColor = Colors.green;
+      statusText = 'Completed';
+      statusIcon = Icons.check_circle_outline;
+    } else if (dailyRate == 0) {
+      statusColor = Colors.grey;
+      statusText = 'No Activity';
+      statusIcon = Icons.pause_circle_outline;
+    } else if (isAhead) {
+      statusColor = Colors.green;
+      statusText = 'On Track';
+      statusIcon = Icons.trending_up_rounded;
+    } else {
+      statusColor = Colors.orange;
+      statusText = 'Needs Focus';
+      statusIcon = Icons.bolt_rounded;
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.onSurface.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: progressColor.withOpacity(0.15)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _goalIcon(goal.type, theme),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  goal.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // Top Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                children: [
+                  _goalIcon(goal.type, theme),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          goal.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        Text(
+                          'Target: ${goal.target} • ${goal.type.toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => onRemoveGoal(goal),
+                    icon: Icon(Icons.delete_outline_rounded, 
+                        size: 18, color: theme.colorScheme.error.withOpacity(0.7)),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ),
-              Text(
-                '$current / ${goal.target}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: progressColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => onRemoveGoal(goal),
-                child: Icon(Icons.close_rounded,
-                    size: 16, color: theme.colorScheme.onSurface.withOpacity(0.3)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 6,
-              backgroundColor: progressColor.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation(progressColor),
             ),
-          ),
-          if (progress >= 1.0) ...[
-            const SizedBox(height: 8),
-            const Text('Goal reached! 🎉', style: TextStyle(fontSize: 11, color: Colors.green)),
-          ] else if (eta != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'At current pace: ~$eta days to goal',
-              style: TextStyle(
-                fontSize: 11,
-                color: theme.colorScheme.onSurface.withOpacity(0.45),
+            
+            // Progress Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${(progress * 100).toInt()}% Done',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                      Text(
+                        '$current / ${goal.target}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 6,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.onSurface.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 800),
+                        height: 6,
+                        width: (MediaQuery.of(context).size.width - 72) * progress,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [statusColor.withOpacity(0.7), statusColor],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: statusColor.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Footer Info
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: statusColor.withOpacity(0.04),
+              child: Row(
+                children: [
+                  Icon(statusIcon, size: 14, color: statusColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 11, 
+                      fontWeight: FontWeight.bold, 
+                      color: statusColor
+                    ),
+                  ),
+                  const Spacer(),
+                  if (progress < 1.0) 
+                    Text(
+                      etaDays != null ? 'ETA: ~$etaDays days' : 'No activity yet',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  if (progress >= 1.0)
+                    const Icon(Icons.stars, size: 16, color: Colors.green),
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -284,20 +385,21 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   final TextEditingController _titleCtrl = TextEditingController();
   final TextEditingController _targetCtrl = TextEditingController();
   bool _isCustom = false;
+  DateTime? _targetDate;
 
-  late final List<(String, int, String)> _presets;
+  late final List<(String, int, String, int)> _presets;
 
   @override
   void initState() {
     super.initState();
     _presets = [
-      ('Solve ${widget.currentSolved + 50} Problems', widget.currentSolved + 50, 'problems'),
-      ('Solve ${widget.currentSolved + 100} Problems', widget.currentSolved + 100, 'problems'),
-      ('Solve ${widget.currentSolved + 250} Problems', widget.currentSolved + 250, 'problems'),
-      ('Reach ${widget.currentRating + 100} Rating', widget.currentRating + 100, 'rating'),
-      ('Reach ${widget.currentRating + 250} Rating', widget.currentRating + 250, 'rating'),
-      ('Maintain ${widget.currentStreak + 7}-Day Streak', widget.currentStreak + 7, 'streak'),
-      ('Maintain ${widget.currentStreak + 30}-Day Streak', widget.currentStreak + 30, 'streak'),
+      ('Solve ${widget.currentSolved + 50} Problems', widget.currentSolved + 50, 'problems', 14),
+      ('Solve ${widget.currentSolved + 100} Problems', widget.currentSolved + 100, 'problems', 30),
+      ('Solve ${widget.currentSolved + 250} Problems', widget.currentSolved + 250, 'problems', 90),
+      ('Reach ${widget.currentRating + 100} Rating', widget.currentRating + 100, 'rating', 30),
+      ('Reach ${widget.currentRating + 250} Rating', widget.currentRating + 250, 'rating', 90),
+      ('Maintain ${widget.currentStreak + 7}-Day Streak', widget.currentStreak + 7, 'streak', 7),
+      ('Maintain ${widget.currentStreak + 30}-Day Streak', widget.currentStreak + 30, 'streak', 30),
     ];
   }
 
@@ -363,7 +465,6 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                   onChanged: (v) {
                     setState(() {
                       _selectedType = v!;
-                      // Pre-fill target with something logical if empty
                       if (_targetCtrl.text.isEmpty) {
                         if (v == 'problems') _targetCtrl.text = (widget.currentSolved + 50).toString();
                         if (v == 'rating') _targetCtrl.text = (widget.currentRating + 100).toString();
@@ -373,6 +474,37 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                   },
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().add(const Duration(days: 30)),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) setState(() => _targetDate = date);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Text(
+                      _targetDate == null 
+                        ? 'Set Target Date (Optional)' 
+                        : 'Target Date: ${_targetDate!.day}/${_targetDate!.month}/${_targetDate!.year}',
+                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -387,6 +519,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                     title: title,
                     target: target,
                     type: _selectedType,
+                    targetDate: _targetDate,
                   ));
                   Navigator.pop(context);
                 },
@@ -411,6 +544,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     leading: Icon(_getIcon(preset.$3), size: 18),
                     title: Text(preset.$1, style: const TextStyle(fontSize: 13)),
+                    subtitle: Text('Tempo: ~${preset.$4} days', style: const TextStyle(fontSize: 10)),
                     trailing: isSelected ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary) : null,
                     onTap: () => setState(() => _selectedPreset = preset.$1),
                   );
@@ -428,6 +562,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                     title: preset.$1,
                     target: preset.$2,
                     type: preset.$3,
+                    targetDate: DateTime.now().add(Duration(days: preset.$4)),
                   ));
                   Navigator.pop(context);
                 },
