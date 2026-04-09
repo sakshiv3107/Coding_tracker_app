@@ -12,6 +12,7 @@ class GlassmorphicContainer extends StatelessWidget {
   final Gradient? gradient;
   final double? width;
   final double? height;
+  final VoidCallback? onTap;
 
   const GlassmorphicContainer({
     super.key,
@@ -25,6 +26,7 @@ class GlassmorphicContainer extends StatelessWidget {
     this.gradient,
     this.width,
     this.height,
+    this.onTap,
   });
 
   @override
@@ -43,24 +45,28 @@ class GlassmorphicContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              // Use theme surface color instead of hardcoded white to match the app better
-              color: isDark 
-                  ? theme.colorScheme.surface.withOpacity(0.6) 
-                  : Colors.white.withOpacity(0.7),
+            child: InkWell(
+              onTap: onTap,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: border ?? Border.all(
-                color: isDark 
-                    ? Colors.white.withOpacity(0.08) 
-                    : theme.colorScheme.primary.withOpacity(0.1),
-                width: 1.0,
+              child: Container(
+                padding: padding,
+                decoration: BoxDecoration(
+                  // Use theme surface color instead of hardcoded white to match the app better
+                  color: isDark 
+                      ? theme.colorScheme.surface.withOpacity(0.6) 
+                      : Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  border: border ?? Border.all(
+                    color: isDark 
+                        ? Colors.white.withOpacity(0.08) 
+                        : theme.colorScheme.primary.withOpacity(0.1),
+                    width: 1.0,
+                  ),
+                  gradient: gradient,
+                ),
+                child: child,
               ),
-              gradient: gradient,
             ),
-            child: child,
-          ),
         ),
       ),
     );

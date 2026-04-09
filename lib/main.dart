@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
         '/ai-coach': (context) => const AIInsightCoachScreen(),
         '/goals': (context) => const GoalsScreen(),
       },
-    ); // Added a copyWith just to ensure a fresh state if possible
+    ); 
   }
 }
 

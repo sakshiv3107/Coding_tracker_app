@@ -15,7 +15,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'modern_card.dart';
+import 'glassmorphic_container.dart';
 import 'skeleton_loading.dart';
 import '../theme/app_theme.dart';
 
@@ -211,13 +211,11 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                 ? FontAwesomeIcons.circleExclamation
                 : icon;
 
-    return ModernCard(
+    return GlassmorphicContainer(
       padding: EdgeInsets.zero,
-      margin: EdgeInsets.zero,
-      showShadow: true,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -226,23 +224,24 @@ class PlatformQuickStatsGrid extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: stateColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(14),
+                    color: stateColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: stateColor.withValues(alpha: 0.2)),
                   ),
                   child: stateIcon is IconData 
-                      ? Icon(stateIcon, color: stateColor, size: 18)
-                      : FaIcon(stateIcon, color: stateColor, size: 18),
+                      ? Icon(stateIcon, color: stateColor, size: 20)
+                      : FaIcon(stateIcon, color: stateColor, size: 20),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 10,
-                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,38 +250,38 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                   Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      letterSpacing: -0.2,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      letterSpacing: -0.3,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   if (hasError || isRateLimited || isNotSet) ...[
                     FittedBox(
-                      fit: MediaQuery.of(context).textScaleFactor > 1.2 ? BoxFit.scaleDown : BoxFit.none,
+                      fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
                         isRateLimited 
                             ? 'Rate Limited' 
                             : isNotSet 
-                                ? 'Username Not Entered'
-                                : 'Profile Error',
+                                ? 'Offline'
+                                : 'Update Req.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: stateColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
                         ),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isNotSet ? 'Tap to configure' : 'Tap to retry',
+                      isNotSet ? 'Tap to setup' : 'Tap to retry',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: stateColor.withOpacity(0.7),
+                        color: stateColor.withValues(alpha: 0.6),
                         fontSize: 10,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ] else ...[
@@ -292,18 +291,18 @@ class PlatformQuickStatsGrid extends StatelessWidget {
                       child: Text(
                         mainStat,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.9),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
                         ),
                       ),
                     ),
                     Text(
                       subStat,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.4),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weekly_activity.dart';
-import 'modern_card.dart';
+import 'glassmorphic_container.dart';
 import 'responsive_row.dart';
 
 class WeeklyActivityChart extends StatefulWidget {
@@ -82,10 +82,10 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxVal = _weeklyActivity.maxActivity.toDouble().clamp(1.0, double.infinity);
 
-    return ModernCard(
+    return GlassmorphicContainer(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,19 +96,31 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'This Week',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   if (_weeklyActivity.isDummyData) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('SAMPLE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      child: Text(
+                        'DEMO',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -117,19 +129,19 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildLegendDot('LC', _leetcodeColor),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   _buildLegendDot('GH', _githubColor),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   _buildLegendDot('HR', _hackerrankColor),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   _buildLegendDot('CC', _codechefColor),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           SizedBox(
-            height: 160,
+            height: 180,
             child: AnimatedBuilder(
               animation: _animation,
               builder: (context, _) => BarChart(
@@ -137,29 +149,26 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                   alignment: BarChartAlignment.spaceAround,
                   maxY: maxVal * 1.3,
                   barTouchData: BarTouchData(
+                    enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => isDark ? Colors.grey[800]! : Colors.white,
-                      tooltipBorderRadius: BorderRadius.circular(10),
+                      getTooltipColor: (_) => Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                      tooltipBorderRadius: BorderRadius.circular(12),
+                      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final day = _weeklyActivity.days[groupIndex];
                         String label = '';
                         int val = 0;
-                        if (rodIndex == 0) {
-                          label = 'LC';
-                          val = day.leetcodeSubmissions;
-                        } else if (rodIndex == 1) {
-                          label = 'GH';
-                          val = day.githubCommits;
-                        } else if (rodIndex == 2) {
-                          label = 'HR';
-                          val = day.hackerrankSubmissions;
-                        } else {
-                          label = 'CC';
-                          val = day.codechefSubmissions;
-                        }
+                        if (rodIndex == 0) { label = 'LC'; val = day.leetcodeSubmissions; }
+                        else if (rodIndex == 1) { label = 'GH'; val = day.githubCommits; }
+                        else if (rodIndex == 2) { label = 'HR'; val = day.hackerrankSubmissions; }
+                        else { label = 'CC'; val = day.codechefSubmissions; }
                         return BarTooltipItem(
                           '$label: $val',
-                          const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         );
                       },
                     ),
@@ -172,16 +181,17 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
-                          const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                          const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
                           final index = value.toInt() % 7;
                           return Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.only(top: 10),
                             child: Text(
                               days[index],
                               style: TextStyle(
-                                color: isDark ? Colors.white54 : Colors.black45,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 10,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 9,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           );
@@ -193,7 +203,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (val) => FlLine(
-                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
                       strokeWidth: 1,
                     ),
                   ),
@@ -202,32 +212,12 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     final day = _weeklyActivity.days[i];
                     return BarChartGroupData(
                       x: i,
-                      barsSpace: 2,
+                      barsSpace: 4,
                       barRods: [
-                        BarChartRodData(
-                          toY: day.leetcodeSubmissions * _animation.value,
-                          color: _leetcodeColor,
-                          width: 6,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                        ),
-                        BarChartRodData(
-                          toY: day.githubCommits * _animation.value,
-                          color: _githubColor,
-                          width: 6,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                        ),
-                        BarChartRodData(
-                          toY: day.hackerrankSubmissions * _animation.value,
-                          color: _hackerrankColor,
-                          width: 6,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                        ),
-                        BarChartRodData(
-                          toY: day.codechefSubmissions * _animation.value,
-                          color: _codechefColor,
-                          width: 6,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                        ),
+                        _buildRod(day.leetcodeSubmissions.toDouble(), _leetcodeColor),
+                        _buildRod(day.githubCommits.toDouble(), _githubColor),
+                        _buildRod(day.hackerrankSubmissions.toDouble(), _hackerrankColor),
+                        _buildRod(day.codechefSubmissions.toDouble(), _codechefColor),
                       ],
                     );
                   }),
@@ -236,6 +226,20 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  BarChartRodData _buildRod(double value, Color color) {
+    return BarChartRodData(
+      toY: value * _animation.value,
+      color: color,
+      width: 7,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+      backDrawRodData: BackgroundBarChartRodData(
+        show: true,
+        toY: 0,
+        color: color.withValues(alpha: 0.05),
       ),
     );
   }

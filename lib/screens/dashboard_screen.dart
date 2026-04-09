@@ -29,7 +29,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _rateLimitBannerDismissed = false;
+  final bool _rateLimitBannerDismissed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.1 : 0.04),
               ),
             ).animate(onPlay: (c) => c.repeat(reverse: true))
              .move(begin: const Offset(0, 0), end: const Offset(-20, 20), duration: 10.seconds),
@@ -117,7 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.tertiary.withValues(alpha: 0.08),
+                color: theme.colorScheme.tertiary.withValues(alpha: theme.brightness == Brightness.dark ? 0.08 : 0.03),
               ),
             ).animate(onPlay: (c) => c.repeat(reverse: true))
              .move(begin: const Offset(0, 0), end: const Offset(30, -30), duration: 15.seconds),
@@ -130,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.secondary.withValues(alpha: 0.06),
+                color: theme.colorScheme.secondary.withValues(alpha: theme.brightness == Brightness.dark ? 0.06 : 0.02),
               ),
             ).animate(onPlay: (c) => c.repeat(reverse: true))
              .move(begin: const Offset(0, 0), end: const Offset(-40, -20), duration: 12.seconds),
@@ -491,32 +491,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildRateLimitBanner() {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        color: Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.access_time_rounded,
-              color: Colors.amber, size: 18),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'API rate limit reached. Showing cached data. Pull to retry.',
-              style: TextStyle(
-                  color: Colors.amber,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.hourglass_bottom_rounded, color: Colors.amber, size: 20),
           ),
-          GestureDetector(
-            onTap: () =>
-                setState(() => _rateLimitBannerDismissed = true),
-            child: const Icon(Icons.close_rounded,
-                color: Colors.amber, size: 16),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rate Limited',
+                  style: TextStyle(color: Colors.amber, fontWeight: FontWeight.w900, fontSize: 14),
+                ),
+                Text(
+                  'Showing cached data. Pull to refresh.',
+                  style: TextStyle(color: Colors.amber, fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -524,56 +529,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCareerBanner(BuildContext context) {
-    final theme = Theme.of(context);
-    return GestureDetector(
+    return GlassmorphicContainer(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      borderRadius: 28,
+      gradient: LinearGradient(
+        colors: [
+          const Color(0xFF6366F1).withValues(alpha: 0.8),
+          const Color(0xFFA855F7).withValues(alpha: 0.8),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
       onTap: () => Navigator.pushNamed(context, '/resume'),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 28),
           ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Career Accelerator',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      letterSpacing: -0.3,
-                    ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Career Accelerator',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 19,
+                    letterSpacing: -0.5,
                   ),
-                  Text(
-                    'Export your coding portfolio to PDF',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  'Export your coding legacy to PDF',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
-          ],
-        ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 24),
+        ],
       ),
     );
   }
@@ -655,13 +660,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: theme.colorScheme.primary),
+        ),
+        const SizedBox(width: 12),
         Text(
           title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: -0.5,
+            fontSize: 18,
           ),
         ),
       ],

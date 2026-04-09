@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'modern_card.dart';
+import 'glassmorphic_container.dart';
 // import '../theme/app_theme.dart';
 
 class SkillRadarChart extends StatelessWidget {
@@ -28,45 +28,52 @@ class SkillRadarChart extends StatelessWidget {
       return value > 20 ? 20.0 : value;
     }).toList();
 
-    return ModernCard(
-      padding: const EdgeInsets.all(24),
+    return GlassmorphicContainer(
+      padding: const EdgeInsets.all(28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Skill Proficiency',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 250,
+            height: 280,
             child: RadarChart(
               RadarChartData(
                 radarShape: RadarShape.circle,
                 dataSets: [
                   RadarDataSet(
-                    fillColor: theme.colorScheme.primary.withOpacity(0.2),
+                    fillColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                     borderColor: theme.colorScheme.primary,
-                    entryRadius: 3,
+                    borderWidth: 3,
+                    entryRadius: 4,
                     dataEntries: data.map((v) => RadarEntry(value: v)).toList(),
                   ),
                 ],
                 radarBorderData: const BorderSide(color: Colors.transparent),
-                tickBorderData: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
-                gridBorderData: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
-                tickCount: 4,
+                tickBorderData: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                gridBorderData: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05), width: 1.5),
+                tickCount: 5,
                 ticksTextStyle: const TextStyle(color: Colors.transparent),
                 getTitle: (index, angle) {
                   return RadarChartTitle(
-                    text: categories[index],
+                    text: categories[index % categories.length],
                     angle: angle,
                   );
                 },
-                titlePositionPercentageOffset: 0.25,
+                titlePositionPercentageOffset: 0.3,
                 titleTextStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

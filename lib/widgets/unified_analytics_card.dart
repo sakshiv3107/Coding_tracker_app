@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glassmorphic_container.dart';
 import '../theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -29,111 +29,113 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final totalSolved = leetcode + codeforces + codechef + hackerrank;
 
-    return ModernCard(
+    return GlassmorphicContainer(
       padding: EdgeInsets.zero,
-      showShadow: true,
       borderRadius: 32,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(32),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'CUMULATIVE PROGRESS',
-                          style: theme.textTheme.labelSmall?.copyWith(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CUMULATIVE PROGRESS',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.5,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          totalSolved.toString(),
+                          style: theme.textTheme.headlineLarge?.copyWith(
+                            color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 2,
-                            color: AppTheme.textSecondaryDark.withOpacity(0.4),
+                            fontSize: 56,
+                            letterSpacing: -1,
+                            shadows: [
+                              Shadow(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            totalSolved.toString(),
-                            style: theme.textTheme.headlineLarge?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 48,
-                              letterSpacing: -1,
-                            ),
-                          ),
+                      ),
+                      Text(
+                        'Total Problems Decimated',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w700,
                         ),
-                        Text(
-                          'Total Problems Decimated',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondaryDark.withOpacity(0.6),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    height: 90,
-                    width: 90,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        PieChart(
-                          PieChartData(
-                            sectionsSpace: 2,
-                            centerSpaceRadius: 28,
-                            startDegreeOffset: 270,
-                            sections: _buildPieSections(theme),
-                          ),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  height: 100,
+                  width: 100,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      PieChart(
+                        PieChartData(
+                          sectionsSpace: 4,
+                          centerSpaceRadius: 32,
+                          startDegreeOffset: 270,
+                          sections: _buildPieSections(theme),
                         ),
-                        FaIcon(FontAwesomeIcons.circleNodes, color: theme.colorScheme.primary.withOpacity(0.3), size: 20),
-                      ],
-                    ),
+                      ),
+                      Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary.withValues(alpha: 0.5), size: 18),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceDarkLighter.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.03)),
                 ),
-                child: Column(
-                  children: [
-                    _buildPlatformRow('LeetCode', leetcode, AppTheme.leetCodeYellow),
-                    _divider(),
-                    _buildPlatformRow('Codeforces', codeforces, Colors.blueAccent),
-                    _divider(),
-                    _buildPlatformRow('CodeChef', codechef, const Color(0xFF8B4513)),
-                    _divider(),
-                    _buildPlatformRow('HackerRank', hackerrank, const Color(0xFF2EC366)),
-                  ],
-                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
               ),
-              const SizedBox(height: 24),
-              Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _buildQuickStat('NODES', _countConnected(), FontAwesomeIcons.networkWired, theme.colorScheme.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildQuickStat('REPOS', githubRepos, FontAwesomeIcons.folderOpen, AppTheme.githubGrey),
-                  ),
+                  _buildPlatformRow('LeetCode', leetcode, AppTheme.leetCodeYellow),
+                  _divider(),
+                  _buildPlatformRow('Codeforces', codeforces, const Color(0xFF60A5FA)),
+                  _divider(),
+                  _buildPlatformRow('CodeChef', codechef, const Color(0xFFC084FC)),
+                  _divider(),
+                  _buildPlatformRow('HackerRank', hackerrank, const Color(0xFF34D399)),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickStat('NODES', _countConnected(), Icons.hub_rounded, theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickStat('REPOS', githubRepos, Icons.folder_copy_rounded, const Color(0xFF94A3B8)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -129,13 +129,13 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
   Color _cellColor(int count, bool isDark) {
     if (count < 0) return Colors.transparent; // future/padding
     final empty = isDark
-        ? const Color(0xFF1E2A1E)
-        : const Color(0xFFEBF3EB);
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.05);
     if (count == 0) return empty;
     final base = widget.baseColor;
-    if (count <= 2) return base.withOpacity(0.35);
-    if (count <= 5) return base.withOpacity(0.60);
-    if (count <= 9) return base.withOpacity(0.80);
+    if (count <= 2) return base.withValues(alpha: 0.3);
+    if (count <= 5) return base.withValues(alpha: 0.5);
+    if (count <= 9) return base.withValues(alpha: 0.75);
     return base;
   }
 
@@ -157,42 +157,27 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
       children: [
         // ── Stats header ────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '$total',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' submissions in the past one year',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Coding Activity',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _statChip('Total active days:', '$active', isDark),
-                  const SizedBox(width: 16),
-                  _statChip('Max streak:', '$streak', isDark),
-                ],
+              Text(
+                'Last 12 Months',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                  letterSpacing: 0.5,
+                ),
               ),
             ],
           ),
@@ -248,7 +233,7 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
                           fontSize: 11,
                           color: isDark
                               ? Colors.grey.shade500
-                              : Colors.grey.shade500,
+                              : Colors.grey.shade700,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
