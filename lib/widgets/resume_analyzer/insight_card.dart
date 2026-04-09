@@ -49,21 +49,73 @@ class InsightCard extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                 ],
-                Text(
-                  explanation,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    height: 1.5,
-                  ),
-                ),
+                _buildFormattedText(theme, explanation),
               ],
             ),
           ),
         ],
       ),
     ).animate().fadeIn().slideX(begin: 0.05);
+  }
+
+  Widget _buildFormattedText(ThemeData theme, String text) {
+    final lines = text.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: lines.map((line) {
+        final trimmedLine = line.trim();
+        final isMistake = trimmedLine.startsWith('•') || trimmedLine.startsWith('-');
+        final isSuggestion = trimmedLine.startsWith('->');
+
+        if (isMistake) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              line.replaceFirst(RegExp(r'^([•-]|->)\s*'), '').trim(),
+              style: TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withOpacity(0.95),
+                height: 1.4,
+              ),
+            ),
+          );
+        } else if (isSuggestion) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+              ),
+            ),
+            child: Text(
+              line.replaceFirst(RegExp(r'^([•-]|->)\s*'), '').trim(),
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.4,
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(
+            line,
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              height: 1.5,
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
