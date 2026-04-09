@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/stats_provider.dart';
+import 'glassmorphic_container.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -41,7 +43,8 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         children: [
           // ── Header ──────────────────────────────────────────────────────
-          _buildHeader(context, userName, leetcodeUser, profilePic, isDark),
+          _buildHeader(context, userName, leetcodeUser, profilePic, isDark)
+              .animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
           // ── Scrollable Menu ──────────────────────────────────────────────
           Expanded(
@@ -50,13 +53,15 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               children: [
                 // ── ANALYTICS HUB ──────────────────────────────────────────
-                _sectionLabel('ANALYTICS HUB'),
+                _sectionLabel('ANALYTICS HUB').animate().fadeIn(delay: 100.ms),
+                const SizedBox(height: 8),
                 _pageItem(
                   context,
                   title: 'Control Center',
                   icon: Icons.dashboard_rounded,
                   pageIndex: 0,
                   isDark: isDark,
+                  index: 1,
                 ),
                 _pushItem(
                   context,
@@ -64,6 +69,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.auto_awesome_outlined,
                   route: '/ai-coach',
                   isDark: isDark,
+                  index: 2,
                 ),
                 _pushItem(
                   context,
@@ -71,6 +77,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.calendar_today_rounded,
                   route: '/contests',
                   isDark: isDark,
+                  index: 3,
                 ),
                 _pushItem(
                   context,
@@ -78,6 +85,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.description_rounded,
                   route: '/resume',
                   isDark: isDark,
+                  index: 4,
                 ),
                 _pageItem(
                   context,
@@ -85,11 +93,13 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.flag_rounded,
                   pageIndex: 3,
                   isDark: isDark,
+                  index: 5,
                 ),
 
                 const SizedBox(height: 24),
                 // ── CONNECTED PLATFORMS ─────────────────────────────────────
-                _sectionLabel('CONNECTED PLATFORMS'),
+                _sectionLabel('CONNECTED PLATFORMS').animate().fadeIn(delay: 300.ms),
+                const SizedBox(height: 8),
                 _pushItem(
                   context,
                   title: 'LeetCode',
@@ -97,6 +107,7 @@ class AppDrawer extends StatelessWidget {
                   route: '/leetcode_stats',
                   isDark: isDark,
                   iconSize: 16,
+                  index: 6,
                 ),
                 _pushItem(
                   context,
@@ -105,6 +116,7 @@ class AppDrawer extends StatelessWidget {
                   route: '/github_stats',
                   isDark: isDark,
                   iconSize: 18,
+                  index: 7,
                 ),
                 _pushItem(
                   context,
@@ -113,6 +125,7 @@ class AppDrawer extends StatelessWidget {
                   route: '/hackerrank_stats',
                   isDark: isDark,
                   iconSize: 18,
+                  index: 8,
                 ),
                 _pushItem(
                   context,
@@ -120,6 +133,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.trending_up_rounded,
                   route: '/codeforces_stats',
                   isDark: isDark,
+                  index: 9,
                 ),
                 _pushItem(
                   context,
@@ -127,17 +141,20 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.restaurant_menu_rounded,
                   route: '/codechef_stats',
                   isDark: isDark,
+                  index: 10,
                 ),
 
                 const SizedBox(height: 24),
                 // ── ACCOUNT ─────────────────────────────────────────────────
-                _sectionLabel('ACCOUNT'),
+                _sectionLabel('ACCOUNT').animate().fadeIn(delay: 500.ms),
+                const SizedBox(height: 8),
                 _pageItem(
                   context,
                   title: 'Profile',
                   icon: Icons.person_rounded,
                   pageIndex: 4,
                   isDark: isDark,
+                  index: 11,
                 ),
                 _pushItem(
                   context,
@@ -145,17 +162,20 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.settings_rounded,
                   route: '/settings',
                   isDark: isDark,
+                  index: 12,
                 ),
 
                 const SizedBox(height: 24),
                 // ── FEEDBACK ────────────────────────────────────────────────
-                _sectionLabel('FEEDBACK & SUPPORT'),
+                _sectionLabel('FEEDBACK & SUPPORT').animate().fadeIn(delay: 700.ms),
+                const SizedBox(height: 8),
                 _pushItem(
                   context,
                   title: 'Feedback and Review',
                   icon: Icons.rate_review_rounded,
                   route: '/review',
                   isDark: isDark,
+                  index: 13,
                 ),
 
                 const SizedBox(height: 12),
@@ -164,6 +184,7 @@ class AppDrawer extends StatelessWidget {
                   title: 'Sign Out',
                   icon: Icons.logout_rounded,
                   color: Colors.redAccent,
+                  index: 14,
                   onTap: () async {
                     // Extract providers BEFORE any navigation/async gaps
                     final statsProvider = Provider.of<StatsProvider>(
@@ -377,6 +398,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required dynamic icon, // Changed to dynamic
     required int pageIndex,
     required bool isDark,
+    required int index,
     double iconSize = 22,
   }) {
     final isActive = selectedIndex == pageIndex;
@@ -390,6 +412,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
       isActive: isActive,
       isDark: isDark,
       theme: theme,
+      index: index,
       onTap: () {
         if (onNavigate != null) {
           onNavigate!(pageIndex);
@@ -407,6 +430,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required dynamic icon, // Changed to dynamic
     required String route,
     required bool isDark,
+    required int index,
     double iconSize = 22,
   }) {
     final theme = Theme.of(context);
@@ -421,6 +445,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
       isActive: isActive,
       isDark: isDark,
       theme: theme,
+      index: index,
       onTap: () {
         Navigator.pop(context);
         Navigator.pushNamed(context, route);
@@ -434,6 +459,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required String title,
     required dynamic icon, // Changed to dynamic
     required Color color,
+    required int index,
     required VoidCallback onTap,
   }) {
     return AnimatedContainer(
@@ -454,7 +480,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(delay: (index * 40).ms).slideX(begin: -0.1);
   }
 
   Widget _tile(
@@ -465,19 +491,18 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required bool isActive,
     required bool isDark,
     required ThemeData theme,
+    required int index,
     required VoidCallback onTap,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return GlassmorphicContainer(
+      borderRadius: 16,
+      blur: isActive ? 10 : 0,
+      opacity: isActive ? 0.12 : 0,
+      border: isActive ? null : Border.all(color: Colors.transparent),
       margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        color: isActive
-            ? theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: ListTile(
         onTap: onTap,
+        visualDensity: VisualDensity.compact,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: icon is IconData 
             ? Icon(
@@ -501,20 +526,27 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withOpacity(0.85),
             fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
-            fontSize: 15,
+            fontSize: 14,
           ),
         ),
         trailing: isActive
             ? Container(
-                width: 7,
-                height: 7,
+                width: 6,
+                height: 6,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.5),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
               )
             : null,
       ),
-    );
+    ).animate().fadeIn(delay: (index * 40).ms).slideX(begin: -0.1);
   }
 }

@@ -10,6 +10,8 @@ class GlassmorphicContainer extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final BoxBorder? border;
   final Gradient? gradient;
+  final double? width;
+  final double? height;
 
   const GlassmorphicContainer({
     super.key,
@@ -21,6 +23,8 @@ class GlassmorphicContainer extends StatelessWidget {
     this.margin,
     this.border,
     this.gradient,
+    this.width,
+    this.height,
   });
 
   @override
@@ -30,6 +34,8 @@ class GlassmorphicContainer extends StatelessWidget {
 
     return Container(
       margin: margin,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
       ),

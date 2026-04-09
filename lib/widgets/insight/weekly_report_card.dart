@@ -239,32 +239,6 @@ class WeeklyReportCard extends StatelessWidget {
     );
   }
 
-  Widget _buildGenerateButton(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        const Divider(height: 24, thickness: 0.5),
-        Center(
-          child: Column(
-            children: [
-              Icon(Icons.auto_awesome_rounded,
-                  size: 28, color: theme.colorScheme.onSurface.withOpacity(0.1)),
-              const SizedBox(height: 10),
-              const Text(
-                'Get your AI-powered weekly recap',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.tonal(
-                onPressed: onGenerate,
-                child: const Text('Generate AI Summary', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildError(BuildContext context) {
     final theme = Theme.of(context);

@@ -33,9 +33,9 @@ class Goal {
     return {
       'id': id,
       'title': title,
-      'type': type.name,
+      'type': type.toString().split('.').last,
       'targetValue': targetValue,
-      'timeframe': timeframe.name,
+      'timeframe': timeframe.toString().split('.').last,
       'platform': platform,
       'createdAt': createdAt.toIso8601String(),
     };

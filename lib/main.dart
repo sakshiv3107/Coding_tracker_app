@@ -20,6 +20,7 @@ import 'screens/resume_screen.dart';
 import 'screens/contest_calendar_screen.dart';
 import 'screens/activity_tracking_screen.dart';
 import 'screens/review_screen.dart';
+import 'screens/goals_screen.dart';
 
 // Providers
 import 'providers/auth_provider.dart';
@@ -109,6 +110,7 @@ class MyApp extends StatelessWidget {
         '/activity_heatmap': (context) => const ActivityTrackingScreen(),
         '/review': (context) => const ReviewScreen(),
         '/ai-coach': (context) => const AIInsightCoachScreen(),
+        '/goals': (context) => const GoalsScreen(),
       },
     ); // Added a copyWith just to ensure a fresh state if possible
   }

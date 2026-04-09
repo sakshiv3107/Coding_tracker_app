@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+// import '../widgets/modern_card.dart';
 import '../widgets/premium_widgets.dart';
 import '../widgets/notification_settings_tile.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../widgets/glassmorphic_container.dart';
 
 import '../services/smart_reminder_service.dart';
 
@@ -45,8 +47,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: CustomScrollView(
+      body: Stack(
+        children: [
+          // ── Background Blobs ───────────────────────────────────────────
+          Positioned(
+            top: -50,
+            right: -100,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.06),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(-20, 20), duration: 14.seconds),
+          ),
+          Positioned(
+            bottom: -80,
+            left: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.tertiary.withOpacity(0.04),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(30, -30), duration: 16.seconds),
+          ),
+
+          SafeArea(
+            child: CustomScrollView(
           slivers: [
             // ── Premium Top Bar ──────────────────────────────────────────
             SliverPadding(
@@ -76,7 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ],
-                ),
+                ).animate().fadeIn().slideY(begin: -0.1),
               ),
             ),
 
@@ -92,9 +124,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.palette_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.all(12),
-                    isGlass: true,
                     borderRadius: 28,
                     child: Column(
                       children: [
@@ -124,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
 
@@ -135,9 +166,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.color_lens_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.all(16),
-                    isGlass: true,
                     borderRadius: 28,
                     child: Wrap(
                       spacing: 12,
@@ -178,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
 
@@ -189,9 +219,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.psychology_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.all(12),
-                    isGlass: true,
                     borderRadius: 28,
                     child: Column(
                       children: [
@@ -230,7 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
 
@@ -241,12 +270,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.notifications_active_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    isGlass: true,
                     borderRadius: 28,
                     child: const NotificationSettingsTile(),
-                  ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
 
@@ -257,9 +285,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.person_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.all(12),
-                    isGlass: true,
                     borderRadius: 28,
                     child: Column(
                       children: [
@@ -279,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
 
@@ -290,9 +317,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.settings_input_component_rounded,
                   ),
                   const SizedBox(height: 16),
-                  ModernCard(
+                  GlassmorphicContainer(
                     padding: const EdgeInsets.all(24),
-                    isGlass: true,
                     borderRadius: 28,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -342,7 +368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
                   
                   const SizedBox(height: 120),
                 ]),
@@ -351,7 +377,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
+      ]
+    ));
   }
 
   Widget _buildBackButton(BuildContext context, bool isDark) {

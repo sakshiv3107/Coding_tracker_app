@@ -6,12 +6,13 @@ import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import 'edit_profile_screen.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+// import '../widgets/modern_card.dart';
 import '../widgets/platform_card.dart';
 import '../models/user_platform_data.dart';
-import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/premium_widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../widgets/glassmorphic_container.dart';
 
 class ProfileScreen extends StatelessWidget {
   final VoidCallback? onBack;
@@ -30,107 +31,132 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          // ── Background Blobs ───────────────────────────────────────────
+          Positioned(
+            top: -100,
+            left: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.05),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(20, 20), duration: 12.seconds),
+          ),
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.tertiary.withOpacity(0.04),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(-20, -20), duration: 10.seconds),
+          ),
+
+          SafeArea(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FadeSlideTransition(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildBackButton(context, isDark),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Text(
-                        'Account Settings',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildBackButton(context, isDark),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Text(
+                      'Account Settings',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      );
+                    },
+                    icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 16),
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      foregroundColor: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn().slideY(begin: -0.1),
+              const SizedBox(height: 32),
+
+              // User Profile Section
+              GlassmorphicContainer(
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                borderRadius: 32,
+                child: Center(
+                  child: Column(
+                    children: [
+                      Hero(
+                        tag: 'profile_avatar',
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 54,
+                            backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                            backgroundImage: (profile.profile?["profilePic"]?.isNotEmpty == true)
+                                ? CachedNetworkImageProvider(profile.profile!["profilePic"]!)
+                                : null,
+                            child: (profile.profile?["profilePic"]?.isNotEmpty != true)
+                                ? Text(
+                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
+                                    style: TextStyle(
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.w900,
+                                      color: theme.colorScheme.primary,
+                                      letterSpacing: -1,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        userName,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton.filledTonal(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-                        );
-                      },
-                      icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 16),
-                      style: IconButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        foregroundColor: theme.colorScheme.primary,
+                      const SizedBox(height: 4),
+                      Text(
+                        userEmail,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // User Profile Section
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 100),
-                child: ModernCard(
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-                  isGlass: true,
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Hero(
-                          tag: 'profile_avatar',
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
-                              ),
-                            ),
-                            child: CircleAvatar(
-                              radius: 54,
-                              backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                              backgroundImage: (profile.profile?["profilePic"]?.isNotEmpty == true)
-                                  ? CachedNetworkImageProvider(profile.profile!["profilePic"]!)
-                                  : null,
-                              child: (profile.profile?["profilePic"]?.isNotEmpty != true)
-                                  ? Text(
-                                      userName.isNotEmpty ? userName[0].toUpperCase() : 'D',
-                                      style: TextStyle(
-                                        fontSize: 42,
-                                        fontWeight: FontWeight.w900,
-                                        color: theme.colorScheme.primary,
-                                        letterSpacing: -1,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          userName,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          userEmail,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              ),
+              ).animate().scale(delay: 100.ms, duration: 400.ms, curve: Curves.easeOutBack),
               const SizedBox(height: 40),
 
               const PremiumSectionHeader(
@@ -151,56 +177,50 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 450),
-                child: ModernCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  isGlass: true,
-                  child: Column(
-                    children: [
-                      _SettingsTile(
-                        icon: FontAwesomeIcons.bell,
-                        title: 'Notifications',
-                        subtitle: 'Alert nodes and sync cycles',
-                        onTap: () => Navigator.pushNamed(context, '/settings'),
-                      ),
-                      const Divider(height: 1, indent: 48, color: Colors.white10),
-                      _SettingsTile(
-                        icon: FontAwesomeIcons.shieldHalved,
-                        title: 'Privacy & Security',
-                        subtitle: 'Multi-factor and key management',
-                        onTap: () {},
-                      ),
-                      const Divider(height: 1, indent: 48, color: Colors.white10),
-                      _SettingsTile(
-                        icon: FontAwesomeIcons.circleQuestion,
-                        title: 'Help & Knowledge Base',
-                        subtitle: 'Documentation and support',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
+              GlassmorphicContainer(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                borderRadius: 28,
+                child: Column(
+                  children: [
+                    _SettingsTile(
+                      icon: FontAwesomeIcons.bell,
+                      title: 'Notifications',
+                      subtitle: 'Alert nodes and sync cycles',
+                      onTap: () => Navigator.pushNamed(context, '/settings'),
+                    ),
+                    const Divider(height: 1, indent: 48, color: Colors.white10),
+                    _SettingsTile(
+                      icon: FontAwesomeIcons.shieldHalved,
+                      title: 'Privacy & Security',
+                      subtitle: 'Multi-factor and key management',
+                      onTap: () {},
+                    ),
+                    const Divider(height: 1, indent: 48, color: Colors.white10),
+                    _SettingsTile(
+                      icon: FontAwesomeIcons.circleQuestion,
+                      title: 'Help & Knowledge Base',
+                      subtitle: 'Documentation and support',
+                      onTap: () {},
+                    ),
+                  ],
                 ),
-              ),
+              ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
 
               const SizedBox(height: 48),
 
-              FadeSlideTransition(
-                delay: const Duration(milliseconds: 500),
-                child: PremiumGradientButton(
-                  text: 'Deactivate Session',
-                  onPressed: () => _showLogoutConfirmation(context),
-                  icon: FontAwesomeIcons.powerOff,
-                  gradient: const [Colors.redAccent, Color(0xFF991B1B)],
-                ),
-              ),
+              PremiumGradientButton(
+                text: 'Deactivate Session',
+                onPressed: () => _showLogoutConfirmation(context),
+                icon: FontAwesomeIcons.powerOff,
+                gradient: const [Colors.redAccent, Color(0xFF991B1B)],
+              ).animate().fadeIn(delay: 400.ms),
               
               const SizedBox(height: 120),
             ],
           ),
         ),
-      ),
-    );
+      ),]
+    ));
   }
   Widget _buildBackButton(BuildContext context, bool isDark) {
     final theme = Theme.of(context);
@@ -286,22 +306,20 @@ class ProfileScreen extends StatelessWidget {
       ),
     ];
 
-    return FadeSlideTransition(
-      delay: const Duration(milliseconds: 250),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: platforms.length,
-        itemBuilder: (context, index) {
-          return PlatformCard(data: platforms[index]);
-        },
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
       ),
+      itemCount: platforms.length,
+      itemBuilder: (context, index) {
+        return PlatformCard(data: platforms[index])
+            .animate().fadeIn(delay: (200 + index * 100).ms).scale();
+      },
     );
   }
 

@@ -8,6 +8,7 @@ import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/unified_analytics_card.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
@@ -15,6 +16,10 @@ import '../widgets/coding_heatmap.dart';
 import '../widgets/skill_radar_chart.dart';
 import '../widgets/weekly_activity_chart.dart';
 import '../widgets/skeleton_loading.dart';
+import '../widgets/glassmorphic_container.dart';
+import '../services/contest_service.dart';
+import '../services/progress_service.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -83,10 +88,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final unlockedAchievements =
         List.from(achievementProvider.unlockedAchievements);
 
+    final upcomingContests = stats.upcomingContests.take(3).toList();
+    final goals = context.watch<GoalProvider>().goals;
+
     return Material(
       color: theme.scaffoldBackgroundColor,
-      child: SafeArea(
-        child: RefreshIndicator(
+      child: Stack(
+        children: [
+          // ── Background Decorative Blobs ─────────────────────────────────────
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(-20, 20), duration: 10.seconds),
+          ),
+          Positioned(
+            top: 200,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.08),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(30, -30), duration: 15.seconds),
+          ),
+          Positioned(
+            bottom: 100,
+            right: -80,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.secondary.withValues(alpha: 0.06),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+             .move(begin: const Offset(0, 0), end: const Offset(-40, -20), duration: 12.seconds),
+          ),
+
+          SafeArea(
+            child: RefreshIndicator(
           onRefresh: () async {
             final goalProvider = context.read<GoalProvider>();
 
@@ -109,153 +160,239 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           },
 
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header ─────────────────────────────────────────────────
-                _buildHeader(context, theme, userName, xp, level, progressToNextLevel),
-                const SizedBox(height: 16),
-
-                // ── Rate Limit Banner ───────────────────────────────────────
-                if (showRateLimitBanner) ...[
-                  _buildRateLimitBanner(),
-                  const SizedBox(height: 12),
-                ],
-
-                // ── Profile Summary ─────────────────────────────────────────
-                ProfileSummaryCard(
-                  name: userName,
-                  leetcodeUser: leetcodeUser,
-                  githubUser: githubUser,
-                  totalPlatforms: connectedPlatforms,
-                  profilePicUrl: avatarUrl,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                sliver: SliverToBoxAdapter(
+                  child: _buildHeader(context, theme, userName, xp, level, progressToNextLevel)
+                      .animate().fadeIn(duration: 600.ms).slideX(begin: -0.1),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // ── Career Accelerator Banner ───────────────────────────────
-                _buildCareerBanner(context),
-                const SizedBox(height: 16),
-
-                // ── Total Problems Solved ───────────────────────────────────
-                UnifiedAnalyticsCard(
-                  leetcode: stats.leetcodeStats?.totalSolved ?? 0,
-                  codeforces: stats.codeforcesStats?.totalSolved ?? 0,
-                  codechef: stats.codechefStats?.totalSolved ?? 0,
-                  hackerrank: stats.hackerrankStats?.totalSolved ?? 0,
-                  githubStars: github.githubStats?.totalStars ?? 0,
-                  githubRepos: github.githubStats?.publicRepos ?? 0,
+              // ── Rate Limit Banner ───────────────────────────────────────
+              if (showRateLimitBanner)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildRateLimitBanner(),
+                  ),
                 ),
-                const SizedBox(height: 16),
 
-                // ── Platform Quick Stats ────────────────────────────────────
-                PlatformQuickStatsGrid(
-                  leetcode: {
-                    'solved': stats.leetcodeStats?.totalSolved,
-                    'easy': stats.leetcodeStats?.easy,
-                    'medium': stats.leetcodeStats?.medium,
-                    'hard': stats.leetcodeStats?.hard,
-                  },
-                  github: {
-                    'repos': github.githubStats?.publicRepos,
-                    'commits': github.githubStats?.totalContributions,
-                  },
-                  codeforces: {
-                    'rating': stats.codeforcesStats?.rating,
-                    'rank': stats.codeforcesStats?.ranking,
-                  },
-                  codechef: {
-                    'rating': stats.codechefStats?.rating,
-                    'rank': stats.codechefStats?.ranking,
-                  },
-                  hackerrank: {
-                    'solved': stats.hackerrankStats?.totalSolved,
-                    'rank': stats.hackerrankStats?.ranking,
-                  },
-                  leetcodeLoading:
-                      stats.leetcodeLoading && stats.leetcodeStats == null,
-                  codeforcesLoading:
-                      stats.codeforcesLoading && stats.codeforcesStats == null,
-                  codechefLoading:
-                      stats.codechefLoading && stats.codechefStats == null,
-                  hackerrankLoading:
-                      stats.hackerrankLoading && stats.hackerrankStats == null,
-                  githubLoading:
-                      github.isLoading && github.githubStats == null,
-                  leetcodeRateLimited: stats.leetcodeRateLimited,
-                  codeforcesRateLimited: stats.codeforcesRateLimited,
-                  codechefRateLimited: stats.codechefRateLimited,
-                  hackerrankRateLimited: stats.hackerrankRateLimited,
-                  leetcodeError: stats.leetcodeError,
-                  codeforcesError: stats.codeforcesError,
-                  codechefError: stats.codechefError,
-                  hackerrankError: stats.hackerrankError,
-                  leetcodeNotSet: leetcodeUser.trim().isEmpty,
-                  githubNotSet: githubUser.trim().isEmpty,
-                  codeforcesNotSet: cfUser.trim().isEmpty,
-                  codechefNotSet: ccUser.trim().isEmpty,
-                  hackerrankNotSet: hrUser.trim().isEmpty,
-                  onLeetCodeTap: () =>
-                      Navigator.pushNamed(context, '/leetcode_stats'),
-                  onGitHubTap: () =>
-                      Navigator.pushNamed(context, '/github_stats'),
-                  onCodeforcesTap: () =>
-                      Navigator.pushNamed(context, '/codeforces_stats'),
-                  onCodeChefTap: () =>
-                      Navigator.pushNamed(context, '/codechef_stats'),
-                  onHackerRankTap: () =>
-                      Navigator.pushNamed(context, '/hackerrank_stats'),
+              // ── Profile Summary ─────────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                sliver: SliverToBoxAdapter(
+                  child: ProfileSummaryCard(
+                    name: userName,
+                    leetcodeUser: leetcodeUser,
+                    githubUser: githubUser,
+                    totalPlatforms: connectedPlatforms,
+                    profilePicUrl: avatarUrl,
+                  ).animate().scale(delay: 100.ms, duration: 400.ms, curve: Curves.easeOutBack),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // ── Achievements ────────────────────────────────────────────
-                if (unlockedAchievements.isNotEmpty) ...[
-                  _buildAchievementsSection(
-                      context, theme, unlockedAchievements),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── Activity Heatmap ────────────────────────────────────────
-                CodingHeatmap(datasets: heatmapData),
-                const SizedBox(height: 16),
-
-                // ── Weekly Activity Chart ───────────────────────────────────
-                WeeklyActivityChart(
-                  leetcodeCalendar:
-                      stats.leetcodeStats?.submissionCalendar ?? {},
-                  githubCalendar:
-                      github.githubStats?.contributionCalendar ?? {},
-                  hackerrankCalendar:
-                      stats.hackerrankStats?.submissionHistory ?? {},
-                  codechefCalendar:
-                      stats.codechefStats?.submissionCalendar ?? {},
+              // ── Career Accelerator Banner ───────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: _buildCareerBanner(context).animate().fadeIn(delay: 200.ms),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // ── Skill Radar Chart ───────────────────────────────────────
-                if (tagStats != null && tagStats.isNotEmpty) ...[
-                  SkillRadarChart(tagStats: tagStats),
-                  const SizedBox(height: 16),
-                ],
+              // ── Upcoming Contests ──────────────────────────────────────
+              if (upcomingContests.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _sectionTitle(context, 'Upcoming Contests', Icons.calendar_today_rounded),
+                            TextButton(
+                              onPressed: () => Navigator.pushNamed(context, '/contests'),
+                              child: const Text('Explore >'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildUpcomingContests(context, upcomingContests),
+                      ],
+                    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+                  ),
+                ),
 
-                const SizedBox(height: 16),
+              // ── Active Goals ─────────────────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _sectionTitle(context, 'Active Goals', Icons.flag_rounded),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/goals'),
+                            child: const Text('Explore >'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (goals.isEmpty)
+                        const Text('No active goals tracking')
+                      else
+                        Column(
+                          children: goals.take(2).map((goal) {
+                            final progress = ProgressService.calculateProgress(
+                              goal: goal,
+                              statsProvider: stats,
+                              githubProvider: github,
+                            );
+                            return _buildGoalProgressCard(context, goal, progress);
+                          }).toList(),
+                        ),
+                    ],
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+                ),
+              ),
 
-                // Trigger goal check whenever stats are ready
-                Builder(builder: (ctx) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (stats.isLoading) return;
-                    context.read<GoalProvider>().checkProgressAndNotifyCompletion(stats, github);
-                  });
-                  return const SizedBox.shrink();
-                }),
-              ],
-            ),
+              
+
+              // ── Analytics Section ──────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionTitle(context, 'Performance Analytics', Icons.analytics_rounded),
+                      const SizedBox(height: 12),
+                      UnifiedAnalyticsCard(
+                        leetcode: stats.leetcodeStats?.totalSolved ?? 0,
+                        codeforces: stats.codeforcesStats?.totalSolved ?? 0,
+                        codechef: stats.codechefStats?.totalSolved ?? 0,
+                        hackerrank: stats.hackerrankStats?.totalSolved ?? 0,
+                        githubStars: github.githubStats?.totalStars ?? 0,
+                        githubRepos: github.githubStats?.publicRepos ?? 0,
+                      ).animate().fadeIn(delay: 300.ms),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Platform Quick Stats ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: PlatformQuickStatsGrid(
+                    leetcode: {
+                      'solved': stats.leetcodeStats?.totalSolved,
+                      'easy': stats.leetcodeStats?.easy,
+                      'medium': stats.leetcodeStats?.medium,
+                      'hard': stats.leetcodeStats?.hard,
+                    },
+                    github: {
+                      'repos': github.githubStats?.publicRepos,
+                      'commits': github.githubStats?.totalContributions,
+                    },
+                    codeforces: {
+                      'rating': stats.codeforcesStats?.rating,
+                      'rank': stats.codeforcesStats?.ranking,
+                    },
+                    codechef: {
+                      'rating': stats.codechefStats?.rating,
+                      'rank': stats.codechefStats?.ranking,
+                    },
+                    hackerrank: {
+                      'solved': stats.hackerrankStats?.totalSolved,
+                      'rank': stats.hackerrankStats?.ranking,
+                    },
+                    leetcodeLoading:
+                        stats.leetcodeLoading && stats.leetcodeStats == null,
+                    codeforcesLoading:
+                        stats.codeforcesLoading && stats.codeforcesStats == null,
+                    codechefLoading:
+                        stats.codechefLoading && stats.codechefStats == null,
+                    hackerrankLoading:
+                        stats.hackerrankLoading && stats.hackerrankStats == null,
+                    githubLoading:
+                        github.isLoading && github.githubStats == null,
+                    leetcodeRateLimited: stats.leetcodeRateLimited,
+                    codeforcesRateLimited: stats.codeforcesRateLimited,
+                    codechefRateLimited: stats.codechefRateLimited,
+                    hackerrankRateLimited: stats.hackerrankRateLimited,
+                    leetcodeError: stats.leetcodeError,
+                    codeforcesError: stats.codeforcesError,
+                    codechefError: stats.codechefError,
+                    hackerrankError: stats.hackerrankError,
+                    leetcodeNotSet: leetcodeUser.trim().isEmpty,
+                    githubNotSet: githubUser.trim().isEmpty,
+                    codeforcesNotSet: cfUser.trim().isEmpty,
+                    codechefNotSet: ccUser.trim().isEmpty,
+                    hackerrankNotSet: hrUser.trim().isEmpty,
+                    onLeetCodeTap: () =>
+                        Navigator.pushNamed(context, '/leetcode_stats'),
+                    onGitHubTap: () =>
+                        Navigator.pushNamed(context, '/github_stats'),
+                    onCodeforcesTap: () =>
+                        Navigator.pushNamed(context, '/codeforces_stats'),
+                    onCodeChefTap: () =>
+                        Navigator.pushNamed(context, '/codechef_stats'),
+                    onHackerRankTap: () =>
+                        Navigator.pushNamed(context, '/hackerrank_stats'),
+                  ),
+                ),
+              ),
+
+              // ── Achievements ────────────────────────────────────────────
+              if (unlockedAchievements.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildAchievementsSection(context, theme, unlockedAchievements),
+                  ),
+                ),
+
+              // ── Visualizations ──────────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionLabel(context, 'Activity Spectrum'),
+                      const SizedBox(height: 12),
+                      CodingHeatmap(datasets: heatmapData),
+                      const SizedBox(height: 16),
+                      WeeklyActivityChart(
+                        leetcodeCalendar:
+                            stats.leetcodeStats?.submissionCalendar ?? {},
+                        githubCalendar:
+                            github.githubStats?.contributionCalendar ?? {},
+                        hackerrankCalendar:
+                            stats.hackerrankStats?.submissionHistory ?? {},
+                        codechefCalendar:
+                            stats.codechefStats?.submissionCalendar ?? {},
+                      ),
+                      const SizedBox(height: 16),
+                      if (tagStats != null && tagStats.isNotEmpty)
+                        SkillRadarChart(tagStats: tagStats),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
           ),
         ),
       ),
-    );
+        ]
+    ));
   }
 
   // ── Sub-builders ────────────────────────────────────────────────────────────
@@ -512,6 +649,163 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  Widget _sectionTitle(BuildContext context, String title, IconData icon) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(BuildContext context, String label) {
+    return Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 2.0,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+      ),
+    );
+  }
+
+  Widget _buildUpcomingContests(BuildContext context, List<Contest> contests) {
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: contests.length,
+        itemBuilder: (context, index) {
+          final contest = contests[index];
+          final Color color;
+          switch (contest.platform.toLowerCase()) {
+            case 'leetcode': color = const Color(0xFFFFA116); break;
+            case 'codeforces': color = const Color(0xFFEF4444); break;
+            case 'codechef': color = const Color(0xFF6A3805); break;
+            default: color = Theme.of(context).colorScheme.primary;
+          }
+
+          return GlassmorphicContainer(
+            width: 240,
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.all(16),
+            borderRadius: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: color.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        contest.platform,
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (contest.startsSoon)
+                      const Icon(Icons.flash_on_rounded, size: 14, color: Colors.amber),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  contest.title,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('MMM d, hh:mm a').format(contest.startTime),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().slideX(begin: 0.2, delay: (index * 100).ms);
+        },
+      ),
+    );
+  }
+
+  Widget _buildGoalProgressCard(BuildContext context, dynamic goal, int current) {
+    final theme = Theme.of(context);
+    final ratio = (current / goal.targetValue).clamp(0.0, 1.0);
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassmorphicContainer(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 24,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        goal.title,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: -0.2),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Target: ${goal.targetValue} ${goal.type.toString().split('.').last}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${(ratio * 100).toInt()}%',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: ratio,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().slideY(begin: 0.1);
   }
 
   void _mergeMap(Map<DateTime, int> target, Map<DateTime, int>? source) {
