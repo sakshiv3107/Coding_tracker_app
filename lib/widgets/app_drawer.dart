@@ -67,6 +67,13 @@ class AppDrawer extends StatelessWidget {
                 ),
                 _pushItem(
                   context,
+                  title: 'AI Insight Coach',
+                  icon: Icons.auto_awesome_outlined,
+                  route: '/ai-coach',
+                  isDark: isDark,
+                ),
+                _pushItem(
+                  context,
                   title: 'Contest Calendar',
                   icon: Icons.calendar_today_rounded,
                   route: '/contests',

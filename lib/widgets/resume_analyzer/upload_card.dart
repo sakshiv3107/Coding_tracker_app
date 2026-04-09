@@ -31,33 +31,34 @@ class UploadCard extends StatelessWidget {
       child: Column(
         children: [
           if (!hasFile) ...[
-            Container(
+            SizedBox(
               height: 110,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 40,
-                    color: theme.colorScheme.primary, // Using theme primary
-                  ).animate(onPlay: (controller) => controller.repeat(reverse: true))
-                   .moveY(begin: -2, end: 2, duration: 2.seconds),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Upload your resume to get instant insights",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+              child: GlassmorphicContainer(
+                padding: EdgeInsets.zero,
+                borderRadius: 16,
+                opacity: 0.03,
+                child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 40,
+                      color: theme.colorScheme.primary,
+                    ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+                     .moveY(begin: -2, end: 2, duration: 2.seconds),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Upload your resume to get instant insights",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ),
             ),
             const SizedBox(height: 20),
             Row(

@@ -33,6 +33,7 @@ import 'providers/theme_provider.dart';
 import 'providers/insights_provider.dart';
 import 'providers/ai_insights_provider.dart';
 import 'screens/ai_insights_screen.dart';
+import 'screens/ai_insight_coach_screen.dart';
 
 // Services
 import 'services/notification_service.dart';
@@ -113,6 +114,7 @@ class MyApp extends StatelessWidget {
         '/activity_heatmap': (context) => const ActivityTrackingScreen(),
         '/review': (context) => const ReviewScreen(),
         '/ai_insights': (context) => const AIInsightsScreen(),
+        '/ai-coach': (context) => const AIInsightCoachScreen(),
       },
     ); // Added a copyWith just to ensure a fresh state if possible
   }

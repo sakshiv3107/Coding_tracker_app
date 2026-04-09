@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/glassmorphic_container.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+// import 'package:flutter_animate/flutter_animate.dart';
 
 class InsightCard extends StatelessWidget {
   final IconData icon;
@@ -57,7 +57,7 @@ class InsightCard extends StatelessWidget {
           ),
         ],
       ),
-    ).animate().fadeIn().slideX(begin: 0.05);
+    );
   }
 
   Widget _buildFormattedText(ThemeData theme, String text) {

@@ -150,3 +150,130 @@ class RecommendationModel {
 }
 
 enum RecommendationPriority { high, medium, low }
+
+// ── AI INSIGHT COACH MODELS ──────────────────────────────────────────────────
+
+class StatsSnapshot {
+  final int streak;
+  final int totalSolved;
+  final int easySolved;
+  final int mediumSolved;
+  final int hardSolved;
+  final List<String> topWeakTopics;
+  final int recentSubmissionCount;
+  final List<String> platforms;
+
+  StatsSnapshot({
+    required this.streak,
+    required this.totalSolved,
+    required this.easySolved,
+    required this.mediumSolved,
+    required this.hardSolved,
+    required this.topWeakTopics,
+    required this.recentSubmissionCount,
+    required this.platforms,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'streak': streak,
+        'totalSolved': totalSolved,
+        'easySolved': easySolved,
+        'mediumSolved': mediumSolved,
+        'hardSolved': hardSolved,
+        'topWeakTopics': topWeakTopics,
+        'recentSubmissionCount': recentSubmissionCount,
+        'platforms': platforms,
+      };
+}
+
+class WeeklySnapshot {
+  final int weekNumber;
+  final int solvedThisWeek;
+  final int easyThisWeek;
+  final int mediumThisWeek;
+  final int hardThisWeek;
+  final int streakDelta;
+  final String bestPlatform;
+
+  WeeklySnapshot({
+    required this.weekNumber,
+    required this.solvedThisWeek,
+    required this.easyThisWeek,
+    required this.mediumThisWeek,
+    required this.hardThisWeek,
+    required this.streakDelta,
+    required this.bestPlatform,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'weekNumber': weekNumber,
+        'solvedThisWeek': solvedThisWeek,
+        'easyThisWeek': easyThisWeek,
+        'mediumThisWeek': mediumThisWeek,
+        'hardThisWeek': hardThisWeek,
+        'streakDelta': streakDelta,
+        'bestPlatform': bestPlatform,
+      };
+}
+
+class CoachInsightData {
+  final String bannerInsight;
+  final String nudge;
+  final List<FocusProblem> focusProblems;
+  final List<MistakePattern> mistakePatterns;
+  final int readinessScore;
+  final DateTime generatedAt;
+
+  CoachInsightData({
+    required this.bannerInsight,
+    required this.nudge,
+    required this.focusProblems,
+    required this.mistakePatterns,
+    required this.readinessScore,
+    required this.generatedAt,
+  });
+}
+
+class FocusProblem {
+  final String problemName;
+  final String platform;
+  final String difficulty;
+  final String topicTag;
+  final String aiReason;
+  final String url;
+
+  FocusProblem({
+    required this.problemName,
+    required this.platform,
+    required this.difficulty,
+    required this.topicTag,
+    required this.aiReason,
+    required this.url,
+  });
+
+  factory FocusProblem.fromJson(Map<String, dynamic> json) {
+    return FocusProblem(
+      problemName: json['problemName'] ?? 'Unknown Problem',
+      platform: json['platform'] ?? 'LeetCode',
+      difficulty: json['difficulty'] ?? 'Medium',
+      topicTag: json['topicTag'] ?? 'General',
+      aiReason: json['aiReason'] ?? 'Highly relevant to your current focus.',
+      url: json['url'] ?? 'https://leetcode.com/problemset/',
+    );
+  }
+}
+
+class MistakePattern {
+  final String patternName;
+  final int count;
+  final String severity; // "red" | "amber" | "blue"
+  String? aiTip;
+
+  MistakePattern({
+    required this.patternName,
+    required this.count,
+    required this.severity,
+    this.aiTip,
+  });
+}
+
