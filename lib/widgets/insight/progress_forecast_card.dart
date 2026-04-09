@@ -6,15 +6,19 @@ import '../../models/insight_model.dart';
 
 class ProgressForecastCard extends StatelessWidget {
   final int totalSolved;
+  final int currentRating;
+  final int currentStreak;
   final int solvedThisMonth;
   final int daysElapsed;
   final List<CoachGoal> goals;
-  final VoidCallback onAddGoal;
+  final Function(int currentSolved, int currentRating, int currentStreak) onAddGoal;
   final Function(CoachGoal) onRemoveGoal;
 
   const ProgressForecastCard({
     super.key,
     required this.totalSolved,
+    required this.currentRating,
+    required this.currentStreak,
     required this.solvedThisMonth,
     required this.daysElapsed,
     required this.goals,
@@ -46,7 +50,7 @@ class ProgressForecastCard extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               FilledButton.tonal(
-                onPressed: onAddGoal,
+                onPressed: () => onAddGoal(totalSolved, currentRating, currentStreak),
                 style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -76,7 +80,7 @@ class ProgressForecastCard extends StatelessWidget {
               children: [
                 _buildMiniStat(context, '$totalSolved', 'Total Solved'),
                 _divider(),
-                _buildMiniStat(context, '$solvedThisMonth', 'This Month'),
+                _buildMiniStat(context, '$currentRating', 'Rating'),
                 _divider(),
                 _buildMiniStat(context, '${dailyRate.toStringAsFixed(1)}/day', 'Pace'),
               ],
@@ -116,13 +120,26 @@ class ProgressForecastCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Determine the current value based on goal type
-    final current = goal.type == 'problems' ? totalSolved : 0;
+    int current;
+    switch (goal.type) {
+      case 'problems': current = totalSolved; break;
+      case 'rating':   current = currentRating; break;
+      case 'streak':   current = currentStreak; break;
+      default:         current = totalSolved;
+    }
+
     final progress = goal.target > 0 ? (current / goal.target).clamp(0.0, 1.0) : 0.0;
     final gap = (goal.target - current).clamp(0, 999999);
-    final eta = (dailyRate > 0 && gap > 0) ? (gap / dailyRate).ceil() : null;
+    
+    // ETA only makes sense for problems/rating if we can estimate progress rate.
+    // For now we only estimate for problems based on monthly pace.
+    final eta = (goal.type == 'problems' && dailyRate > 0 && gap > 0) 
+        ? (gap / dailyRate).ceil() 
+        : null;
 
     Color progressColor;
-    if (progress >= 0.8) progressColor = Colors.green;
+    if (progress >= 1.0) progressColor = Colors.green;
+    else if (progress >= 0.8) progressColor = Colors.lightGreen;
     else if (progress >= 0.5) progressColor = Colors.amber;
     else progressColor = theme.colorScheme.primary;
 
@@ -175,17 +192,16 @@ class ProgressForecastCard extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation(progressColor),
             ),
           ),
-          if (eta != null) ...[
+          if (progress >= 1.0) ...[
+            const SizedBox(height: 8),
+            const Text('Goal reached! 🎉', style: TextStyle(fontSize: 11, color: Colors.green)),
+          ] else if (eta != null) ...[
             const SizedBox(height: 8),
             Text(
-              eta > 0
-                  ? 'At current pace: ~$eta days to goal'
-                  : 'Goal reached! 🎉',
+              'At current pace: ~$eta days to goal',
               style: TextStyle(
                 fontSize: 11,
-                color: eta > 0
-                    ? theme.colorScheme.onSurface.withOpacity(0.45)
-                    : Colors.green,
+                color: theme.colorScheme.onSurface.withOpacity(0.45),
               ),
             ),
           ],
@@ -245,9 +261,18 @@ class ProgressForecastCard extends StatelessWidget {
 // ── Goal Add Bottom Sheet ──────────────────────────────────────────────────────
 
 class AddGoalSheet extends StatefulWidget {
+  final int currentSolved;
+  final int currentRating;
+  final int currentStreak;
   final Function(CoachGoal) onAdd;
 
-  const AddGoalSheet({super.key, required this.onAdd});
+  const AddGoalSheet({
+    super.key, 
+    required this.currentSolved,
+    required this.currentRating,
+    required this.currentStreak,
+    required this.onAdd
+  });
 
   @override
   State<AddGoalSheet> createState() => _AddGoalSheetState();
@@ -260,16 +285,21 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   final TextEditingController _targetCtrl = TextEditingController();
   bool _isCustom = false;
 
-  static const _presets = [
-    ('Solve 100 Problems', 100, 'problems'),
-    ('Solve 300 Problems', 300, 'problems'),
-    ('Solve 500 Problems', 500, 'problems'),
-    ('Solve 1000 Problems', 1000, 'problems'),
-    ('Reach 1600 Rating', 1600, 'rating'),
-    ('Reach 1800 Rating', 1800, 'rating'),
-    ('Maintain 30-Day Streak', 30, 'streak'),
-    ('Maintain 60-Day Streak', 60, 'streak'),
-  ];
+  late final List<(String, int, String)> _presets;
+
+  @override
+  void initState() {
+    super.initState();
+    _presets = [
+      ('Solve ${widget.currentSolved + 50} Problems', widget.currentSolved + 50, 'problems'),
+      ('Solve ${widget.currentSolved + 100} Problems', widget.currentSolved + 100, 'problems'),
+      ('Solve ${widget.currentSolved + 250} Problems', widget.currentSolved + 250, 'problems'),
+      ('Reach ${widget.currentRating + 100} Rating', widget.currentRating + 100, 'rating'),
+      ('Reach ${widget.currentRating + 250} Rating', widget.currentRating + 250, 'rating'),
+      ('Maintain ${widget.currentStreak + 7}-Day Streak', widget.currentStreak + 7, 'streak'),
+      ('Maintain ${widget.currentStreak + 30}-Day Streak', widget.currentStreak + 30, 'streak'),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -315,7 +345,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
-                      hintText: 'Target number',
+                      hintText: 'Target value',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       isDense: true,
                     ),
@@ -330,7 +360,17 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                     DropdownMenuItem(value: 'streak', child: Text('Streak')),
                     DropdownMenuItem(value: 'custom', child: Text('Custom')),
                   ],
-                  onChanged: (v) => setState(() => _selectedType = v!),
+                  onChanged: (v) {
+                    setState(() {
+                      _selectedType = v!;
+                      // Pre-fill target with something logical if empty
+                      if (_targetCtrl.text.isEmpty) {
+                        if (v == 'problems') _targetCtrl.text = (widget.currentSolved + 50).toString();
+                        if (v == 'rating') _targetCtrl.text = (widget.currentRating + 100).toString();
+                        if (v == 'streak') _targetCtrl.text = (widget.currentStreak + 7).toString();
+                      }
+                    });
+                  },
                 ),
               ],
             ),
@@ -355,21 +395,28 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
             ),
           ] else ...[
             // Preset list
-            ...List.generate(_presets.length, (i) {
-              final preset = _presets[i];
-              final isSelected = _selectedPreset == preset.$1;
-              return ListTile(
-                dense: true,
-                selected: isSelected,
-                selectedColor: theme.colorScheme.primary,
-                selectedTileColor: theme.colorScheme.primary.withOpacity(0.06),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                leading: Icon(_typeIcon(preset.$3), size: 18),
-                title: Text(preset.$1, style: const TextStyle(fontSize: 13)),
-                trailing: isSelected ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary) : null,
-                onTap: () => setState(() => _selectedPreset = preset.$1),
-              );
-            }),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _presets.length,
+                itemBuilder: (ctx, i) {
+                  final preset = _presets[i];
+                  final isSelected = _selectedPreset == preset.$1;
+                  return ListTile(
+                    dense: true,
+                    selected: isSelected,
+                    selectedColor: theme.colorScheme.primary,
+                    selectedTileColor: theme.colorScheme.primary.withOpacity(0.06),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    leading: Icon(_getIcon(preset.$3), size: 18),
+                    title: Text(preset.$1, style: const TextStyle(fontSize: 13)),
+                    trailing: isSelected ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary) : null,
+                    onTap: () => setState(() => _selectedPreset = preset.$1),
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -394,7 +441,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
     );
   }
 
-  IconData _typeIcon(String type) {
+  IconData _getIcon(String type) {
     switch (type) {
       case 'rating': return Icons.star_rounded;
       case 'streak': return Icons.local_fire_department_rounded;

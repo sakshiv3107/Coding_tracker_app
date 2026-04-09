@@ -118,10 +118,11 @@ class InsightService {
         'The programmer recently worked on: ${topics.join(", ")}. '
         'Their weak areas are: ${weakTopics.join(", ")}. '
         'They have solved $totalSolved problems total ($mediumSolved medium, $hardSolved hard). '
-        'Suggest exactly 3 next-step problems that build directly on their recent activity. '
+        'Suggest exactly 3 problems that the student has NOT solved yet. '
+        'Pick problems from distinct topics (e.g., one from DP, one from Graph, one from Arrays). '
         'Respond ONLY with a valid JSON array, no markdown, no preamble:\n'
         '[{"problemName":"...","platform":"LeetCode|Codeforces|CodeChef","difficulty":"Easy|Medium|Hard",'
-        '"topicTag":"...","aiReason":"one sentence why this problem fits their recent work"}]';
+        '"topicTag":"...","aiReason":"one sentence why this specific problem fits their recent work and pushes them"}]';
 
     final response = await _callGroq(prompt, maxTokens: 600, temperature: 0.5);
     try {

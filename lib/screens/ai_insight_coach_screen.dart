@@ -420,16 +420,21 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     _saveGoals();
   }
 
-  void _showAddGoalSheet() {
+  void _showAddGoalSheet(int curSolved, int curRating, int curStreak) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => AddGoalSheet(onAdd: (goal) {
-        _addGoal(goal);
-      }),
+      builder: (ctx) => AddGoalSheet(
+        currentSolved: curSolved,
+        currentRating: curRating,
+        currentStreak: curStreak,
+        onAdd: (goal) {
+          _addGoal(goal);
+        },
+      ),
     );
   }
 
@@ -678,8 +683,13 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
             ).animate().fadeIn(duration: 3.seconds),
           ),
 
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+          RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: theme.colorScheme.primary,
+            backgroundColor: theme.colorScheme.surface,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -724,6 +734,8 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
                 const SizedBox(height: 12),
                 ProgressForecastCard(
                   totalSolved: stats.totalSolved,
+                  currentRating: (stats.leetcodeStats?.rating ?? 0.0).toInt(),
+                  currentStreak: stats.leetcodeStats?.streak ?? 0,
                   solvedThisMonth: _solvedThisMonth,
                   daysElapsed: DateTime.now().day,
                   goals: _goals,
@@ -768,9 +780,15 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
               ],
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ));
+  }
+
+  Future<void> _onRefresh() async {
+    // Also trigger StatsProvider refresh if needed
+    await context.read<StatsProvider>().fetchAllStats();
+    await _initData();
   }
 
   Widget _header(BuildContext context, String title, IconData icon) {

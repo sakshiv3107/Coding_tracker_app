@@ -42,20 +42,66 @@ class FocusProblemsCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Based on your recent submissions',
+          'Targeting unsolved problems in your focus areas',
           style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.45)),
         ),
         const SizedBox(height: 12),
         if (isLoading)
-          ...List.generate(3, (index) => _buildShimmer(context))
+          ...List.generate(2, (index) => _buildShimmer(context))
         else if (errorMessage != null)
           _buildError(context)
         else if (problems == null || problems!.isEmpty)
           _buildFallback(context)
         else
-          ...problems!.map((p) => _buildProblemCard(context, p)),
+          ..._buildGroupedProblems(context),
       ],
     ).animate().fadeIn(delay: 200.ms);
+  }
+
+  List<Widget> _buildGroupedProblems(BuildContext context) {
+    final theme = Theme.of(context);
+    final grouped = <String, List<FocusProblem>>{};
+    
+    for (var p in problems!) {
+      final topic = p.topicTag;
+      if (!grouped.containsKey(topic)) grouped[topic] = [];
+      grouped[topic]!.add(p);
+    }
+
+    final List<Widget> children = [];
+    grouped.forEach((topic, topicProblems) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 3, height: 14,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                topic.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      for (var p in topicProblems) {
+        children.add(_buildProblemCard(context, p));
+      }
+    });
+
+    return children;
   }
 
   Widget _buildProblemCard(BuildContext context, FocusProblem p) {
@@ -121,21 +167,6 @@ class FocusProblemsCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.08)),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  p.topicTag,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -145,7 +176,7 @@ class FocusProblemsCard extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 6),
-          // AI reason — no button
+          // AI reason
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -206,37 +237,6 @@ class FocusProblemsCard extends StatelessWidget {
   }
 
   Widget _buildFallback(BuildContext context) {
-    final fallbacks = [
-      FocusProblem(
-        problemName: 'Two Sum', platform: 'LeetCode', difficulty: 'Easy',
-        topicTag: 'Arrays', aiReason: 'A foundational array problem — great for warming up.',
-        url: 'https://leetcode.com/problems/two-sum/',
-      ),
-      FocusProblem(
-        problemName: 'Longest Substring Without Repeating Characters',
-        platform: 'LeetCode', difficulty: 'Medium', topicTag: 'Sliding Window',
-        aiReason: 'Builds sliding-window intuition critical for strings.',
-        url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
-      ),
-      FocusProblem(
-        problemName: 'Word Search', platform: 'LeetCode', difficulty: 'Medium',
-        topicTag: 'Backtracking', aiReason: 'Classic backtracking — reinforces DFS on a grid.',
-        url: 'https://leetcode.com/problems/word-search/',
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            'Curated suggestions (AI offline)',
-            style: TextStyle(fontSize: 11, color: Colors.grey.withOpacity(0.6)),
-          ),
-        ),
-        ...fallbacks.map((p) => _buildProblemCard(context, p)),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 }
