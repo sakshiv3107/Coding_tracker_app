@@ -138,6 +138,8 @@ class StatsProvider extends ChangeNotifier {
       (_codechefStats?.totalSolved ?? 0) +
       (_hackerrankStats?.totalSolved ?? 0);
 
+  int get streakCount => _leetcodeStats?.streak ?? 0;
+
   // ── Developer score ────────────────────────────────────────────────────────
   DeveloperScore? get developerScore {
     final lc = _leetcodeStats;

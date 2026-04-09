@@ -145,9 +145,6 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final months = _buildMonthData();
-    final total = _totalSubmissions;
-    final active = _activeDays;
-    final streak = _maxStreak;
 
     const cellSize = 11.0;
     const cellGap = 3.0;

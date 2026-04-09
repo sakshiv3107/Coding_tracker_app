@@ -31,6 +31,8 @@ import 'providers/goal_provider.dart';
 import 'providers/achievement_provider.dart';
 import 'providers/resume_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/gamification_provider.dart';
+import 'providers/skill_provider.dart';
 import 'screens/ai_insight_coach_screen.dart';
 
 // Services
@@ -73,6 +75,14 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => GoalProvider()..init()),
         ChangeNotifierProvider(create: (_) => ResumeProvider()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()),
+        ChangeNotifierProxyProvider<StatsProvider, GamificationProvider>(
+          create: (context) => GamificationProvider(Provider.of<StatsProvider>(context, listen: false)),
+          update: (context, stats, previous) => GamificationProvider(stats),
+        ),
+        ChangeNotifierProxyProvider<StatsProvider, SkillProvider>(
+          create: (context) => SkillProvider(Provider.of<StatsProvider>(context, listen: false)),
+          update: (context, stats, previous) => SkillProvider(stats),
+        ),
         StreamProvider<User?>(
           create: (_) => FirebaseAuth.instance.authStateChanges(),
           initialData: null,
