@@ -104,25 +104,25 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
     return widget.datasets[key] ?? 0;
   }
 
-  int get _totalSubmissions =>
-      widget.datasets.values.fold(0, (sum, v) => sum + v);
+  // int get _totalSubmissions =>
+  //     widget.datasets.values.fold(0, (sum, v) => sum + v);
 
-  int get _activeDays => widget.datasets.length;
+  // int get _activeDays => widget.datasets.length;
 
-  int get _maxStreak {
-    if (widget.datasets.isEmpty) return 0;
-    final sorted = widget.datasets.keys.toList()..sort();
-    int max = 1, cur = 1;
-    for (int i = 1; i < sorted.length; i++) {
-      if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
-        cur++;
-        if (cur > max) max = cur;
-      } else {
-        cur = 1;
-      }
-    }
-    return max;
-  }
+  // int get _maxStreak {
+  //   if (widget.datasets.isEmpty) return 0;
+  //   final sorted = widget.datasets.keys.toList()..sort();
+  //   int max = 1, cur = 1;
+  //   for (int i = 1; i < sorted.length; i++) {
+  //     if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
+  //       cur++;
+  //       if (cur > max) max = cur;
+  //     } else {
+  //       cur = 1;
+  //     }
+  //   }
+  //   return max;
+  // }
 
   // ── Color ──────────────────────────────────────────────────────────────────
 
@@ -274,30 +274,29 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
     );
   }
 
-  Widget _statChip(String label, String value, bool isDark) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-            ),
-          ),
-          const TextSpan(text: ' '),
-          TextSpan(
-            text: value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+//   Widget _statChip(String label, String value, bool isDark) {
+//     return RichText(
+//       text: TextSpan(
+//         children: [
+//           TextSpan(
+//             text: label,
+//             style: TextStyle(
+//               fontSize: 12,
+//               color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+//             ),
+//           ),
+//           const TextSpan(text: ' '),
+//           TextSpan(
+//             text: value,
+//             style: TextStyle(
+//               fontSize: 12,
+//               fontWeight: FontWeight.bold,
+//               color: isDark ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
 }
 
 class _MonthData {

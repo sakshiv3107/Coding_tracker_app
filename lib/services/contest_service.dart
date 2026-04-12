@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'notification_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class Contest {
   final String? id;
@@ -110,62 +111,24 @@ class ContestService {
     final finalContests = unique.values.toList();
     finalContests.sort((a, b) => a.startTime.compareTo(b.startTime));
     
-    // Schedule notifications in background without blocking the result
-    _scheduleNotificationsInBackground(finalContests);
+    // Schedule notifications
+    unawaited(scheduleAllContestNotifications(finalContests));
     
     return finalContests;
   }
 
-  void _scheduleNotificationsInBackground(List<Contest> contests) {
-    scheduleAllContestNotifications(contests).catchError((e) {
-      debugPrint("Error scheduling notifications: $e");
-    });
-  }
-
   Future<void> scheduleAllContestNotifications(List<Contest> contests) async {
-    final prefs = await SharedPreferences.getInstance();
-    final scheduledIds = prefs.getStringList('scheduled_contest_ids') ?? [];
-    final newScheduledIds = <String>[];
-
-    final now = DateTime.now();
-    
     for (var contest in contests) {
-      if (contest.startTime.isBefore(now)) continue;
-
-      final contestId = contest.id ?? '${contest.platform}_${contest.startTime.millisecondsSinceEpoch}';
-      
-      // Avoid scheduling duplicates
-      if (scheduledIds.contains(contestId)) {
-        newScheduledIds.add(contestId);
-        continue;
+      if (contest.startTime.isAfter(DateTime.now())) {
+        await NotificationService.instance.scheduleContestReminders(
+          contestId: contest.id ?? contest.startTime.millisecondsSinceEpoch.toString(),
+          platform: contest.platform,
+          contestName: contest.title,
+          startTime: contest.startTime,
+          contestUrl: contest.url ?? '',
+        );
       }
-
-      // Unique numeric ID for local notifications
-      int baseId = contestId.hashCode.abs() % 1000000;
-
-      // Schedule 1 hour before
-      await NotificationService.scheduleContestNotification(
-        id: baseId,
-        title: contest.title,
-        platform: contest.platform,
-        startTime: contest.startTime,
-        minutesBefore: 60,
-      );
-
-      // Schedule 10 minutes before
-      await NotificationService.scheduleContestNotification(
-        id: baseId + 10,
-        title: contest.title,
-        platform: contest.platform,
-        startTime: contest.startTime,
-        minutesBefore: 10,
-      );
-
-      newScheduledIds.add(contestId);
     }
-
-    // Filter out old contest IDs to keep the list clean
-    await prefs.setStringList('scheduled_contest_ids', newScheduledIds);
   }
 
   Future<List<Contest>> _fetchCodeforces() async {

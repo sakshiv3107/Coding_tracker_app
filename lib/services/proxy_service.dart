@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ProxyService {
@@ -49,7 +50,7 @@ class ProxyService {
         return data['data']['activeDailyCodingChallengeQuestion'];
       }
     } catch (e) {
-      print("Error fetching daily challenge: $e");
+      debugPrint("Error fetching daily challenge: $e");
     }
     return null;
   }

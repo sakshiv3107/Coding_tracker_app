@@ -29,6 +29,7 @@ import '../services/codeforces_service.dart';
 import '../services/codechef_service.dart';
 import '../services/hackerrank_service.dart';
 import '../services/contest_service.dart';
+import '../services/milestone_detector.dart';
 import '../core/analytics_engine.dart';
 import '../core/exceptions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -185,6 +186,13 @@ class StatsProvider extends ChangeNotifier {
     _githubCommitCalendar = commitCalendar;
     _githubStars = stars;
     _githubTotalCommits = totalCommits;
+    
+    MilestoneDetector.checkMilestones(
+      platform: 'GitHub',
+      currentValue: totalCommits,
+      type: 'contributions',
+    );
+
     // Delay notification to ensure it doesn't happen during a build (called from HomeScreen)
     Future.microtask(() {
       notifyListeners();
@@ -600,6 +608,19 @@ class StatsProvider extends ChangeNotifier {
       _leetcodeLastFetch = DateTime.now();
       if (uid != null) await _saveLcToDisk(stats, uid);
       _calculateAnalytics();
+
+      MilestoneDetector.checkMilestones(
+        platform: 'LeetCode',
+        currentValue: stats.totalSolved,
+        type: 'problems',
+      );
+      if (stats.contestRating != null) {
+        MilestoneDetector.checkMilestones(
+          platform: 'LeetCode',
+          currentValue: stats.contestRating!.toInt(),
+          type: 'rating',
+        );
+      }
     } catch (e) {
       _leetcodeError = _handleError(
         e,
@@ -659,6 +680,19 @@ class StatsProvider extends ChangeNotifier {
       _codeforcesStats = stats;
       _codeforcesLastFetch = DateTime.now();
       if (uid != null) await _saveCfToDisk(stats, uid);
+
+      if (stats.rating != null) {
+        MilestoneDetector.checkMilestones(
+          platform: 'Codeforces',
+          currentValue: stats.rating!,
+          type: 'rating',
+        );
+      }
+      MilestoneDetector.checkMilestones(
+        platform: 'Codeforces',
+        currentValue: stats.totalSolved,
+        type: 'problems',
+      );
     } catch (e) {
       _codeforcesError = _handleError(
         e,
@@ -717,6 +751,19 @@ class StatsProvider extends ChangeNotifier {
       _codechefStats = stats;
       _codechefLastFetch = DateTime.now();
       if (uid != null) await _saveCcToDisk(stats, uid);
+
+      if (stats.rating != null) {
+        MilestoneDetector.checkMilestones(
+          platform: 'CodeChef',
+          currentValue: stats.rating!,
+          type: 'rating',
+        );
+      }
+      MilestoneDetector.checkMilestones(
+        platform: 'CodeChef',
+        currentValue: stats.totalSolved,
+        type: 'problems',
+      );
     } catch (e) {
       _codechefError = _handleError(
         e,
@@ -775,6 +822,12 @@ class StatsProvider extends ChangeNotifier {
       _hackerrankStats = stats;
       _hackerrankLastFetch = DateTime.now();
       if (uid != null) await _saveHrToDisk(stats, uid);
+
+      MilestoneDetector.checkMilestones(
+        platform: 'HackerRank',
+        currentValue: stats.totalSolved,
+        type: 'problems',
+      );
     } catch (e) {
       _hackerrankError = _handleError(
         e,

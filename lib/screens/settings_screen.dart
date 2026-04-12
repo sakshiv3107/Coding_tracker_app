@@ -4,11 +4,8 @@ import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 // import '../widgets/modern_card.dart';
 import '../widgets/premium_widgets.dart';
-import '../widgets/notification_settings_tile.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/glassmorphic_container.dart';
-
-import '../services/smart_reminder_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,25 +15,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _smartRemindersEnabled = true;
-  bool _inactivityRemindersEnabled = true;
-  bool _goalRemindersEnabled = true;
-
   @override
   void initState() {
     super.initState();
-    _loadReminderPrefs();
-  }
-
-  Future<void> _loadReminderPrefs() async {
-    final enabled = await SmartReminderService.isSmartRemindersEnabled();
-    final inactivity = await SmartReminderService.isInactivityAlertsEnabled();
-    final goals = await SmartReminderService.isGoalAlertsEnabled();
-    setState(() {
-      _smartRemindersEnabled = enabled;
-      _inactivityRemindersEnabled = inactivity;
-      _goalRemindersEnabled = goals;
-    });
   }
 
   @override
@@ -212,57 +193,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 32),
 
-                  // 💡 Smart Reminders Section
-                  const PremiumSectionHeader(
-                    title: 'Smart AI Alerts',
-                    subtitle: 'Behavior-based nudges',
-                    icon: Icons.psychology_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  GlassmorphicContainer(
-                    padding: const EdgeInsets.all(12),
-                    borderRadius: 28,
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          title: const Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Enable AI-based behavior reminders'),
-                          value: _smartRemindersEnabled,
-                          activeColor: theme.colorScheme.primary,
-                          onChanged: (val) async {
-                            await SmartReminderService.setSmartRemindersEnabled(val);
-                            setState(() => _smartRemindersEnabled = val);
-                          },
-                        ),
-                        if (_smartRemindersEnabled) ...[
-                          const Divider(),
-                          SwitchListTile(
-                            title: const Text('Inactivity Alerts', style: TextStyle(fontWeight: FontWeight.w600)),
-                            subtitle: const Text('Alert if no activity by evening'),
-                            value: _inactivityRemindersEnabled,
-                            activeColor: theme.colorScheme.primary,
-                            onChanged: (val) async {
-                              await SmartReminderService.setInactivityAlertsEnabled(val);
-                              setState(() => _inactivityRemindersEnabled = val);
-                            },
-                          ),
-                          SwitchListTile(
-                            title: const Text('Goal Reminders', style: TextStyle(fontWeight: FontWeight.w600)),
-                            subtitle: const Text('Alert for incomplete daily goals'),
-                            value: _goalRemindersEnabled,
-                            activeColor: theme.colorScheme.primary,
-                            onChanged: (val) async {
-                              await SmartReminderService.setGoalAlertsEnabled(val);
-                              setState(() => _goalRemindersEnabled = val);
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
-
-                  const SizedBox(height: 32),
-
                   // 🔔 Notifications Section
                   const PremiumSectionHeader(
                     title: 'Alert Network',
@@ -271,12 +201,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
                   GlassmorphicContainer(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.all(12),
                     borderRadius: 28,
-                    child: const NotificationSettingsTile(),
-                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+                    child: _buildActionTile(
+                      context,
+                      title: 'Notification Settings',
+                      subtitle: 'Contests, streaks and milestones',
+                      icon: Icons.notifications_active_rounded,
+                      onTap: () => Navigator.pushNamed(context, '/notification_settings'),
+                    ),
+                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
 
                   const SizedBox(height: 32),
+
+
 
                   // 👤 Profile Section
                   const PremiumSectionHeader(

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 class PlatformDonutChart extends StatefulWidget {
   final Map<String, int> platformSolvedCounts;
 
-  const PlatformDonutChart({Key? key, required this.platformSolvedCounts}) : super(key: key);
+  const PlatformDonutChart({super.key, required this.platformSolvedCounts});
 
   @override
   State<PlatformDonutChart> createState() => _PlatformDonutChartState();
@@ -43,10 +43,8 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
     if (filteredData.isEmpty) return const SizedBox.shrink();
 
     final total = filteredData.fold<int>(0, (sum, e) => sum + e.value);
-    final largest = filteredData.reduce((a, b) => a.value > b.value ? a : b);
-    final largestPercentage = (largest.value / total * 100).toInt();
 
-    return Container(
+    return SizedBox(
       height: 220,
       child: Stack(
         alignment: Alignment.center,
@@ -102,12 +100,12 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _touchedIndex == -1 ? "${largest.key} · $largestPercentage%" : "${filteredData[_touchedIndex].key}",
+                _touchedIndex == -1 ? "Total Solved" : filteredData[_touchedIndex].key,
                 style: GoogleFonts.inter(fontSize: 10, color: Colors.grey.shade500),
               ),
               const SizedBox(height: 2),
               Text(
-                _touchedIndex == -1 ? "${largest.value}" : "${filteredData[_touchedIndex].value}",
+                _touchedIndex == -1 ? total.toString() : filteredData[_touchedIndex].value.toString(),
                 style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 2),
@@ -129,6 +127,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
       case 'codechef': return const Color(0xFF7B68EE);
       case 'github': return const Color(0xFF4078c0);
       case 'codeforces': return const Color(0xFFE24B4A);
+      case 'hackerrank': return const Color(0xFF2EC866);
       default: return Colors.grey;
     }
   }
@@ -137,7 +136,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
 class RatingHistoryChart extends StatelessWidget {
   final Map<String, List<RatingPoint>> history;
 
-  const RatingHistoryChart({Key? key, required this.history}) : super(key: key);
+  const RatingHistoryChart({super.key, required this.history});
 
   @override
   Widget build(BuildContext context) {

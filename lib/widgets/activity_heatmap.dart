@@ -57,17 +57,25 @@ class ActivityHeatmap extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          _buildStatsHeader(),
+          _buildStatsHeader(context),
           const SizedBox(height: 16),
         ] else if (label.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -83,11 +91,11 @@ class ActivityHeatmap extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 14), // Offset for labels
-                    _buildDayLabel('Mon'),
+                    _buildDayLabel(context, 'Mon'),
                     const SizedBox(height: 14),
-                    _buildDayLabel('Wed'),
+                    _buildDayLabel(context, 'Wed'),
                     const SizedBox(height: 14),
-                    _buildDayLabel('Fri'),
+                    _buildDayLabel(context, 'Fri'),
                   ],
                 ),
               ),
@@ -103,12 +111,12 @@ class ActivityHeatmap extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildLegend(),
+        _buildLegend(context),
       ],
     );
   }
 
-  Widget _buildStatsHeader() {
+  Widget _buildStatsHeader(BuildContext context) {
     final total = data.values.fold(0, (sum, v) => sum + v);
     final activeDays = data.values.where((v) => v > 0).length;
     
@@ -137,10 +145,10 @@ class ActivityHeatmap extends StatelessWidget {
             children: [
               Text(
                 '$total',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -149,7 +157,7 @@ class ActivityHeatmap extends StatelessWidget {
                 '$tooltipLabel in the past one year',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -158,9 +166,9 @@ class ActivityHeatmap extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              _buildStatInfo('Total active days:', '$activeDays'),
+              _buildStatInfo(context, 'Total active days:', '$activeDays'),
               const SizedBox(width: 16),
-              _buildStatInfo('Max streak:', '$maxStreak'),
+              _buildStatInfo(context, 'Max streak:', '$maxStreak'),
             ],
           ),
         ],
@@ -168,7 +176,7 @@ class ActivityHeatmap extends StatelessWidget {
     );
   }
 
-  Widget _buildStatInfo(String label, String value) {
+  Widget _buildStatInfo(BuildContext context, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       child: Row(
@@ -178,17 +186,17 @@ class ActivityHeatmap extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(width: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -210,7 +218,11 @@ class ActivityHeatmap extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4.0),
             child: Text(
               monthLabel,
-              style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -218,12 +230,12 @@ class ActivityHeatmap extends StatelessWidget {
     );
   }
 
-  Widget _buildDayLabel(String text) {
+  Widget _buildDayLabel(BuildContext context, String text) {
     return SizedBox(
       height: 12,
       child: Text(
         text,
-        style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 10),
       ),
     );
   }
@@ -239,17 +251,17 @@ class ActivityHeatmap extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend() {
+  Widget _buildLegend(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text('Less ', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+        Text('Less', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 10)),
         _buildLegendSquare(0),
         _buildLegendSquare(1),
         _buildLegendSquare(3),
         _buildLegendSquare(6),
         _buildLegendSquare(10),
-        Text(' More', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+        Text('More', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 10)),
       ],
     );
   }
@@ -267,8 +279,8 @@ class ActivityHeatmap extends StatelessWidget {
   }
 
   static Color _getColor(int count, Color baseColor) {
-    if (count == 0) return const Color(0xFFFFFFFF).withOpacity(0.05); 
-    if (count < 3) return baseColor.withOpacity(0.2);
+    if (count == 0) return baseColor.withOpacity(0.05); 
+    if (count < 3) return baseColor.withOpacity(0.15);
     if (count < 6) return baseColor.withOpacity(0.4);
     if (count < 10) return baseColor.withOpacity(0.7);
     return baseColor;
@@ -310,27 +322,34 @@ class _HeatmapCellState extends State<_HeatmapCell> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '${widget.count} ${widget.tooltipLabel}',
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   DateFormat('MMM d, yyyy').format(widget.date),
-                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),

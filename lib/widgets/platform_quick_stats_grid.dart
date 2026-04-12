@@ -122,6 +122,21 @@ class PlatformQuickStatsGrid extends StatelessWidget {
           onConnect: onCodeChefTap,
           onTap: onCodeChefTap,
         ),
+        const SizedBox(height: 12),
+        PlatformStatCard(
+          platformName: 'HackerRank',
+          username: hackerrankUsername,
+          primaryStat: '${hackerrank['solved'] ?? 0} Solved',
+          secondaryStat: 'Rank: ${hackerrank['rank'] ?? 'N/A'}',
+          dailyActivity: [2, 1, 3, 0, 4, 1, 2],
+          platformColor: const Color(0xFF2EC866),
+          icon: const FaIcon(FontAwesomeIcons.hackerrank, size: 18, color: Color(0xFF2EC866)),
+          isLoading: hackerrankLoading,
+          error: hackerrankError,
+          onRetry: onHackerRankTap,
+          onConnect: onHackerRankTap,
+          onTap: onHackerRankTap,
+        ),
       ],
     );
   }

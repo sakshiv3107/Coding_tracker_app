@@ -7,7 +7,7 @@ import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/goal_provider.dart';
-import '../providers/achievement_provider.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/profile_summary_card.dart';
 import '../widgets/platform_quick_stats_grid.dart';
@@ -31,7 +31,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final bool _rateLimitBannerDismissed = false;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final profile = context.watch<ProfileProvider>();
     final stats = context.watch<StatsProvider>();
     final github = context.watch<GithubProvider>();
-    final achievementProvider = context.watch<AchievementProvider>();
+
 
     // ── LOADING GATE: only show skeleton while intentionally loading from network ──
     if (profile.isLoading) {
@@ -75,12 +75,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _mergeMap(heatmapData, stats.hackerrankStats?.submissionHistory);
     _mergeMap(heatmapData, stats.codechefStats?.submissionCalendar);
 
-    final showRateLimitBanner =
-        !_rateLimitBannerDismissed &&
-        (stats.leetcodeRateLimited ||
-            stats.codeforcesRateLimited ||
-            stats.codechefRateLimited ||
-            stats.hackerrankRateLimited);
+    // final showRateLimitBanner =
+    //     !_rateLimitBannerDismissed &&
+    //     (stats.leetcodeRateLimited ||
+    //         stats.codeforcesRateLimited ||
+    //         stats.codechefRateLimited ||
+    //         stats.hackerrankRateLimited);
 
     final avatarUrl = (profilePic != null && profilePic.isNotEmpty)
         ? profilePic
@@ -89,9 +89,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               : null);
 
     final tagStats = stats.leetcodeStats?.tagStats;
-    final unlockedAchievements = List.from(
-      achievementProvider.unlockedAchievements,
-    );
+    // final unlockedAchievements = List.from(
+    //   achievementProvider.unlockedAchievements,
+    // );
 
     final upcomingContests = stats.upcomingContests
         .where((c) {

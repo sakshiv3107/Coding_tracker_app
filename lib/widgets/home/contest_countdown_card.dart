@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/stats_provider.dart';
-import '../../services/notification_service.dart';
 
 class ContestCountdownCard extends StatefulWidget {
   final List<dynamic>? contests;
@@ -17,7 +16,7 @@ class ContestCountdownCard extends StatefulWidget {
 
 class _ContestCountdownCardState extends State<ContestCountdownCard> {
   Timer? _timer;
-  final Map<String, bool> _reminded = {};
+  // final Map<String, bool> _reminded = {};
 
   @override
   void initState() {
@@ -73,7 +72,7 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
             itemBuilder: (context, index) {
               final contest = contests[index];
               final timeRemaining = contest.startTime.difference(DateTime.now());
-              final isReminded = _reminded[contest.id] ?? false;
+              // final isReminded = _reminded[contest.id] ?? false;
 
               return Container(
                 width: 260, // Slightly narrower
@@ -113,8 +112,6 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
                         color: const Color(0xFF7B68EE),
                       ),
                     ),
-                    const Spacer(),
-                    _buildRemindButton(contest, isReminded),
                   ],
                 ),
               );
@@ -149,41 +146,5 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
     }
   }
 
-  Widget _buildRemindButton(dynamic contest, bool isReminded) {
-    return SizedBox(
-      width: double.infinity,
-      height: 30,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: isReminded ? Colors.grey : const Color(0xFFEF9F27).withOpacity(0.5)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: EdgeInsets.zero,
-        ),
-        onPressed: isReminded ? null : () async {
-          try {
-            await NotificationService.scheduleContestNotification(
-              id: contest.id.hashCode,
-              title: contest.title,
-              platform: contest.platform,
-              startTime: contest.startTime,
-              minutesBefore: 30,
-            );
-            setState(() {
-              _reminded[contest.id] = true;
-            });
-          } catch (e) {
-            debugPrint("Failed to schedule notification: $e");
-          }
-        },
-        child: Text(
-          isReminded ? "Reminded ✓" : "Remind me",
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: isReminded ? Colors.grey : const Color(0xFFEF9F27),
-          ),
-        ),
-      ),
-    );
-  }
+
 }

@@ -36,17 +36,20 @@ import 'providers/skill_provider.dart';
 import 'screens/ai_insight_coach_screen.dart';
 
 // Services
-import 'services/notification_service.dart';
-import 'services/smart_reminder_service.dart';
-import 'services/background_task_service.dart';
 import 'services/ota_service.dart';
+import 'services/notification_service.dart';
+import 'services/streak_monitor_service.dart';
+import 'screens/settings/notification_settings_screen.dart';
+
+import 'services/notification_permission_service.dart';
 
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
-  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Only critical blocking initialization
   await dotenv.load(fileName: ".env");
   try {
     await Firebase.initializeApp(
@@ -58,11 +61,6 @@ Future<void> main() async {
       rethrow;
     }
   }
-
-  await NotificationService.init();
-  await SmartReminderService.init();
-  await BackgroundTaskService.init();
-  await BackgroundTaskService.schedulePeriodicTasks();
 
   runApp(
     MultiProvider(
@@ -121,6 +119,7 @@ class MyApp extends StatelessWidget {
         '/review': (context) => const ReviewScreen(),
         '/ai-coach': (context) => const AIInsightCoachScreen(),
         '/goals': (context) => const GoalsScreen(),
+        '/notification_settings': (context) => const NotificationSettingsScreen(),
       },
     ); 
   }
@@ -146,7 +145,32 @@ class _AppEntryState extends State<_AppEntry> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _deferredInit();
+    });
+  }
+
+  // ✅ All non-critical init happens AFTER engine is ready
+  Future<void> _deferredInit() async {
+    if (!mounted) return;
+    
+    // Set HttpOverrides after engine is running
+    HttpOverrides.global = MyHttpOverrides();
+    
+    // Initialize services in background
+    try {
+      await NotificationService.instance.initialize();
+      await StreakMonitorService.initialize();
+      await StreakMonitorService.scheduleTask();
+    } catch (e) {
+      debugPrint('Background service init failed: $e');
+    }
+
+    // Check for updates
+    if (mounted) {
+      _checkUpdate();
+      NotificationPermissionService.checkAndRequestPermission(context);
+    }
   }
 
   Future<void> _checkUpdate() async {

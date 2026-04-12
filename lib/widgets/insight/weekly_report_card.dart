@@ -176,7 +176,7 @@ class WeeklyReportCard extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
-      childAspectRatio: 1.6,
+      childAspectRatio: 1.35,
       children: [
         _statCell(context, '${snapshot.solvedThisWeek}', 'Solved', Icons.check_circle_outline_rounded, Colors.green),
         _statCell(context, '${snapshot.totalSubmissions}', 'Submissions', Icons.upload_outlined, Colors.blue),

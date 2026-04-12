@@ -1,221 +1,223 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  // Singleton pattern
+  static final NotificationService instance = NotificationService._();
+  NotificationService._();
 
-  static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  static const String _kEnabledKey = 'notifications_enabled';
-  static const String _kPlatformPrefix = 'notify_';
+  // Channels IDs
+  static const String channelContests = 'contest_reminders';
+  static const String channelStreaks = 'streak_warnings';
+  static const String channelMilestones = 'milestones';
 
-  static Future<void> init() async {
-    try {
-      tz.initializeTimeZones();
-      final dynamic timeZoneResult = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = timeZoneResult is String
-          ? timeZoneResult
-          : timeZoneResult.toString();
+  Future<void> initialize() async {
+    tz.initializeTimeZones();
+    final timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
 
-      try {
-        tz.setLocalLocation(tz.getLocation(timeZoneName));
-      } catch (e) {
-        debugPrint(
-          'NotificationService: Could not set local location for $timeZoneName. Falling back to UTC.',
-        );
-        tz.setLocalLocation(tz.getLocation('UTC'));
-      }
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
 
-      const DarwinInitializationSettings initializationSettingsIOS =
-          DarwinInitializationSettings(
-            requestAlertPermission: true,
-            requestBadgePermission: true,
-            requestSoundPermission: true,
-          );
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
-      const InitializationSettings initializationSettings =
-          InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsIOS,
-          );
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: handleNotificationTap,
+    );
 
-      await _localNotifications.initialize(
-        settings: initializationSettings,
-        onDidReceiveNotificationResponse: (NotificationResponse details) {
-          // Handle notification click
-        },
-      );
+    await _createNotificationChannels();
+  }
 
-      // Handle permissions
-      await requestPermissions();
+  Future<void> _createNotificationChannels() async {
+    const List<AndroidNotificationChannel> channels = [
+      AndroidNotificationChannel(
+        channelContests,
+        'Contest Reminders',
+        description: 'Upcoming contest alerts',
+        importance: Importance.high,
+      ),
+      AndroidNotificationChannel(
+        channelStreaks,
+        'Streak Warnings',
+        description: 'Maintain your streak',
+        importance: Importance.defaultImportance,
+      ),
+      AndroidNotificationChannel(
+        channelMilestones,
+        'Achievements',
+        description: 'Milestone celebrations',
+        importance: Importance.high,
+      ),
+    ];
 
-      if (Platform.isIOS) {
-        await _fcm.requestPermission();
-      }
-
-      // FCM Listeners
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        _showLocalNotification(message);
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        // Handle background notification click
-      });
-
-      FirebaseMessaging.onBackgroundMessage(
-        _firebaseMessagingBackgroundHandler,
-      );
-    } catch (e) {
-      debugPrint('NotificationService init error: $e');
+    for (var channel in channels) {
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
     }
   }
 
-  static Future<void> requestPermissions() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.notification.status;
-      if (status.isDenied) {
-        await Permission.notification.request();
-      }
-    } else if (Platform.isIOS) {
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >()
-          ?.requestPermissions(alert: true, badge: true, sound: true);
-    }
-  }
-
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'high_importance_channel',
-          'High Importance Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        );
-
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidDetails,
-    );
-
-    await _localNotifications.show(
-      id: message.hashCode,
-      title: message.notification?.title,
-      body: message.notification?.body,
-      notificationDetails: platformChannelSpecifics,
-    );
-  }
-
-  static Future<void> showInstantNotification({
-    required String title,
-    required String body,
-    String? payload,
+  // Contest Notifications
+  Future<void> scheduleContestReminders({
+    required String contestId,
+    required String platform,
+    required String contestName,
+    required DateTime startTime,
+    required String contestUrl,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!(prefs.getBool(_kEnabledKey) ?? true)) return;
+    final now = DateTime.now();
+    final payload = jsonEncode({
+      "type": "contest",
+      "platform": platform,
+      "url": contestUrl,
+      "contestId": contestId
+    });
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'alerts',
-          'Alerts',
-          channelDescription: 'Goal and performance alerts',
-          importance: Importance.max,
-          priority: Priority.high,
+    final offsets = {
+      1440: "Tomorrow", // 1 day
+      60: "Starting in 1 hour!",
+      30: "Starting soon! Get ready 🚀",
+    };
+
+    for (var entry in offsets.entries) {
+      final minutesBefore = entry.key;
+      final label = entry.value;
+      
+      final scheduledTime = startTime.subtract(Duration(minutes: minutesBefore));
+      
+      if (scheduledTime.isAfter(now)) {
+        int notificationId = (minutesBefore ~/ 30 * 1000) + (contestId.hashCode.abs() % 1000);
+        
+        await _notificationsPlugin.zonedSchedule(
+          notificationId,
+          'Contest Alert: $platform',
+          minutesBefore == 1440 ? '$contestName starts tomorrow!' : label,
+          tz.TZDateTime.from(scheduledTime, tz.local),
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channelContests,
+              'Contest Reminders',
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+            iOS: const DarwinNotificationDetails(),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
         );
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidDetails,
-    );
+      }
+    }
+  }
 
-    await _localNotifications.show(
-      id: DateTime.now().millisecond,
-      title: title,
-      body: body,
-      notificationDetails: platformChannelSpecifics,
+  // Streak Warnings
+  Future<void> scheduleStreakWarning({
+    required String platform,
+    required DateTime lastSolvedTime,
+  }) async {
+    final scheduledTime = lastSolvedTime.add(const Duration(hours: 24));
+    if (scheduledTime.isBefore(DateTime.now())) return;
+
+    final payload = jsonEncode({
+      "type": "streak",
+      "platform": platform,
+    });
+
+    int notificationId = 4000 + (platform.hashCode.abs() % 1000);
+
+    await _notificationsPlugin.zonedSchedule(
+      notificationId,
+      'Streak Warning! 🔥',
+      'Your $platform streak is at risk. Solve a problem now!',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelStreaks,
+          'Streak Warnings',
+          importance: Importance.defaultImportance,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
   }
 
-  static Future<void> scheduleContestNotification({
-    required int id,
-    required String title,
+  // Milestone Celebrations
+  Future<void> showMilestoneNotification({
     required String platform,
-    required DateTime startTime,
-    required int minutesBefore,
+    required String milestone,
+    required int value,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final isEnabled = prefs.getBool(_kEnabledKey) ?? true;
-    final isPlatformEnabled =
-        prefs.getBool('$_kPlatformPrefix${platform.toLowerCase()}') ?? true;
+    final payload = jsonEncode({
+      "type": "milestone",
+      "platform": platform,
+    });
 
-    if (!isEnabled || !isPlatformEnabled) return;
+    int notificationId = 5000 + (platform.hashCode.abs() % 1000);
 
-    final scheduledTime = startTime.subtract(Duration(minutes: minutesBefore));
-    if (scheduledTime.isBefore(DateTime.now())) return;
-
-    final tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
-
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'contest_alerts',
-          'Contest Alerts',
-          channelDescription: 'Reminder for upcoming coding contests',
-          importance: Importance.max,
+    await _notificationsPlugin.show(
+      notificationId,
+      '🎉 Milestone Unlocked!',
+      'You\'ve $milestone on $platform! Keep up the amazing work!',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelMilestones,
+          'Achievements',
+          importance: Importance.high,
           priority: Priority.high,
-        );
-
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidDetails,
-    );
-
-    final notificationId = id + minutesBefore;
-
-    await _localNotifications.zonedSchedule(
-      id: notificationId,
-      title: 'Contest Alert: $platform',
-      body: '$title starts in $minutesBefore minutes!',
-      scheduledDate: tzScheduledTime,
-      notificationDetails: platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: platform,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: payload,
     );
   }
 
-  static Future<void> cancelAllNotifications() async {
-    await _localNotifications.cancelAll();
+  // Cancel specific notifications
+  Future<void> cancelContestNotifications(String contestId) async {
+    int baseId = contestId.hashCode.abs() % 1000;
+    await _notificationsPlugin.cancel(1000 + baseId);
+    await _notificationsPlugin.cancel(2000 + baseId);
+    await _notificationsPlugin.cancel(3000 + baseId);
   }
 
-  static Future<void> setNotificationsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kEnabledKey, enabled);
+  Future<void> cancelAllNotifications() async {
+    await _notificationsPlugin.cancelAll();
   }
 
-  static Future<void> setPlatformEnabled(String platform, bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('$_kPlatformPrefix${platform.toLowerCase()}', enabled);
+  // Deep linking handler
+  void handleNotificationTap(NotificationResponse response) async {
+    final String? payload = response.payload;
+    if (payload != null) {
+      try {
+        final data = jsonDecode(payload);
+        if (data['url'] != null) {
+          final uri = Uri.parse(data['url']);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error handling notification tap: $e');
+      }
+    }
   }
-
-  static Future<bool> isEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_kEnabledKey) ?? true;
-  }
-
-  static Future<bool> isPlatformEnabled(String platform) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('$_kPlatformPrefix${platform.toLowerCase()}') ?? true;
-  }
-}
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint("Handling a background message: ${message.messageId}");
 }

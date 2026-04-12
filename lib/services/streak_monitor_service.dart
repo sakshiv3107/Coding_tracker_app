@@ -11,9 +11,12 @@ void callbackDispatcher() {
       try {
         final prefs = await SharedPreferences.getInstance();
         
+        // check user preferences
         final streakEnabled = prefs.getBool('streak_warnings_enabled') ?? true;
         if (!streakEnabled) return Future.value(true);
 
+        // Check LeetCode Streak (Mocking logic for multiple platforms)
+        // In a real app, we'd iterate through all platforms
         final allKeys = prefs.getKeys();
         final lcKeys = allKeys.where((k) => k.contains('_lc_') && !k.endsWith('_ts'));
         
@@ -52,4 +55,25 @@ void callbackDispatcher() {
     }
     return Future.value(true);
   });
+}
+
+class StreakMonitorService {
+  static Future<void> initialize() async {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: kDebugMode,
+    );
+  }
+
+  static Future<void> scheduleTask() async {
+    await Workmanager().registerPeriodicTask(
+      "streakMonitor",
+      "streakMonitorTask",
+      frequency: const Duration(hours: 6),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
+  }
 }
