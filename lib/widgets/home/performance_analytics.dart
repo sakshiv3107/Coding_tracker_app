@@ -242,7 +242,9 @@ class RatingHistoryChart extends StatelessWidget {
     switch (platform.toLowerCase()) {
       case 'leetcode': return const Color(0xFFEF9F27);
       case 'codechef': return const Color(0xFF7B68EE);
+      case 'github': return const Color(0xFF4078c0);
       case 'codeforces': return const Color(0xFFE24B4A);
+      case 'hackerrank': return const Color(0xFF2EC866);
       default: return Colors.grey;
     }
   }

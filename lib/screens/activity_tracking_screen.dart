@@ -8,7 +8,6 @@ import '../services/leetcode_service.dart';
 import '../widgets/activity_heatmap.dart';
 import '../theme/app_theme.dart';
 import '../providers/profile_provider.dart';
-// import '../services/background_task_service.dart';
 
 class ActivityTrackingScreen extends StatefulWidget {
   const ActivityTrackingScreen({super.key});
@@ -123,8 +122,11 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           _buildBackground(),
@@ -194,6 +196,8 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     int currentStreak,
     int maxStreak,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -202,7 +206,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           child: Text(
             title,
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: theme.textTheme.titleLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -240,9 +244,9 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.02),
+                color: theme.cardColor.withOpacity(isDark ? 0.02 : 0.4),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+                border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
               ),
               child: ActivityHeatmap(
                 data: data,
@@ -263,13 +267,15 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     IconData icon,
     Color color,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
+          color: theme.cardColor.withOpacity(isDark ? 0.03 : 0.5),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
         ),
         child: Column(
           children: [
@@ -278,7 +284,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             Text(
               value,
               style: GoogleFonts.outfit(
-                color: Colors.white,
+                color: theme.textTheme.bodyLarge?.color,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -287,7 +293,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.3),
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),
@@ -331,13 +337,15 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     IconData icon,
     Color color,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
+          color: theme.cardColor.withOpacity(isDark ? 0.04 : 0.6),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
         ),
         child: Column(
           children: [
@@ -353,7 +361,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             Text(
               value,
               style: GoogleFonts.outfit(
-                color: Colors.white,
+                color: theme.textTheme.titleLarge?.color,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -362,7 +370,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.4),
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -374,6 +382,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         children: [
@@ -387,7 +396,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           Text(
             'No Platforms Connected',
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: theme.textTheme.titleLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -397,7 +406,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             'Connect your profiles in settings to see your activity reports.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
               fontSize: 14,
             ),
           ),
@@ -407,15 +416,16 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    final theme = Theme.of(context);
+    return Center(
       child: Column(
         children: [
-          SizedBox(height: 100),
-          CircularProgressIndicator(color: AppTheme.primary),
-          SizedBox(height: 20),
+          const SizedBox(height: 100),
+          const CircularProgressIndicator(color: AppTheme.primary),
+          const SizedBox(height: 20),
           Text(
             'Compiling your activity report...',
-            style: TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
           ),
         ],
       ),
@@ -423,6 +433,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   }
 
   Widget _buildErrorState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         children: [
@@ -436,7 +447,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           Text(
             'Report generation failed',
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: theme.textTheme.titleLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -459,6 +470,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
       ),
     );
   }
+
   Widget _buildBackground() {
     return Stack(
       children: [
@@ -491,6 +503,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   }
 
   Widget _buildAppBar() {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 120,
       backgroundColor: Colors.transparent,
@@ -503,7 +516,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
         title: Text(
           'Activity Insights',
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: theme.textTheme.titleLarge?.color,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -516,12 +529,12 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
         ),
       ),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.iconTheme.color, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          icon: Icon(Icons.refresh_rounded, color: theme.iconTheme.color),
           onPressed: _loadAllData,
         ),
         const SizedBox(width: 8),
