@@ -17,7 +17,7 @@ class PlatformStatCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const PlatformStatCard({
-    Key? key,
+    super.key,
     required this.platformName,
     this.username,
     required this.primaryStat,
@@ -30,7 +30,7 @@ class PlatformStatCard extends StatelessWidget {
     this.onRetry,
     this.onConnect,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

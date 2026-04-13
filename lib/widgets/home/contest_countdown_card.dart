@@ -8,7 +8,7 @@ import '../../providers/stats_provider.dart';
 class ContestCountdownCard extends StatefulWidget {
   final List<dynamic>? contests;
 
-  const ContestCountdownCard({Key? key, this.contests}) : super(key: key);
+  const ContestCountdownCard({super.key, this.contests});
 
   @override
   State<ContestCountdownCard> createState() => _ContestCountdownCardState();

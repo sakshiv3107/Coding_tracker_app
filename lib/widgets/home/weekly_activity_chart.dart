@@ -8,11 +8,11 @@ class WeeklyActivityChart extends StatefulWidget {
   final Map<int, Map<String, int>> perPlatformData;
 
   const WeeklyActivityChart({
-    Key? key,
+    super.key,
     required this.values,
     required this.days,
     required this.perPlatformData,
-  }) : super(key: key);
+  });
 
   @override
   State<WeeklyActivityChart> createState() => _WeeklyActivityChartState();
@@ -133,8 +133,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart> with SingleTi
                             getTooltipItem: (group, groupIndex, rod, rodIndex) {
                               final data = widget.perPlatformData[groupIndex] ?? {};
                               return BarTooltipItem(
-                                "${widget.days[groupIndex]}\nTotal: ${widget.values[groupIndex].toInt()}\n" +
-                                data.entries.map((e) => "${e.key}: ${e.value}").join('\n'),
+                                "${widget.days[groupIndex]}\nTotal: ${widget.values[groupIndex].toInt()}\n${data.entries.map((e) => "${e.key}: ${e.value}").join('\n')}",
                                 GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w500),
                               );
                             },

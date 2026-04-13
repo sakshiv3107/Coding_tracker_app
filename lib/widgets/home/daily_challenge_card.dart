@@ -9,7 +9,7 @@ import '../../providers/skill_provider.dart';
 import '../../providers/stats_provider.dart';
 
 class DailyChallengeCard extends StatefulWidget {
-  const DailyChallengeCard({Key? key}) : super(key: key);
+  const DailyChallengeCard({super.key});
 
   @override
   State<DailyChallengeCard> createState() => _DailyChallengeCardState();

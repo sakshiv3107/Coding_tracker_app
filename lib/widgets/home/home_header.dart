@@ -6,7 +6,7 @@ import '../../providers/gamification_provider.dart';
 import '../../providers/auth_provider.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({Key? key}) : super(key: key);
+  const HomeHeader({super.key});
 
   String _getGreeting() {
     final hour = DateTime.now().hour;

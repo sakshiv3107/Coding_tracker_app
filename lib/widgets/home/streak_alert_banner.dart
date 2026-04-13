@@ -8,7 +8,7 @@ import '../../providers/stats_provider.dart';
 class StreakAlertBanner extends StatefulWidget {
   final VoidCallback onSolveNow;
 
-  const StreakAlertBanner({Key? key, required this.onSolveNow}) : super(key: key);
+  const StreakAlertBanner({super.key, required this.onSolveNow});
 
   @override
   State<StreakAlertBanner> createState() => _StreakAlertBannerState();

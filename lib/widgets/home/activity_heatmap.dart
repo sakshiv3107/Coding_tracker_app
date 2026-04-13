@@ -7,10 +7,10 @@ class ActivityHeatmap extends StatefulWidget {
   final Map<DateTime, Map<String, int>>? platformBreakdown;
 
   const ActivityHeatmap({
-    Key? key,
+    super.key,
     required this.datasets,
     this.platformBreakdown,
-  }) : super(key: key);
+  });
 
   @override
   State<ActivityHeatmap> createState() => _ActivityHeatmapState();
