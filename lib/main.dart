@@ -168,21 +168,38 @@ class _AppEntryState extends State<_AppEntry> {
 
     // Check for updates
     if (mounted) {
-      _checkUpdate();
+      _checkUpdateAndHandle();
       NotificationPermissionService.checkAndRequestPermission(context);
     }
   }
 
-  Future<void> _checkUpdate() async {
-    final data = await OTAService.checkForUpdate();
-    if (data == null || !mounted) return;
+  Future<void> _checkUpdateAndHandle() async {
+  final data = await OTAService.checkForUpdate();
+  if (data == null || !mounted) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => _UpdateDialog(data: data),
-    );
+  await _handleUpdate(data);
+}
+
+Future<void> _handleUpdate(Map<String, dynamic> updateInfo) async {
+  final shouldUpdate = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => _UpdateDialog(data: updateInfo),
+  );
+
+  if (shouldUpdate == true) {
+    
+
+    final stream = OTAService.startUpdate(updateInfo['apk_url']);
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _ProgressDialog(stream: stream),
+      );
+
   }
+}
 
   @override
   Widget build(BuildContext context) => const AuthWrapper();
@@ -197,84 +214,7 @@ class _UpdateDialog extends StatefulWidget {
 }
 
 class _UpdateDialogState extends State<_UpdateDialog> {
-  double? _progress;
-  String _status = '';
-  bool _isDownloading = false;
-  bool _hasFailed = false;
 
-
-
-void _startUpdate() async {
-  // ✅ Check & request "Install unknown apps" permission first
-  if (!await Permission.requestInstallPackages.isGranted) {
-    final status = await Permission.requestInstallPackages.request();
-    if (!status.isGranted) {
-      setState(() {
-        _hasFailed = true;
-        _status = 'Permission denied.\nGo to Settings → Install unknown apps → allow CodeSphere.';
-      });
-      // Open settings so user can enable it
-      await openAppSettings();
-      return;
-    }
-  }
-
-  setState(() {
-    _isDownloading = true;
-    _hasFailed = false;
-    _status = 'Starting download...';
-  });
-
-  OTAService.startUpdate(widget.data['apk_url']).listen(
-    (OtaEvent event) {
-      if (!mounted) return;
-      setState(() {
-        switch (event.status) {
-          case OtaStatus.DOWNLOADING:
-            _progress = double.tryParse(event.value ?? '0');
-            _status = 'Downloading... ${event.value ?? 0}%';
-            break;
-          case OtaStatus.INSTALLING:
-            _progress = null;
-            _isDownloading = false;
-            _status = 'Installing update…';
-            break;
-          case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-            _isDownloading = false;
-            _hasFailed = true;
-            _status = 'Permission denied.\nEnable "Install unknown apps" in Settings.';
-            openAppSettings(); // Auto-open settings
-            break;
-          case OtaStatus.DOWNLOAD_ERROR:
-            _isDownloading = false;
-            _hasFailed = true;
-            _status = 'Download failed. Check your internet.';
-            break;
-          case OtaStatus.CHECKSUM_ERROR:
-            _isDownloading = false;
-            _hasFailed = true;
-            _status = 'File corruption detected. Please retry.';
-            break;
-          case OtaStatus.INTERNAL_ERROR:
-            _isDownloading = false;
-            _hasFailed = true;
-            _status = 'Internal error. Please try again.';
-            break;
-          default:
-            _status = 'Status: ${event.status}';
-        }
-      });
-    },
-    onError: (e) {
-      if (!mounted) return;
-      setState(() {
-        _isDownloading = false;
-        _hasFailed = true;
-        _status = 'Download failed. Check your connection.';
-      });
-    },
-  );
-}
 
   @override
   Widget build(BuildContext context) {
@@ -312,21 +252,105 @@ void _startUpdate() async {
             widget.data['changelog'] ?? 'Bug fixes and improvements.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          if (_isDownloading || _hasFailed) ...[
-            const SizedBox(height: 20),
-            if (_progress != null)
-              LinearProgressIndicator(value: _progress! / 100, backgroundColor: colorScheme.surfaceVariant),
-            const SizedBox(height: 8),
-            Text(_status, style: TextStyle(fontSize: 12, color: _hasFailed ? Colors.red : colorScheme.onSurface)),
-          ],
+          
         ],
       ),
       actions: [
-        if (!_isDownloading)
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later')),
-        if (!_isDownloading || _hasFailed)
-          ElevatedButton(onPressed: _startUpdate, child: Text(_hasFailed ? 'Retry' : 'Update Now')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Later'),
+          ),
+        ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Update Now'),
+          ),
+                    
       ],
+    );
+  }
+}
+class _ProgressDialog extends StatefulWidget {
+  final Stream<OtaEvent> stream;
+
+  const _ProgressDialog({required this.stream});
+
+  @override
+  State<_ProgressDialog> createState() => _ProgressDialogState();
+}
+
+class _ProgressDialogState extends State<_ProgressDialog> {
+  double progress = 0;
+  String status = "Starting update...";
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.stream.listen(
+      (event) {
+        if (!mounted) return;
+
+        setState(() {
+          switch (event.status) {
+            case OtaStatus.DOWNLOADING:
+              progress = (double.tryParse(event.value ?? '0') ?? 0) / 100;
+              status = "Downloading... ${event.value}%";
+              break;
+
+            case OtaStatus.INSTALLING:
+              status = "Installing update...";
+              break;
+
+            case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+              status = "Permission denied. Enable it in settings.";
+              break;
+
+            case OtaStatus.DOWNLOAD_ERROR:
+              status = "Download failed. Check your internet.";
+              break;
+
+            case OtaStatus.CHECKSUM_ERROR:
+              status = "File corrupted. Retry.";
+              break;
+
+            case OtaStatus.INTERNAL_ERROR:
+              status = "Internal error. Try again.";
+              break;
+
+            default:
+              status = "Status: ${event.status}";
+          }
+        });
+
+        // Auto close when installing starts
+        if (event.status == OtaStatus.INSTALLING) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) Navigator.pop(context);
+          });
+        }
+      },
+      onError: (e) {
+        if (!mounted) return;
+        setState(() {
+          status = "Update failed: $e";
+        });
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text("Updating App 🚀"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LinearProgressIndicator(value: progress),
+          const SizedBox(height: 12),
+          Text(status, textAlign: TextAlign.center),
+        ],
+      ),
     );
   }
 }
