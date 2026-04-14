@@ -18,9 +18,10 @@
         android:requestLegacyExternalStorage="true">
         
         <!-- FileProvider for APK installation on Android 7.0+ -->
+        <!-- Authority MUST match what ota_update plugin uses internally: applicationId.provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path name="external_files" path="." />
-    <cache-path name="cache" path="." />
-    <external-cache-path name="external_cache" path="." />
+    <!-- Internal app files -->
     <files-path name="files" path="." />
+    <!-- Internal cache -->
+    <cache-path name="cache" path="." />
+    <!-- External storage (needed for older Android versions) -->
+    <external-path name="external_files" path="." />
+    <!-- External cache (ota_update default download location) -->
+    <external-cache-path name="external_cache" path="." />
+    <!-- External files dir -->
+    <external-files-path name="external_files_dir" path="." />
 </paths>
