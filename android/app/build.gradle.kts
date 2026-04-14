@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.coding_tracker_app"
-    compileSdk = 36
+    compileSdk = 35
 
     ndkVersion = "27.0.12077973"
 
@@ -26,7 +26,7 @@ android {
     defaultConfig {
         applicationId = "com.example.coding_tracker_app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

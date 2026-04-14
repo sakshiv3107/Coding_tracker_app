@@ -298,7 +298,8 @@ class _ProgressDialogState extends State<_ProgressDialog> {
               break;
 
             case OtaStatus.INSTALLING:
-              status = "Installing update...";
+              status = "Launching installer...";
+              progress = 1.0;
               break;
 
             case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
@@ -313,18 +314,22 @@ class _ProgressDialogState extends State<_ProgressDialog> {
               status = "File corrupted. Retry.";
               break;
 
+            case OtaStatus.ALREADY_RUNNING_ERROR:
+              status = "An update is already in progress.";
+              break;
+
             case OtaStatus.INTERNAL_ERROR:
-              status = "Internal error. Try again.";
+              status = "Internal system error. Please restart the app.";
               break;
 
             default:
-              status = "Status: ${event.status}";
+              status = "Unexpected status: ${event.status}";
           }
         });
 
         // Auto close when installing starts
         if (event.status == OtaStatus.INSTALLING) {
-          Future.delayed(const Duration(seconds: 2), () {
+          Future.delayed(const Duration(seconds: 3), () {
             if (mounted) Navigator.pop(context);
           });
         }

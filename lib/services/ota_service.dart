@@ -12,7 +12,7 @@ class OTAService {
 
   static Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
-      final response = await http.get(Uri.parse(versionUrl));
+      final response = await http.get(Uri.parse("$versionUrl?t=${DateTime.now().millisecondsSinceEpoch}"));
       if (response.statusCode != 200) return null;
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -90,8 +90,8 @@ class OTAService {
       // Execute the OTA update with proper configuration
       await for (final event in OtaUpdate().execute(
         apkUrl,
-        destinationFilename: 'CodeSphere_update.apk',
-        sha256checksum: null, // Optional: add checksum for security
+        // Remove destinationFilename to let the plugin handle it best
+        destinationFilename: 'CodeSphere.apk', 
       )) {
         debugPrint("OTA Event - Status: ${event.status}, Value: ${event.value}");
         yield event;
