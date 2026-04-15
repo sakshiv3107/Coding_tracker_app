@@ -60,54 +60,150 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Text(
-            "Upcoming Contests",
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Upcoming Contests",
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/contests'),
+                child: Text(
+                  "View All",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
-          height: 154, // Slightly reduced height
+          height: 170,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             itemCount: contests.length,
             itemBuilder: (context, index) {
               final contest = contests[index];
-              final timeRemaining = contest.startTime.difference(
-                DateTime.now(),
-              );
-              // final isReminded = _reminded[contest.id] ?? false;
+              final timeRemaining = contest.startTime.difference(DateTime.now());
+              final theme = Theme.of(context);
+              final isDark = theme.brightness == Brightness.dark;
+
+              Color platformColor;
+              IconData platformIcon;
+              switch (contest.platform.toLowerCase()) {
+                case 'leetcode':
+                  platformColor = const Color(0xFFFFA116);
+                  platformIcon = Icons.code_rounded;
+                  break;
+                case 'codeforces':
+                  platformColor = const Color(0xFF318CE7);
+                  platformIcon = Icons.trending_up_rounded;
+                  break;
+                case 'codechef':
+                  platformColor = const Color(0xFF5B4638);
+                  platformIcon = Icons.restaurant_menu_rounded;
+                  break;
+                default:
+                  platformColor = theme.colorScheme.primary;
+                  platformIcon = Icons.event_available_rounded;
+              }
 
               return GlassCard(
-                width: 260,
-                margin: const EdgeInsets.only(right: 16),
-                child: Row(
+                width: 240,
+                margin: const EdgeInsets.only(right: 16, bottom: 8),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warning.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.timer, color: AppTheme.warning),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: platformColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: platformColor.withOpacity(0.2)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(platformIcon, size: 12, color: platformColor),
+                              const SizedBox(width: 6),
+                              Text(
+                                contest.platform,
+                                style: TextStyle(
+                                  color: platformColor,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (timeRemaining.inHours < 24 && !timeRemaining.isNegative)
+                          Container(
+                            width: 8, height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.redAccent.withOpacity(0.5),
+                                  blurRadius: 6,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            contest.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Starts in ${_formatDuration(timeRemaining)}',
-                            style: const TextStyle(color: AppTheme.warning),
-                          ),
-                        ],
+                    const Spacer(),
+                    Text(
+                      contest.title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: theme.colorScheme.onSurface,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 14,
+                          color: timeRemaining.inHours < 12 
+                            ? Colors.redAccent 
+                            : theme.colorScheme.onSurface.withOpacity(0.4),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatDuration(timeRemaining),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'monospace',
+                            color: timeRemaining.inHours < 12 
+                              ? Colors.redAccent 
+                              : platformColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

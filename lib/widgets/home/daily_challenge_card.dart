@@ -180,7 +180,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
           }
         },
         child: Text(
-          "Solve now",
+          "Solve Now",
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),

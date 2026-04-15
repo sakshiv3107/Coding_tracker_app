@@ -434,7 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionLabel(context, 'Activity Spectrum'),
+                         // _buildSectionLabel(context, 'Activity Spectrum'),
                           const SizedBox(height: 12),
                           GlassCard(
                             padding: const EdgeInsets.all(16),
