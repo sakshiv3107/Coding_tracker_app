@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 // import 'package:intl/intl.dart';
-import '../../theme/app_theme.dart';
+// import '../../theme/app_theme.dart';
 import '../glass_card.dart';
 import '../../providers/stats_provider.dart';
 
@@ -96,7 +96,7 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
               final contest = contests[index];
               final timeRemaining = contest.startTime.difference(DateTime.now());
               final theme = Theme.of(context);
-              final isDark = theme.brightness == Brightness.dark;
+              // final isDark = theme.brightness == Brightness.dark;
 
               Color platformColor;
               IconData platformIcon;

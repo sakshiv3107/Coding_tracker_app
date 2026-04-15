@@ -522,18 +522,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSectionLabel(BuildContext context, String label) {
-    return Text(
-      label.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 2.0,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-      ),
-    );
-  }
-
+ 
   Widget _buildGoalProgressCard(
     BuildContext context,
     dynamic goal,

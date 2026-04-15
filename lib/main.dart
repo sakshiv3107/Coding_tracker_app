@@ -3,9 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:ota_update/ota_update.dart';
-// import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 
 // Screens
 import 'screens/auth_wrapper.dart';
@@ -188,16 +187,10 @@ Future<void> _handleUpdate(Map<String, dynamic> updateInfo) async {
   );
 
   if (shouldUpdate == true) {
-    
-
-    final stream = OTAService.startUpdate(updateInfo['apk_url']);
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => _ProgressDialog(stream: stream),
-      );
-
+    final url = Uri.parse('https://github.com/sakshiv3107/CodeSphere-Coding-Analytics-App');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 }
 
@@ -269,95 +262,6 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     );
   }
 }
-class _ProgressDialog extends StatefulWidget {
-  final Stream<OtaEvent> stream;
 
-  const _ProgressDialog({required this.stream});
-
-  @override
-  State<_ProgressDialog> createState() => _ProgressDialogState();
-}
-
-class _ProgressDialogState extends State<_ProgressDialog> {
-  double progress = 0;
-  String status = "Starting update...";
-
-  @override
-  void initState() {
-    super.initState();
-
-    widget.stream.listen(
-      (event) {
-        if (!mounted) return;
-
-        setState(() {
-          switch (event.status) {
-            case OtaStatus.DOWNLOADING:
-              progress = (double.tryParse(event.value ?? '0') ?? 0) / 100;
-              status = "Downloading... ${event.value}%";
-              break;
-
-            case OtaStatus.INSTALLING:
-              status = "Launching installer...";
-              progress = 1.0;
-              break;
-
-            case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-              status = "Permission denied. Enable it in settings.";
-              break;
-
-            case OtaStatus.DOWNLOAD_ERROR:
-              status = "Download failed. Check your internet.";
-              break;
-
-            case OtaStatus.CHECKSUM_ERROR:
-              status = "File corrupted. Retry.";
-              break;
-
-            case OtaStatus.ALREADY_RUNNING_ERROR:
-              status = "An update is already in progress.";
-              break;
-
-            case OtaStatus.INTERNAL_ERROR:
-              status = "Internal system error. Please restart the app.";
-              break;
-
-            default:
-              status = "Unexpected status: ${event.status}";
-          }
-        });
-
-        // Auto close when installing starts
-        if (event.status == OtaStatus.INSTALLING) {
-          Future.delayed(const Duration(seconds: 3), () {
-            if (mounted) Navigator.pop(context);
-          });
-        }
-      },
-      onError: (e) {
-        if (!mounted) return;
-        setState(() {
-          status = "Update failed: $e";
-        });
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text("Updating App 🚀"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LinearProgressIndicator(value: progress),
-          const SizedBox(height: 12),
-          Text(status, textAlign: TextAlign.center),
-        ],
-      ),
-    );
-  }
-}
 
 
