@@ -176,21 +176,12 @@ class _AppEntryState extends State<_AppEntry> {
   final data = await OTAService.checkForUpdate();
   if (data == null || !mounted) return;
 
-  await _handleUpdate(data);
-}
-
-Future<void> _handleUpdate(Map<String, dynamic> updateInfo) async {
-  final shouldUpdate = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => _UpdateDialog(data: updateInfo),
-  );
-
-  if (shouldUpdate == true) {
-    final url = Uri.parse('https://github.com/sakshiv3107/CodeSphere-Coding-Analytics-App');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
+  if (mounted) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _UpdateDialog(data: data),
+    );
   }
 }
 
@@ -249,15 +240,30 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         ],
       ),
       actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Later'),
-          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Later'),
+        ),
         ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Update Now'),
+          onPressed: () async {
+            final url = Uri.parse('https://github.com/sakshiv3107/CodeSphere-Coding-Analytics-App');
+            try {
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            } catch (e) {
+              debugPrint('Could not launch update URL: $e');
+            }
+            if (context.mounted) Navigator.pop(context);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-                    
+          child: const Text('Open GitHub'),
+        ),
       ],
     );
   }
