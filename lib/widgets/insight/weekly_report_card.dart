@@ -266,3 +266,5 @@ class WeeklyReportCard extends StatelessWidget {
 
   String _fmt(DateTime d) => DateFormat('MMM d').format(d);
 }
+
+

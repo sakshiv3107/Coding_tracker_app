@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../theme/app_theme.dart';
 import '../services/email_service.dart';
 import '../widgets/animations/fade_slide_transition.dart';
@@ -82,7 +82,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       appBar: AppBar(
         title: const Text('Review', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -132,8 +132,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _buildForm(ThemeData theme, bool isDark) {
-    return ModernCard(
-      isGlass: true,
+    return GlassCard(
+      
       padding: const EdgeInsets.all(24),
       child: Form(
         key: _formKey,
@@ -193,7 +193,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
+                  
                 ),
                 child: _isLoading
                     ? const SizedBox(
@@ -290,7 +290,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           value: _reviewType,
           isExpanded: true,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.primary),
-          dropdownColor: isDark ? AppTheme.surfaceDark : Colors.white,
+          dropdownColor: isDark ? AppTheme.darkSecondaryBg : Colors.white,
           borderRadius: BorderRadius.circular(16),
           items: _reviewTypes.map((String type) {
             return DropdownMenuItem<String>(
@@ -311,3 +311,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 }
+
+
+

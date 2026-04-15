@@ -59,7 +59,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notification Preferences', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0,
+        
       ),
       body: ListView(
         children: [
@@ -172,3 +172,5 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     await _saveSetting('quiet_hours_end', endStr);
   }
 }
+
+

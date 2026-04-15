@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'activity_heatmap.dart';
-import 'modern_card.dart';
-// import '../theme/app_theme.dart';
+import 'glass_card.dart';
 
 class CodingHeatmap extends StatelessWidget {
   final Map<DateTime, int> datasets;
+  final Map<int, Color>? colorsets;
 
-  const CodingHeatmap({super.key, required this.datasets});
+  const CodingHeatmap({
+    super.key,
+    required this.datasets,
+    this.colorsets,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      isGlass: true,
-      showShadow: true,
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -38,7 +40,10 @@ class CodingHeatmap extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Last 12 Months',
-                style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                style: TextStyle(
+                  fontSize: 12, 
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -51,6 +56,7 @@ class CodingHeatmap extends StatelessWidget {
             label: '',
             tooltipLabel: 'activities',
             showStats: false,
+            colorsets: colorsets,
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -68,11 +74,11 @@ class CodingHeatmap extends StatelessWidget {
                 ),
               ),
               style: TextButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                  side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.2)),
                 ),
               ),
             ),

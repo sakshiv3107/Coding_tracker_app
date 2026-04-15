@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../../services/proxy_service.dart';
 import '../../providers/skill_provider.dart';
+import '../../theme/app_theme.dart';
+import '../glass_card.dart';
 import '../../providers/stats_provider.dart';
 
 class DailyChallengeCard extends StatefulWidget {
@@ -74,17 +76,9 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
         : [_fallbackTopic, 'Practice'];
     final url = challenge != null ? "https://leetcode.com${challenge['link']}" : "https://leetcode.com/problemset/all/?topicSlugs=${_fallbackTopic.toLowerCase()}";
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _isSolved ? const Color(0xFF1D9E75) : Theme.of(context).dividerColor,
-          width: _isSolved ? 2.0 : 0.5,
-        ),
-      ),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,7 +118,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
           if (_isSolved)
             _buildSolvedState()
           else
-            _buildCTA(url),
+            _buildCTA(url, context),
         ],
       ),
     );
@@ -165,16 +159,17 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
     );
   }
 
-  Widget _buildCTA(String url) {
+  Widget _buildCTA(String url, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: double.infinity,
       height: 44,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFEF9F27),
+          backgroundColor: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
+          
         ),
         onPressed: () async {
           final uri = Uri.parse(url);
@@ -185,7 +180,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
           }
         },
         child: Text(
-          "Solve now →",
+          "Solve now",
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
@@ -210,13 +205,12 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
   }
 
   Widget _buildLoading() {
-    return Container(
+    return const GlassCard(
       height: 180,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Center(child: CircularProgressIndicator(color: Color(0xFF7B68EE))),
+      borderRadius: 16,
+      child: Center(child: CircularProgressIndicator(color: AppTheme.darkAccent)),
     );
   }
 }
+
+

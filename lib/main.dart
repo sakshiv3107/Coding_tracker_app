@@ -101,8 +101,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CodeSphere',
-      theme: AppTheme.lightTheme(themeProvider.primaryColor),
-      darkTheme: AppTheme.darkTheme(themeProvider.primaryColor),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       home: const _AppEntry(),
       routes: {
@@ -359,3 +359,5 @@ class _ProgressDialogState extends State<_ProgressDialog> {
     );
   }
 }
+
+

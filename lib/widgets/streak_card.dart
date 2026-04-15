@@ -3,7 +3,7 @@
 // Pass compact: true on the home screen for a smaller layout.
 
 import 'package:flutter/material.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 import 'animations/animated_stat_counter.dart';
 
 class StreakCard extends StatefulWidget {
@@ -79,7 +79,7 @@ class _StreakCardState extends State<StreakCard>
         ? (isActive ? Colors.orange : Colors.grey.shade600)
         : Colors.amber;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +180,7 @@ class _StreakCardState extends State<StreakCard>
   // ── Compact version (home screen) ─────────────────────────────────────────
 
   Widget _buildCompact(bool isDark) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
@@ -301,3 +301,6 @@ class _StreakCardState extends State<StreakCard>
     );
   }
 }
+
+
+

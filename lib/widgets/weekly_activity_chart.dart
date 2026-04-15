@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weekly_activity.dart';
-import 'glassmorphic_container.dart';
+import 'glass_card.dart';
 import 'responsive_row.dart';
 
 class WeeklyActivityChart extends StatefulWidget {
@@ -85,8 +85,9 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     // final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxVal = _weeklyActivity.maxActivity.toDouble().clamp(1.0, double.infinity);
 
-    return GlassmorphicContainer(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -97,7 +98,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'This Week',
+                    'Evolution Stream',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -110,7 +111,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -151,7 +152,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                      getTooltipColor: (_) => Theme.of(context).colorScheme.surface.withOpacity(0.9),
                       tooltipBorderRadius: BorderRadius.circular(12),
                       tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -188,7 +189,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                             child: Text(
                               days[index],
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 9,
                                 letterSpacing: 0.5,
@@ -203,7 +204,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (val) => FlLine(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
                       strokeWidth: 1,
                     ),
                   ),
@@ -239,7 +240,7 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
       backDrawRodData: BackgroundBarChartRodData(
         show: true,
         toY: 0,
-        color: color.withValues(alpha: 0.05),
+        color: color.withOpacity(0.05),
       ),
     );
   }
@@ -265,3 +266,5 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
     );
   }
 }
+
+

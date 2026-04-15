@@ -50,7 +50,7 @@ class SkillRadarChart extends StatelessWidget {
                 radarShape: RadarShape.circle,
                 dataSets: [
                   RadarDataSet(
-                    fillColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    fillColor: theme.colorScheme.primary.withOpacity(0.2),
                     borderColor: theme.colorScheme.primary,
                     borderWidth: 3,
                     entryRadius: 4,
@@ -58,8 +58,8 @@ class SkillRadarChart extends StatelessWidget {
                   ),
                 ],
                 radarBorderData: const BorderSide(color: Colors.transparent),
-                tickBorderData: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
-                gridBorderData: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05), width: 1.5),
+                tickBorderData: BorderSide(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+                gridBorderData: BorderSide(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05), width: 1.5),
                 tickCount: 5,
                 ticksTextStyle: const TextStyle(color: Colors.transparent),
                 getTitle: (index, angle) {
@@ -70,7 +70,7 @@ class SkillRadarChart extends StatelessWidget {
                 },
                 titlePositionPercentageOffset: 0.3,
                 titleTextStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
@@ -83,3 +83,5 @@ class SkillRadarChart extends StatelessWidget {
     );
   }
 }
+
+

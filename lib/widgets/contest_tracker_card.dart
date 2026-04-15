@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/contest_service.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -19,7 +19,7 @@ class ContestTrackerCard extends StatelessWidget {
     final theme = Theme.of(context);
   //  final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,3 +181,6 @@ class ContestTrackerCard extends StatelessWidget {
     );
   }
 }
+
+
+

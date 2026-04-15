@@ -50,7 +50,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2.5,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                          color: theme.colorScheme.onSurface.withOpacity(0.4),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -65,7 +65,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                             letterSpacing: -1,
                             shadows: [
                               Shadow(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                color: theme.colorScheme.primary.withOpacity(0.3),
                                 blurRadius: 20,
                               ),
                             ],
@@ -75,7 +75,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                       Text(
                         'Total Problems Decimated',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -97,7 +97,7 @@ class UnifiedAnalyticsCard extends StatelessWidget {
                           sections: _buildPieSections(theme),
                         ),
                       ),
-                      Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary.withValues(alpha: 0.5), size: 18),
+                      Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary.withOpacity(0.5), size: 18),
                     ],
                   ),
                 ),
@@ -107,9 +107,9 @@ class UnifiedAnalyticsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.1),
+                color: theme.colorScheme.surface.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
               ),
               child: Column(
                 children: [
@@ -241,3 +241,5 @@ class UnifiedAnalyticsCard extends StatelessWidget {
     ];
   }
 }
+
+

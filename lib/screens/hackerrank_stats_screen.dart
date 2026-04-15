@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/hackerrank_stats.dart';
 import '../providers/stats_provider.dart';
 import '../providers/profile_provider.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/not_connected_widget.dart';
 import '../widgets/coding_heatmap.dart';
@@ -51,7 +51,7 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
       appBar: AppBar(
         title: const Text('HackerRank Analytics'),
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        
         centerTitle: true,
       ),
       body: RefreshIndicator(
@@ -155,8 +155,9 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
   }
 
   Widget _buildProfileHeader(HackerRankStats stats, ThemeData theme) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
+      borderRadius: 16,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,3 +314,5 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
     );
   }
 }
+
+

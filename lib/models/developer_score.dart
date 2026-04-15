@@ -57,3 +57,5 @@ class DeveloperScore {
   double get totalContributions =>
       problemsContribution + ratingContribution + starsContribution + commitsContribution;
 }
+
+

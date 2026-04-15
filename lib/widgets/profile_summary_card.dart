@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 import '../theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -25,9 +25,8 @@ class ProfileSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       padding: EdgeInsets.zero,
-      showShadow: true,
       borderRadius: 28,
       child: Stack(
         children: [
@@ -57,7 +56,7 @@ class ProfileSummaryCard extends StatelessWidget {
                   ),
                   child: CircleAvatar(
                     radius: 38,
-                    backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                    backgroundColor: isDark ? AppTheme.darkSecondaryBg : Colors.white,
                     backgroundImage: (profilePicUrl != null && profilePicUrl!.isNotEmpty) 
                         ? CachedNetworkImageProvider(profilePicUrl!) 
                         : null,
@@ -93,7 +92,7 @@ class ProfileSummaryCard extends StatelessWidget {
                       Text(
                         leetcodeUser.isNotEmpty ? '@$leetcodeUser' : 'Setup Developer ID',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondaryDark.withOpacity(0.6),
+                          color: isDark ? AppTheme.darkTextSecondary.withOpacity(0.6) : AppTheme.lightTextSecondary.withOpacity(0.6),
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -148,3 +147,5 @@ class ProfileSummaryCard extends StatelessWidget {
     );
   }
 }
+
+

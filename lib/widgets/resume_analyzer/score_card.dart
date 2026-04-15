@@ -104,3 +104,5 @@ class ScoreCard extends StatelessWidget {
     return "Needs work. Follow the AI suggestions below to strengthen your profile.";
   }
 }
+
+

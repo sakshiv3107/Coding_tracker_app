@@ -87,7 +87,7 @@ class PlatformCardSkeleton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.surfaceDarkLighter : Colors.white,
+          color: isDark ? AppTheme.darkTertiaryBg : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDark
@@ -242,7 +242,7 @@ class ProfileSummarySkeleton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.surfaceDarkLighter : Colors.white,
+          color: isDark ? AppTheme.darkTertiaryBg : Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
@@ -274,3 +274,5 @@ class ProfileSummarySkeleton extends StatelessWidget {
     );
   }
 }
+
+

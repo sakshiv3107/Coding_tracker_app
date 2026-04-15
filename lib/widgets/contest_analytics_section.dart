@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/leetcode_stats.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class ContestAnalyticsSection extends StatefulWidget {
   final LeetcodeStats stats;
@@ -109,7 +109,7 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
         ? stats.contestRating!.toStringAsFixed(0)
         : 'N/A';
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +166,7 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
+                            color: Colors.orange.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -432,3 +432,6 @@ class _ContestAnalyticsSectionState extends State<ContestAnalyticsSection>
     );
   }
 }
+
+
+

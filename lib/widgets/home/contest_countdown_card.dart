@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
+import '../../theme/app_theme.dart';
+import '../glass_card.dart';
 import '../../providers/stats_provider.dart';
 
 class ContestCountdownCard extends StatefulWidget {
@@ -71,45 +73,40 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
             itemCount: contests.length,
             itemBuilder: (context, index) {
               final contest = contests[index];
-              final timeRemaining = contest.startTime.difference(DateTime.now());
+              final timeRemaining = contest.startTime.difference(
+                DateTime.now(),
+              );
               // final isReminded = _reminded[contest.id] ?? false;
 
-              return Container(
-                width: 260, // Slightly narrower
+              return GlassCard(
+                width: 260,
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 0.5),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildPlatformBadge(contest.platform),
-                        Text(
-                          DateFormat('MMM d, HH:mm').format(contest.startTime),
-                          style: GoogleFonts.inter(fontSize: 10, color: Colors.grey.shade500),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.timer, color: AppTheme.warning),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      contest.title,
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatDuration(timeRemaining),
-                      style: GoogleFonts.inter(
-                        fontSize: 20, // Reduced from 24 to prevent overflow
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF7B68EE),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            contest.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Starts in ${_formatDuration(timeRemaining)}',
+                            style: const TextStyle(color: AppTheme.warning),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -121,30 +118,4 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
       ],
     );
   }
-
-  Widget _buildPlatformBadge(String platform) {
-    Color color = _getPlatformColor(platform);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        platform,
-        style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: color),
-      ),
-    );
-  }
-
-  Color _getPlatformColor(String platform) {
-    switch (platform.toLowerCase()) {
-      case 'leetcode': return const Color(0xFFEF9F27);
-      case 'codeforces': return const Color(0xFFE24B4A);
-      case 'codechef': return const Color(0xFF7B68EE);
-      default: return Colors.grey;
-    }
-  }
-
-
 }

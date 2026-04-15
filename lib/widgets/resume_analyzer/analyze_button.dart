@@ -120,3 +120,5 @@ class _AnimatedLoadingTextState extends State<_AnimatedLoadingText> {
     );
   }
 }
+
+

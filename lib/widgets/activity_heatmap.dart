@@ -7,6 +7,7 @@ class ActivityHeatmap extends StatelessWidget {
   final String label;
   final String tooltipLabel;
   final bool showStats;
+  final Map<int, Color>? colorsets;
 
   const ActivityHeatmap({
     super.key,
@@ -15,6 +16,7 @@ class ActivityHeatmap extends StatelessWidget {
     this.label = 'Activity',
     this.tooltipLabel = 'contributions',
     this.showStats = true,
+    this.colorsets,
   });
 
   @override
@@ -42,7 +44,6 @@ class ActivityHeatmap extends StatelessWidget {
     final Map<String, List<List<DateTime>>> monthGroups = {};
     for (var week in weeks) {
         if (week.isEmpty) continue;
-        // Use a unique key for grouping (Year-Month) to avoid collisions between years
         final firstDay = week.first;
         final groupKey = DateFormat('yyyy-MM').format(firstDay);
         monthGroups.putIfAbsent(groupKey, () => []).add(week);
@@ -85,12 +86,11 @@ class ActivityHeatmap extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Day labels (Mon, Wed, Fri)
               Padding(
                 padding: const EdgeInsets.only(top: 4.0, right: 12.0),
                 child: Column(
                   children: [
-                    const SizedBox(height: 14), // Offset for labels
+                    const SizedBox(height: 14),
                     _buildDayLabel(context, 'Mon'),
                     const SizedBox(height: 14),
                     _buildDayLabel(context, 'Wed'),
@@ -99,9 +99,7 @@ class ActivityHeatmap extends StatelessWidget {
                   ],
                 ),
               ),
-              // Month Blocks
               ...monthGroups.entries.map((entry) {
-                // Parse yyyy-MM to get month name
                 final parts = entry.key.split('-');
                 final date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
                 final monthName = DateFormat('MMM').format(date);
@@ -120,7 +118,6 @@ class ActivityHeatmap extends StatelessWidget {
     final total = data.values.fold(0, (sum, v) => sum + v);
     final activeDays = data.values.where((v) => v > 0).length;
     
-    // Simple streak calculation
     int maxStreak = 0;
     int currentStreak = 0;
     final sortedDates = data.keys.toList()..sort();
@@ -177,36 +174,33 @@ class ActivityHeatmap extends StatelessWidget {
   }
 
   Widget _buildStatInfo(BuildContext context, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-              fontWeight: FontWeight.w600,
-            ),
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildMonthBlock(BuildContext context, String monthLabel, List<List<DateTime>> monthWeeks) {
     return Container(
-      margin: const EdgeInsets.only(right: 16), // The Gap
+      margin: const EdgeInsets.only(right: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,6 +241,7 @@ class ActivityHeatmap extends StatelessWidget {
         count: data[DateTime(date.year, date.month, date.day)] ?? 0,
         baseColor: baseColor,
         tooltipLabel: tooltipLabel,
+        colorsets: colorsets,
       )).toList(),
     );
   }
@@ -272,13 +267,19 @@ class ActivityHeatmap extends StatelessWidget {
       height: 10,
       margin: const EdgeInsets.symmetric(horizontal: 1.5),
       decoration: BoxDecoration(
-        color: _getColor(count, baseColor),
+        color: _getColor(count, baseColor, colorsets),
         borderRadius: BorderRadius.circular(2),
       ),
     );
   }
 
-  static Color _getColor(int count, Color baseColor) {
+  static Color _getColor(int count, Color baseColor, [Map<int, Color>? colorsets]) {
+    if (colorsets != null) {
+      if (count == 0) return baseColor.withOpacity(0.05);
+      if (count >= 10) return colorsets[5] ?? baseColor;
+      if (count >= 5) return colorsets[3] ?? baseColor.withOpacity(0.6);
+      return colorsets[1] ?? baseColor.withOpacity(0.3);
+    }
     if (count == 0) return baseColor.withOpacity(0.05); 
     if (count < 3) return baseColor.withOpacity(0.15);
     if (count < 6) return baseColor.withOpacity(0.4);
@@ -292,12 +293,14 @@ class _HeatmapCell extends StatefulWidget {
   final int count;
   final Color baseColor;
   final String tooltipLabel;
+  final Map<int, Color>? colorsets;
 
   const _HeatmapCell({
     required this.date,
     required this.count,
     required this.baseColor,
     required this.tooltipLabel,
+    this.colorsets,
   });
 
   @override
@@ -309,10 +312,8 @@ class _HeatmapCellState extends State<_HeatmapCell> {
 
   void _showTooltip() {
     _removeTooltip();
-    
     final renderBox = context.findRenderObject() as RenderBox;
     final offset = renderBox.localToGlobal(Offset.zero);
-    
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         left: offset.dx - 60,
@@ -338,11 +339,7 @@ class _HeatmapCellState extends State<_HeatmapCell> {
               children: [
                 Text(
                   '${widget.count} ${widget.tooltipLabel}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   DateFormat('MMM d, yyyy').format(widget.date),
@@ -357,10 +354,7 @@ class _HeatmapCellState extends State<_HeatmapCell> {
         ),
       ),
     );
-    
     Overlay.of(context).insert(_overlayEntry!);
-    
-    // Auto-remove after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       _removeTooltip();
     });
@@ -386,10 +380,12 @@ class _HeatmapCellState extends State<_HeatmapCell> {
         height: 11,
         margin: const EdgeInsets.all(1.5),
         decoration: BoxDecoration(
-          color: ActivityHeatmap._getColor(widget.count, widget.baseColor),
+          color: ActivityHeatmap._getColor(widget.count, widget.baseColor, widget.colorsets),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
     );
   }
 }
+
+

@@ -92,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                     },
                     icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 16),
                     style: IconButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                       foregroundColor: theme.colorScheme.primary,
                     ),
                   ),
@@ -119,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           child: CircleAvatar(
                             radius: 54,
-                            backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                            backgroundColor: isDark ? AppTheme.darkSecondaryBg : Colors.white,
                             backgroundImage: (profile.profile?["profilePic"]?.isNotEmpty == true)
                                 ? CachedNetworkImageProvider(profile.profile!["profilePic"]!)
                                 : null,
@@ -149,7 +149,7 @@ class ProfileScreen extends StatelessWidget {
                       Text(
                         userEmail,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondaryDark.withValues(alpha: 0.6),
+                          color: AppTheme.darkTextSecondary.withOpacity(0.6),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -230,11 +230,11 @@ class ProfileScreen extends StatelessWidget {
     }
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -342,7 +342,7 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: Text(
               "Cancel",
-              style: TextStyle(color: AppTheme.textSecondaryDark.withValues(alpha: 0.6)),
+              style: TextStyle(color: AppTheme.darkTextSecondary.withOpacity(0.6)),
             ),
           ),
           ElevatedButton(
@@ -397,7 +397,7 @@ class _SettingsTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: icon is IconData 
@@ -411,7 +411,7 @@ class _SettingsTile extends StatelessWidget {
       subtitle: Text(
         subtitle, 
         style: TextStyle(
-          color: AppTheme.textSecondaryDark.withValues(alpha: 0.4), 
+          color: AppTheme.darkTextSecondary.withOpacity(0.4), 
           fontSize: 12,
           fontWeight: FontWeight.w600,
         )
@@ -425,3 +425,5 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
+
+

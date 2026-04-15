@@ -143,7 +143,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Card(
-                  elevation: 8,
+                  
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -221,7 +221,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               minimumSize: const Size(double.infinity, 55),
-                              elevation: 6,
+                              
                             ),
                             onPressed: profileProvider.isLoading
                                 ? null
@@ -339,3 +339,5 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 }
+
+

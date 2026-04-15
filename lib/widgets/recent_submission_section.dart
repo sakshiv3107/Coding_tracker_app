@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/submission.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class RecentSubmissionsSection extends StatelessWidget {
   final List<Submission> submissions;
@@ -79,7 +79,7 @@ class RecentSubmissionsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            ModernCard(
+            GlassCard(
               padding: const EdgeInsets.all(24),
               child: Center(
                 child: Column(
@@ -113,7 +113,7 @@ class RecentSubmissionsSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-        ModernCard(
+        GlassCard(
           padding: EdgeInsets.zero,
           child: Column(
             children: visible.asMap().entries.map((entry) {
@@ -273,3 +273,6 @@ class RecentSubmissionsSection extends StatelessWidget {
     }
   }
 }
+
+
+

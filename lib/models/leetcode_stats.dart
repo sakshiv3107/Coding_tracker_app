@@ -201,3 +201,5 @@ class LeetCodeBadge {
         earnedDate: json['earnedDate']?.toString(),
       );
 }
+
+

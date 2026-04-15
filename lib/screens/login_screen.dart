@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen>
                                  context.read<AuthProvider>().clearError();
                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen()));
                                },
-                               child: const Text('Initialize Account', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+                               child: Text('Initialize Account', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
                              ),
                           ],
                         ).animate().fadeIn(delay: 900.ms),
@@ -238,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen>
         filled: true, fillColor: Colors.white.withOpacity(0.04),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: AppTheme.primaryLight, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: AppTheme.primaryLight, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen>
         filled: true, fillColor: Colors.white.withOpacity(0.04),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: AppTheme.primaryLight, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: AppTheme.primaryLight, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
                           filled: true, fillColor: Colors.white.withOpacity(0.04),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.primaryLight)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppTheme.primaryLight)),
                         ),
                         validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                       ),
@@ -415,3 +415,5 @@ class _GoogleButton extends StatelessWidget {
     );
   }
 }
+
+

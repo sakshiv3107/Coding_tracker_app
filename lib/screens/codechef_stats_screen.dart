@@ -4,7 +4,7 @@ import '../providers/stats_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/platform_stats.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
@@ -237,8 +237,9 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
+      borderRadius: 20,
       child: Row(
         children: [
           // Avatar / icon
@@ -281,7 +282,7 @@ class _ProfileHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _amber.withValues(alpha: 0.15),
+                        color: _amber.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -322,23 +323,14 @@ class _RatingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6B3A2A), Color(0xFFE08D2D)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFE08D2D).withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+      borderRadius: 24,
+      gradient: const LinearGradient(
+        colors: [Color(0xFF6B3A2A), Color(0xFFE08D2D)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -460,8 +452,9 @@ class _StarsCard extends StatelessWidget {
     final division = stats.extraMetrics['division'];
     final country  = stats.extraMetrics['country'];
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
+      borderRadius: 16,
       child: Row(
         children: [
           // Star display
@@ -605,7 +598,7 @@ class _ActivityHeatmap extends StatelessWidget {
     Color cellColor(DateTime? day) {
       if (day == null) return Colors.transparent;
       final count = cal[norm(day)] ?? 0;
-      if (count == 0) return isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06);
+      if (count == 0) return isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.06);
       final intensity = (count / maxVal).clamp(0.15, 1.0);
       return _amber.withValues(alpha: intensity);
     }
@@ -623,8 +616,9 @@ class _ActivityHeatmap extends StatelessWidget {
       }
     }
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -690,7 +684,7 @@ class _ActivityHeatmap extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 1.5),
                   decoration: BoxDecoration(
                     color: i == 0
-                        ? (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06))
+                        ? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.06))
                         : _amber.withValues(alpha: opacity),
                     borderRadius: BorderRadius.circular(2),
                   ),
@@ -798,11 +792,11 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -813,7 +807,7 @@ class _BackButton extends StatelessWidget {
         icon: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 18,
-          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
         ),
       ),
     );
@@ -841,7 +835,7 @@ class _RefreshButton extends StatelessWidget {
             )
           : const Icon(Icons.refresh_rounded, size: 20),
       style: IconButton.styleFrom(
-        backgroundColor: color.withValues(alpha: 0.1),
+        backgroundColor: color.withOpacity(0.1),
         foregroundColor: color,
       ),
     );
@@ -862,8 +856,8 @@ class _ErrorBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
+        color: Colors.red.withOpacity(0.05),
+        border: Border.all(color: Colors.red.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -897,3 +891,5 @@ class _ErrorBanner extends StatelessWidget {
     );
   }
 }
+
+

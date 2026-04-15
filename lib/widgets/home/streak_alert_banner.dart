@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+//import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import '../../theme/app_theme.dart';
+import '../glass_card.dart';
 import '../../providers/stats_provider.dart';
 
 class StreakAlertBanner extends StatefulWidget {
@@ -88,59 +90,58 @@ class _StreakAlertBannerState extends State<StreakAlertBanner> with SingleTicker
       position: _slideAnimation,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 20.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEF9F27).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFEF9F27), width: 0.5),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF9F27), size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Streak ending soon",
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFEF9F27),
-                      ),
-                    ),
-                    Text(
-                      "Solve 1 problem to keep your $streak-day streak",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+        child: GlassCard(
+          padding: EdgeInsets.zero,
+          borderRadius: 20,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.darkAccent
+                      : AppTheme.lightAccent,
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Color(0xFF7C3AED) // darkAccentSecondary
+                      : Color(0xFF8B5CF6), // lightAccentSecondary
+                ],
               ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: widget.onSolveNow,
-                child: Text(
-                  "Solve now →",
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFFEF9F27),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                const Icon(Icons.local_fire_department, color: Colors.white, size: 32),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '🔥 $streak Day Streak',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        'Keep it going!',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              GestureDetector(
-                onTap: _dismiss,
-                child: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
-              ),
-            ],
+                IconButton(
+                  onPressed: _dismiss,
+                  icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+

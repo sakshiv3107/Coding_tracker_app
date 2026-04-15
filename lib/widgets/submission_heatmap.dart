@@ -129,13 +129,13 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
   Color _cellColor(int count, bool isDark) {
     if (count < 0) return Colors.transparent; // future/padding
     final empty = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.05);
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.05);
     if (count == 0) return empty;
     final base = widget.baseColor;
-    if (count <= 2) return base.withValues(alpha: 0.3);
-    if (count <= 5) return base.withValues(alpha: 0.5);
-    if (count <= 9) return base.withValues(alpha: 0.75);
+    if (count <= 2) return base.withOpacity(0.3);
+    if (count <= 5) return base.withOpacity(0.5);
+    if (count <= 9) return base.withOpacity(0.75);
     return base;
   }
 
@@ -172,7 +172,7 @@ class _SubmissionHeatmapState extends State<SubmissionHeatmap>
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.3),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -310,3 +310,5 @@ class _MonthData {
     required this.weeks,
   });
 }
+
+

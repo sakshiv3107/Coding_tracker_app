@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class TopicWiseSection extends StatelessWidget {
   final Map<String, int> tagStats;
@@ -24,7 +24,7 @@ class TopicWiseSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ModernCard(
+          GlassCard(
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Column(
@@ -59,7 +59,7 @@ class TopicWiseSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        ModernCard(
+        GlassCard(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,3 +231,6 @@ class TopicWiseSection extends StatelessWidget {
     );
   }
 }
+
+
+

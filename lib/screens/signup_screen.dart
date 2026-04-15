@@ -260,8 +260,8 @@ class _SignupScreenState extends State<SignupScreen>
                                 child: RichText(
                                   text: TextSpan(
                                     style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                                    children: const [
-                                      TextSpan(text: 'Already registered? '),
+                                    children: [
+                                      const TextSpan(text: 'Already registered? '),
                                       TextSpan(text: 'Sign In', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -295,7 +295,7 @@ class _SignupScreenState extends State<SignupScreen>
         filled: true, fillColor: Colors.white.withOpacity(0.04),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: AppTheme.primaryLight, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: AppTheme.primaryLight, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
@@ -318,7 +318,7 @@ class _SignupScreenState extends State<SignupScreen>
         filled: true, fillColor: Colors.white.withOpacity(0.04),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: AppTheme.primaryLight, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: AppTheme.primaryLight, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
@@ -396,3 +396,5 @@ class _HomeRedirectState extends State<_HomeRedirect> {
   Widget build(BuildContext context) =>
       const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
+
+

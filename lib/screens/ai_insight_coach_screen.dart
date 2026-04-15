@@ -710,7 +710,7 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        
       ),
       body: Stack(
         children: [
@@ -879,3 +879,5 @@ class _AIInsightCoachScreenState extends State<AIInsightCoachScreen> {
     );
   }
 }
+
+

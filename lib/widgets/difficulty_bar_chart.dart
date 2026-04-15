@@ -2,7 +2,7 @@
 // Replaces the pie chart with a clean horizontal stacked bar chart
 
 import 'package:flutter/material.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class DifficultyBarChart extends StatefulWidget {
   final int easy;
@@ -52,7 +52,7 @@ class _DifficultyBarChartState extends State<DifficultyBarChart>
   Widget build(BuildContext context) {
     final total = widget.easy + widget.medium + widget.hard;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,3 +161,6 @@ class _DifficultyBarChartState extends State<DifficultyBarChart>
     );
   }
 }
+
+
+

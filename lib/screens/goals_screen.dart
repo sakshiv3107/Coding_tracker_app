@@ -6,7 +6,7 @@ import '../../providers/stats_provider.dart';
 import '../../providers/github_provider.dart';
 import '../../services/progress_service.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/modern_card.dart';
+import '../../widgets/glass_card.dart';
 import '../../widgets/animations/fade_slide_transition.dart';
 import '../../models/goal.dart';
 
@@ -205,9 +205,9 @@ class _GoalCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: ModernCard(
+      child: GlassCard(
         padding: const EdgeInsets.all(24),
-        showShadow: true,
+        
         showBorder: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,3 +440,6 @@ class _AddGoalModalState extends State<_AddGoalModal> {
     );
   }
 }
+
+
+

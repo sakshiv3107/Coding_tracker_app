@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/platform_stats.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/responsive_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/not_connected_widget.dart';
@@ -111,7 +111,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                       // 2. Main stats
                       FadeSlideTransition(
                         delay: const Duration(milliseconds: 100),
-                        child: _buildMainStats(theme),
+                        child: _buildMainStats(theme, isDark),
                       ),
                       const SizedBox(height: 24),
 
@@ -135,7 +135,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                           delay: const Duration(milliseconds: 250),
                           child: Row(
                             children: [
-                              const Icon(Icons.history_rounded, size: 24, color: Colors.blue),
+                              Icon(Icons.history_rounded, size: 24, color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent),
                               const SizedBox(width: 12),
                               Text('Recent Activity', style: theme.textTheme.titleLarge),
                             ],
@@ -150,19 +150,20 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                             delay: const Duration(milliseconds: 300),
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: ModernCard(
+                              child: GlassCard(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                borderRadius: 12,
                                 child: Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: (isAccepted ? Colors.green : Colors.red).withOpacity(0.1),
+                                        color: (isAccepted ? AppTheme.success : AppTheme.error).withOpacity(0.1),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
                                         isAccepted ? Icons.check_circle_outline : Icons.error_outline_rounded,
-                                        color: isAccepted ? Colors.green : Colors.red,
+                                        color: isAccepted ? AppTheme.success : AppTheme.error,
                                         size: 18,
                                       ),
                                     ),
@@ -228,10 +229,11 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
   }
-
   Widget _buildProfileHeader(ThemeData theme) {
-    return ModernCard(
+    final isDark = theme.brightness == Brightness.dark;
+    return GlassCard(
       padding: const EdgeInsets.all(24),
+      borderRadius: 16,
       child: Row(
         children: [
           Container(
@@ -255,7 +257,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
                 ),
                 Text(
                   '$platformName ${stats?.ranking ?? "User"}',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                  style: TextStyle(color: isDark ? AppTheme.darkTextSecondary.withOpacity(0.6) : AppTheme.lightTextSecondary.withOpacity(0.6), fontSize: 14),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -275,7 +277,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainStats(ThemeData theme) {
+  Widget _buildMainStats(ThemeData theme, bool isDark) {
     return Row(
       children: [
         Expanded(
@@ -283,7 +285,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
             'PROBLEMS SOLVED',
             stats!.totalSolved,
             Icons.check_circle_rounded,
-            AppTheme.secondary,
+            AppTheme.success,
           ),
         ),
         const SizedBox(width: 12),
@@ -331,7 +333,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
   Widget _buildBackButton(BuildContext context, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -343,7 +345,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: isDark ? Colors.white : AppTheme.lightTextPrimary),
       ),
     );
   }
@@ -361,7 +363,7 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
     return Builder(builder: (context) {
       return Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.surfaceDark : Colors.white,
+          color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -376,10 +378,12 @@ class PlatformStatsDetailsScreen extends StatelessWidget {
           icon: Icon(
             Icons.menu_rounded,
             size: 18,
-            color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+            color: isDark ? Colors.white : AppTheme.lightTextPrimary,
           ),
         ),
       );
     });
   }
 }
+
+

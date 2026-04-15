@@ -506,7 +506,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     return SliverAppBar(
       expandedHeight: 120,
       backgroundColor: Colors.transparent,
-      elevation: 0,
+      
       floating: true,
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
@@ -541,3 +541,5 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     );
   }
 }
+
+

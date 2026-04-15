@@ -185,3 +185,5 @@ class ContestReadinessCard extends StatelessWidget {
     ).animate().shimmer(delay: 2.seconds, duration: 2.seconds);
   }
 }
+
+

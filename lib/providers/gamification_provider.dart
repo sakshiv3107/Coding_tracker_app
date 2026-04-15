@@ -13,3 +13,5 @@ class GamificationProvider extends ChangeNotifier {
   
   double get progress => (currentXP % 100) / 100.0;
 }
+
+

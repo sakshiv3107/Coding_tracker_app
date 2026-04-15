@@ -53,7 +53,7 @@ class ErrorCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.2),
                 foregroundColor: Colors.redAccent,
-                elevation: 0,
+                
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -63,3 +63,5 @@ class ErrorCard extends StatelessWidget {
     );
   }
 }
+
+

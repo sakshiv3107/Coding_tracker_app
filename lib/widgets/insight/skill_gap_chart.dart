@@ -314,3 +314,5 @@ class _TopicScore {
 
   _TopicScore(this.name, this.solved, this.threshold, this.percentage);
 }
+
+

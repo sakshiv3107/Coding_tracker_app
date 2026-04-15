@@ -940,3 +940,5 @@ class StatsProvider extends ChangeNotifier {
     } catch (_) {}
   }
 }
+
+

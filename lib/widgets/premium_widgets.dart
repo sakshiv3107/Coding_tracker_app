@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../theme/app_theme.dart';
-import 'modern_card.dart';
+// import '../theme/app_theme.dart';
+import 'glass_card.dart';
 
 class PremiumSectionHeader extends StatelessWidget {
   final String title;
@@ -61,7 +61,7 @@ class PremiumSectionHeader extends StatelessWidget {
               ],
             ),
           ),
-          ?trailing,
+          if (trailing != null) trailing!,
         ],
       ),
     );
@@ -89,12 +89,11 @@ class PremiumStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      color: isDark ? AppTheme.surfaceDark.withOpacity(0.5) : Colors.white,
-      showShadow: true,
+      
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -233,3 +232,6 @@ class PremiumGradientButton extends StatelessWidget {
     );
   }
 }
+
+
+

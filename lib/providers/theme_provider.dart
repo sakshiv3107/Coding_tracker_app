@@ -82,3 +82,5 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setInt(_colorKey, _colorIndex);
   }
 }
+
+

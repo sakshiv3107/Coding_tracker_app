@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 // import '../theme/app_theme.dart';
 
 class MonthlyProgressChart extends StatelessWidget {
@@ -60,7 +60,7 @@ class MonthlyProgressChart extends StatelessWidget {
       );
     }
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,3 +115,6 @@ class MonthlyProgressChart extends StatelessWidget {
     );
   }
 }
+
+
+

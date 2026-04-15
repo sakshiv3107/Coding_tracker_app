@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/submission.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class RecentlySolvedSection extends StatelessWidget {
   final List<Submission> submissions;
@@ -36,7 +36,7 @@ class RecentlySolvedSection extends StatelessWidget {
   Widget _buildProblemCard(BuildContext context, Submission sub) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ModernCard(
+      child: GlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         onTap: () async {
           final url = Uri.parse('https://leetcode.com/problems/${sub.titleSlug}/');
@@ -109,3 +109,6 @@ class RecentlySolvedSection extends StatelessWidget {
     );
   }
 }
+
+
+

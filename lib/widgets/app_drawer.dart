@@ -6,7 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/stats_provider.dart';
-import 'glassmorphic_container.dart';
+import 'glass_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 
@@ -33,7 +33,7 @@ class AppDrawer extends StatelessWidget {
     final profilePic = profile.profile?['profilePic'];
 
     return Drawer(
-      backgroundColor: isDark ? AppTheme.bgDark : Colors.white,
+      backgroundColor: isDark ? AppTheme.darkPrimaryBg : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(32),
@@ -148,14 +148,7 @@ class AppDrawer extends StatelessWidget {
                 // ── ACCOUNT ─────────────────────────────────────────────────
                 _sectionLabel('ACCOUNT').animate().fadeIn(delay: 500.ms),
                 const SizedBox(height: 8),
-                _pageItem(
-                  context,
-                  title: 'Profile',
-                  icon: Icons.person_rounded,
-                  pageIndex: 4,
-                  isDark: isDark,
-                  index: 11,
-                ),
+
                 _pushItem(
                   context,
                   title: 'Settings',
@@ -282,7 +275,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -311,7 +304,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
                 child: CircleAvatar(
                   radius: 32,
                   backgroundColor: isDark
-                      ? AppTheme.surfaceDarkLighter
+                      ? AppTheme.darkTertiaryBg
                       : Colors.grey[200],
                   backgroundImage: (pic != null && pic.isNotEmpty)
                       ? CachedNetworkImageProvider(pic)
@@ -494,12 +487,11 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required int index,
     required VoidCallback onTap,
   }) {
-    return GlassmorphicContainer(
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      margin: const EdgeInsets.only(bottom: 8),
       borderRadius: 16,
-      blur: isActive ? 10 : 0,
-      opacity: isActive ? 0.12 : 0,
-      border: isActive ? null : Border.all(color: Colors.transparent),
-      margin: const EdgeInsets.only(bottom: 6),
+      borderOpacity: isActive ? 0.3 : 0,
       child: ListTile(
         onTap: onTap,
         visualDensity: VisualDensity.compact,
@@ -550,3 +542,5 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     ).animate().fadeIn(delay: (index * 40).ms).slideX(begin: -0.1);
   }
 }
+
+

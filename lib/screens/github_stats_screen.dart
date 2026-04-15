@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/github_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/activity_heatmap.dart';
 import '../models/github_stats.dart';
 import '../widgets/animations/fade_slide_transition.dart';
@@ -87,9 +87,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                             Text(
                               'Active Node: $username',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppTheme.textSecondaryDark.withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: AppTheme.darkTextSecondary.withOpacity(0.4),
                                 fontWeight: FontWeight.w700,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -270,11 +268,11 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -285,7 +283,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
         icon: FaIcon(
           FontAwesomeIcons.chevronLeft,
           size: 14,
-          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
         ),
       ),
     );
@@ -305,7 +303,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
             )
           : const FaIcon(FontAwesomeIcons.rotate, size: 16),
       style: IconButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
         foregroundColor: theme.colorScheme.primary,
         padding: const EdgeInsets.all(12),
       ),
@@ -320,8 +318,8 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: ModernCard(
-            isGlass: true,
+          child: GlassCard(
+            borderRadius: 32,
             padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -343,7 +341,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                   error,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppTheme.textSecondaryDark.withValues(alpha: 0.5),
+                    color: AppTheme.darkTextSecondary.withOpacity(0.5),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -361,9 +359,8 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
 
   Widget _buildProfileHero(GithubStats stats, ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    return ModernCard(
+    return GlassCard(
       padding: EdgeInsets.zero,
-      isGlass: true,
       borderRadius: 32,
       child: Stack(
         children: [
@@ -374,8 +371,8 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
               FontAwesomeIcons.github,
               size: 140,
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.03)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? Colors.white.withOpacity(0.03)
+                  : Colors.black.withOpacity(0.03),
             ),
           ),
           Padding(
@@ -424,9 +421,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.textSecondaryDark.withValues(
-                              alpha: 0.6,
-                            ),
+                            color: AppTheme.darkTextSecondary.withOpacity(0.6),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -476,9 +471,8 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   }
 
   Widget _buildLanguagesSection(GithubStats stats) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      isGlass: true,
       borderRadius: 28,
       child: Column(
         children: stats.topLanguages.entries.map((entry) {
@@ -513,9 +507,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                     Text(
                       '${(entry.value * 100).toStringAsFixed(1)}%',
                       style: TextStyle(
-                        color: AppTheme.textSecondaryDark.withValues(
-                          alpha: 0.4,
-                        ),
+                        color: AppTheme.darkTextSecondary.withOpacity(0.4),
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
                       ),
@@ -531,7 +523,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                     curve: Curves.easeOutCubic,
                     builder: (context, value, _) => LinearProgressIndicator(
                       value: value,
-                      backgroundColor: color.withValues(alpha: 0.1),
+                      backgroundColor: color.withOpacity(0.1),
                       valueColor: AlwaysStoppedAnimation<Color>(color),
                       minHeight: 6,
                     ),
@@ -555,9 +547,9 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
           .map(
             (repo) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: ModernCard(
+              child: GlassCard(
                 padding: const EdgeInsets.all(18),
-                isGlass: true,
+                borderRadius: 16,
                 child: Row(
                   children: [
                     Expanded(
@@ -575,9 +567,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                             'by ${repo.owner}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppTheme.textSecondaryDark.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: AppTheme.darkTextSecondary.withOpacity(0.4),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -613,9 +603,9 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
   Widget _buildRepoCard(GithubRepository repo, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: ModernCard(
+      child: GlassCard(
         padding: const EdgeInsets.all(24),
-        isGlass: true,
+        borderRadius: 20,
         onTap: () {},
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,7 +625,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 FaIcon(
                   FontAwesomeIcons.chevronRight,
                   size: 12,
-                  color: AppTheme.textSecondaryDark.withValues(alpha: 0.2),
+                  color: AppTheme.darkTextSecondary.withOpacity(0.2),
                 ),
               ],
             ),
@@ -646,7 +636,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppTheme.textSecondaryDark.withValues(alpha: 0.5),
+                  color: AppTheme.darkTextSecondary.withOpacity(0.5),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -693,7 +683,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                 Text(
                   'Updated ${DateFormat('MMM d').format(repo.updatedAt)}',
                   style: TextStyle(
-                    color: AppTheme.textSecondaryDark.withValues(alpha: 0.3),
+                    color: AppTheme.darkTextSecondary.withOpacity(0.3),
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -748,3 +738,5 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
     }
   }
 }
+
+

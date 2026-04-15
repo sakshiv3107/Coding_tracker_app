@@ -27,3 +27,5 @@ class PlatformStats {
     this.extraMetrics = const {},
   });
 }
+
+

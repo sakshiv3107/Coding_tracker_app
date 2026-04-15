@@ -7,7 +7,7 @@ import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 // import '../models/leetcode_stats.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/activity_heatmap.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/animations/animated_stat_counter.dart';
@@ -375,8 +375,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     Color color, {
     String subtitle = '',
   }) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -426,24 +427,55 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
 
   Widget _buildMainStats(StatsProvider stats) {
     final lc = stats.leetcodeStats!;
-    final theme = Theme.of(context);
-    return Row(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
       children: [
-        Expanded(
-          child: PremiumStatCard(
-            label: 'SOLVED',
-            value: lc.totalSolved.toString(),
-            icon: FontAwesomeIcons.checkDouble,
-            color: theme.colorScheme.secondary,
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedStatCounter(
+                value: lc.totalSolved,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.success,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Problems Solved',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: PremiumStatCard(
-            label: 'RANKING',
-            value: NumberFormat.compact().format(lc.ranking),
-            icon: FontAwesomeIcons.globe,
-            color: Colors.purple,
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                NumberFormat.compact().format(lc.ranking),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Global Ranking',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
         ),
       ],
@@ -456,10 +488,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     final theme = Theme.of(context);
     final username = profile.profile?["leetcode"] ?? "";
 
-    return ModernCard(
+    return GlassCard(
       padding: EdgeInsets.zero,
-      isGlass: true,
-      showShadow: true,
+      borderRadius: 16,
       child: Stack(
         children: [
           // Background Gradient Pattern
@@ -573,7 +604,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -622,7 +653,7 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.surfaceDark : Colors.white,
+            color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -653,10 +684,9 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     String prefix = '',
     bool isSmall = false,
   }) {
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      showShadow: true,
-      showBorder: false,
+      borderRadius: 12,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -700,3 +730,5 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 }
+
+

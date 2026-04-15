@@ -26,3 +26,5 @@ class SkillProvider extends ChangeNotifier {
     return weakest;
   }
 }
+
+

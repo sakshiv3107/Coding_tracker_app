@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/user_platform_data.dart';
 import '../theme/app_theme.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class PlatformCard extends StatelessWidget {
   final UserPlatformData data;
@@ -19,10 +19,10 @@ class PlatformCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       onTap: onTap,
       padding: const EdgeInsets.all(20),
-      isGlass: true,
+      
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,7 +32,7 @@ class PlatformCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: data.color.withValues(alpha: 0.1),
+                  color: data.color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: data.icon is IconData 
@@ -43,8 +43,8 @@ class PlatformCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: data.isConnected 
-                      ? Colors.green.withValues(alpha: 0.1) 
-                      : Colors.orange.withValues(alpha: 0.1),
+                      ? Colors.green.withOpacity(0.1) 
+                      : Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -80,7 +80,7 @@ class PlatformCard extends StatelessWidget {
           Text(
             data.username,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+              color: AppTheme.darkTextSecondary.withOpacity(0.4),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -141,7 +141,7 @@ class PlatformCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 12, color: AppTheme.textSecondaryDark.withValues(alpha: 0.3)),
+            Icon(icon, size: 12, color: AppTheme.darkTextSecondary.withOpacity(0.3)),
             const SizedBox(width: 4),
             Text(
               label,
@@ -149,7 +149,7 @@ class PlatformCard extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
-                color: AppTheme.textSecondaryDark.withValues(alpha: 0.3),
+                color: AppTheme.darkTextSecondary.withOpacity(0.3),
               ),
             ),
           ],
@@ -166,3 +166,6 @@ class PlatformCard extends StatelessWidget {
     );
   }
 }
+
+
+

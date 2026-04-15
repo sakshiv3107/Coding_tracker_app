@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/leetcode_stats.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class ContestTable extends StatelessWidget {
   final List<LeetCodeContestHistory> history;
@@ -16,7 +16,7 @@ class ContestTable extends StatelessWidget {
     final sortedHistory = List<LeetCodeContestHistory>.from(history)
       ..sort((a, b) => b.date.compareTo(a.date));
 
-    return ModernCard(
+    return GlassCard(
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +54,7 @@ class ContestTable extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
+                          color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -74,3 +74,6 @@ class ContestTable extends StatelessWidget {
     );
   }
 }
+
+
+

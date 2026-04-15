@@ -167,7 +167,7 @@ class _SplashScreen extends StatelessWidget {
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.secondary]),
+                        gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.secondary]),
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: [
                           BoxShadow(
@@ -201,3 +201,5 @@ class _SplashScreen extends StatelessWidget {
     );
   }
 }
+
+

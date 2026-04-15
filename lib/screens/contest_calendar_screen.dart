@@ -191,7 +191,7 @@ class _ContestListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
@@ -389,3 +389,5 @@ class _ContestDetailLabel extends StatelessWidget {
     );
   }
 }
+
+

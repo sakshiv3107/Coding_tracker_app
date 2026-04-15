@@ -375,3 +375,5 @@ class ResumeRecommendation {
   bool get isHigh => priority == 'high';
   bool get isMedium => priority == 'medium';
 }
+
+

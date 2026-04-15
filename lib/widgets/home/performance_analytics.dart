@@ -249,3 +249,5 @@ class RatingHistoryChart extends StatelessWidget {
     }
   }
 }
+
+

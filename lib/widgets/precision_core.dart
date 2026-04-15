@@ -4,10 +4,10 @@ import '../theme/app_theme.dart';
 
 class AppColors {
   static const Color primary = AppTheme.primary;
-  static const Color border = AppTheme.borderLight;
-  static const Color textSecondary = AppTheme.textSecondaryLight;
+  static const Color border = AppTheme.lightBorder;
+  static const Color textSecondary = AppTheme.lightTextSecondary;
   static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textPrimary = AppTheme.textPrimaryLight;
+  static const Color textPrimary = AppTheme.lightTextPrimary;
   static const Color success = Colors.green;
   static const Color warning = Colors.orange;
   static const Color error = Colors.red;
@@ -323,8 +323,7 @@ class PrecisionButton extends StatelessWidget {
               onPressed: onPressed,
               color: backgroundColor,
               disabledColor: AppColors.surfaceRaised,
-              elevation: 0,
-              highlightElevation: 0,
+              
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -343,3 +342,5 @@ class PrecisionButton extends StatelessWidget {
     );
   }
 }
+
+

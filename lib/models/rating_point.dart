@@ -9,3 +9,5 @@ class RatingPoint {
     required this.platform,
   });
 }
+
+

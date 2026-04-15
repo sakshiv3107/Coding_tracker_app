@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class ResponsiveCard extends StatelessWidget {
   final String label;
@@ -24,8 +24,9 @@ class ResponsiveCard extends StatelessWidget {
     final theme = Theme.of(context);
     final accentColor = color ?? theme.colorScheme.primary;
 
-    return ModernCard(
+    return GlassCard(
       padding: padding ?? const EdgeInsets.all(16),
+      borderRadius: 16,
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Dynamic scaling based on available height
@@ -79,3 +80,5 @@ class ResponsiveCard extends StatelessWidget {
     );
   }
 }
+
+

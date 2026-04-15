@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 // import '../theme/app_theme.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class ProblemSolvingTrendChart extends StatelessWidget {
   final Map<DateTime, int> submissionCalendar;
@@ -33,7 +33,7 @@ class ProblemSolvingTrendChart extends StatelessWidget {
     maxVal = (maxVal * 1.5).ceilToDouble();
     if (maxVal < 10) maxVal = 10;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,3 +132,6 @@ class ProblemSolvingTrendChart extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/leetcode_stats.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 
 class BadgesSection extends StatelessWidget {
   final List<LeetCodeBadge> badges;
@@ -39,7 +39,7 @@ class BadgesSection extends StatelessWidget {
             return InkWell(
               onTap: () => _showBadgeDetails(context, badge),
               borderRadius: BorderRadius.circular(24),
-              child: ModernCard(
+              child: GlassCard(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -128,3 +128,6 @@ class BadgesSection extends StatelessWidget {
     );
   }
 }
+
+
+

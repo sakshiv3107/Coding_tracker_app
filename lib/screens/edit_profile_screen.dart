@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/modern_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/premium_widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -182,7 +182,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Text(
                             'Updating your global persona',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textSecondaryDark.withValues(alpha: 0.4),
+                              color: AppTheme.darkTextSecondary.withOpacity(0.4),
                               fontWeight: FontWeight.w700,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -221,7 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 60,
-                                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                                     backgroundImage: _picController.text.isNotEmpty
                                         ? CachedNetworkImageProvider(_picController.text)
                                         : null,
@@ -238,7 +238,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     Positioned.fill(
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.3),
+                                          color: Colors.black.withOpacity(0.3),
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Center(
@@ -271,9 +271,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       
-                      ModernCard(
+                      GlassCard(
                         padding: const EdgeInsets.all(12),
-                        isGlass: true,
+                        
                         borderRadius: 28,
                         child: Column(
                           children: [
@@ -297,9 +297,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         icon: Icons.hub_rounded,
                       ),
                       const SizedBox(height: 16),
-                      ModernCard(
+                      GlassCard(
                         padding: const EdgeInsets.all(12),
-                        isGlass: true,
+                        
                         borderRadius: 28,
                         child: Column(
                           children: [
@@ -361,11 +361,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildBackButton(BuildContext context, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -376,7 +376,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         icon: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 16,
-          color: isDark ? Colors.white : AppTheme.textPrimaryLight,
+          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
         ),
       ),
     );
@@ -403,7 +403,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurface.withOpacity(0.3),
               ),
             ),
           ),
@@ -414,14 +414,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+                color: theme.colorScheme.onSurface.withOpacity(0.15),
                 fontWeight: FontWeight.w600,
               ),
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: icon is IconData 
-                  ? Icon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6))
-                  : FaIcon(icon, size: 18, color: AppTheme.primary.withValues(alpha: 0.6)),
+                  ? Icon(icon, size: 18, color: AppTheme.primary.withOpacity(0.6))
+                  : FaIcon(icon, size: 18, color: AppTheme.primary.withOpacity(0.6)),
               ),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -430,9 +430,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
           ),
-          Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.02)),
+          Divider(height: 1, color: theme.colorScheme.onSurface.withOpacity(0.02)),
         ],
       ),
     );
   }
 }
+
+
+

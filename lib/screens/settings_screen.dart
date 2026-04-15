@@ -82,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(
                           'System & Profile Preferences',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -140,58 +140,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 32),
 
-                  // 🎨 Accent Color Section
-                  const PremiumSectionHeader(
-                    title: 'Accent System',
-                    subtitle: 'Choose your primary node color',
-                    icon: Icons.color_lens_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  GlassmorphicContainer(
-                    padding: const EdgeInsets.all(16),
-                    borderRadius: 28,
-                    child: Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      alignment: WrapAlignment.center,
-                      children: List.generate(
-                        ThemeProvider.availableColors.length,
-                        (index) {
-                          final color = ThemeProvider.availableColors[index];
-                          final isSelected = themeProvider.colorIndex == index;
-                          return GestureDetector(
-                            onTap: () => themeProvider.setPrimaryColor(index),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: isSelected
-                                    ? Border.all(color: theme.colorScheme.onSurface, width: 3)
-                                    : null,
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: color.withValues(alpha: 0.4),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        )
-                                      ]
-                                    : [],
-                              ),
-                              child: isSelected 
-                                ? const Icon(Icons.check, color: Colors.white) 
-                                : null,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
-
-                  const SizedBox(height: 32),
 
                   // 🔔 Notifications Section
                   const PremiumSectionHeader(
@@ -278,7 +226,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               '1.0.4-α Production',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
                               ),
                             ),
                           ],
@@ -286,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: Colors.green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
@@ -323,11 +271,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? AppTheme.darkSecondaryBg : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -359,11 +307,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        tileColor: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.05) : Colors.transparent,
+        tileColor: isSelected ? theme.colorScheme.primary.withOpacity(0.05) : Colors.transparent,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary : Colors.grey.withValues(alpha: 0.1),
+            color: isSelected ? theme.colorScheme.primary : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
@@ -385,12 +333,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            color: theme.colorScheme.onSurface.withOpacity(0.4),
           ),
         ),
         trailing: isSelected 
             ? Icon(Icons.radio_button_checked_rounded, color: theme.colorScheme.primary, size: 18)
-            : Icon(Icons.radio_button_off_rounded, color: Colors.grey.withValues(alpha: 0.3), size: 18),
+            : Icon(Icons.radio_button_off_rounded, color: Colors.grey.withOpacity(0.3), size: 18),
       ),
     );
   }
@@ -412,13 +360,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+            color: theme.colorScheme.onSurface.withOpacity(0.05),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
             icon,
             size: 20,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
         title: Text(
@@ -433,15 +381,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            color: theme.colorScheme.onSurface.withOpacity(0.4),
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios_rounded,
           size: 14,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          color: theme.colorScheme.onSurface.withOpacity(0.2),
         ),
       ),
     );
   }
 }
+
+

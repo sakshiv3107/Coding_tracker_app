@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/developer_score.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 import 'animations/animated_stat_counter.dart';
 
 class DeveloperScoreCard extends StatefulWidget {
@@ -98,8 +98,9 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _color;
 
-    return ModernCard(
+    return GlassCard(
       padding: EdgeInsets.zero,
+      borderRadius: 24,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
@@ -264,3 +265,5 @@ class _DeveloperScoreCardState extends State<DeveloperScoreCard>
     );
   }
 }
+
+

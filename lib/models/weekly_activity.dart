@@ -88,4 +88,6 @@ class WeeklyActivity {
     final max = days.map((d) => d.total).reduce((a, b) => a > b ? a : b);
     return max > 0 ? max : 1;
   }
-}
+}
+
+

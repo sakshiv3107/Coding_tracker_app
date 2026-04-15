@@ -7,6 +7,8 @@ import '../providers/profile_provider.dart';
 import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/goal_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/profile_summary_card.dart';
@@ -304,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               TextButton(
                                 onPressed: () =>
                                     Navigator.pushNamed(context, '/goals'),
-                                child: const Text('Explore >'),
+                                child: Text('Explore >', style: TextStyle(color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent),),
                               ),
                             ],
                           ),
@@ -344,15 +346,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Icons.analytics_rounded,
                           ),
                           const SizedBox(height: 12),
-                          PlatformDonutChart(
-                            platformSolvedCounts: {
-                              'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
-                              'CodeForces':
-                                  stats.codeforcesStats?.totalSolved ?? 0,
-                              'CodeChef': stats.codechefStats?.totalSolved ?? 0,
-                              'HackerRank':
-                                  stats.hackerrankStats?.totalSolved ?? 0,
-                            },
+                          GlassCard(
+                            padding: const EdgeInsets.all(16),
+                            child: PlatformDonutChart(
+                              platformSolvedCounts: {
+                                'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
+                                'CodeForces':
+                                    stats.codeforcesStats?.totalSolved ?? 0,
+                                'CodeChef': stats.codechefStats?.totalSolved ?? 0,
+                                'HackerRank':
+                                    stats.hackerrankStats?.totalSolved ?? 0,
+                              },
+                            ),
                           ).animate().fadeIn(delay: 300.ms),
                         ],
                       ),
@@ -431,21 +436,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           _buildSectionLabel(context, 'Activity Spectrum'),
                           const SizedBox(height: 12),
-                          CodingHeatmap(datasets: heatmapData),
+                          GlassCard(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Activity Heatmap',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 16),
+                                CodingHeatmap(
+                                  datasets: heatmapData,
+                                  colorsets: {
+                                    1: Theme.of(context).brightness == Brightness.dark
+                                        ? AppTheme.darkAccent.withOpacity(0.3)
+                                        : AppTheme.lightAccent.withOpacity(0.3),
+                                    3: Theme.of(context).brightness == Brightness.dark
+                                        ? AppTheme.darkAccent.withOpacity(0.6)
+                                        : AppTheme.lightAccent.withOpacity(0.6),
+                                    5: Theme.of(context).brightness == Brightness.dark
+                                        ? AppTheme.darkAccent
+                                        : AppTheme.lightAccent,
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 16),
-                          old_chart.WeeklyActivityChart(
-                            leetcodeCalendar:
-                                stats.leetcodeStats?.submissionCalendar ?? {},
-                            githubCalendar:
-                                github.githubStats?.contributionCalendar ?? {},
-                            hackerrankCalendar:
-                                stats.hackerrankStats?.submissionHistory ?? {},
-                            codechefCalendar:
-                                stats.codechefStats?.submissionCalendar ?? {},
+                          GlassCard(
+                            padding: const EdgeInsets.all(16),
+                            child: old_chart.WeeklyActivityChart(
+                              leetcodeCalendar:
+                                  stats.leetcodeStats?.submissionCalendar ?? {},
+                              githubCalendar:
+                                  github.githubStats?.contributionCalendar ?? {},
+                              hackerrankCalendar:
+                                  stats.hackerrankStats?.submissionHistory ?? {},
+                              codechefCalendar:
+                                  stats.codechefStats?.submissionCalendar ?? {},
+                            ),
                           ),
                           const SizedBox(height: 16),
                           if (tagStats != null && tagStats.isNotEmpty)
-                            SkillRadarChart(tagStats: tagStats),
+                            GlassCard(
+                              padding: const EdgeInsets.all(16),
+                              child: SkillRadarChart(tagStats: tagStats),
+                            ),
                         ],
                       ),
                     ),
@@ -467,7 +504,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: theme.colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, size: 18, color: theme.colorScheme.primary),
@@ -565,3 +602,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 }
+
+

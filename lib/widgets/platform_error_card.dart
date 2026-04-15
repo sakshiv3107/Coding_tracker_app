@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'modern_card.dart';
+import 'glass_card.dart';
 
 class PlatformErrorCard extends StatelessWidget {
   final String platformName;
@@ -21,10 +21,10 @@ class PlatformErrorCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return ModernCard(
+    return GlassCard(
       padding: const EdgeInsets.all(24),
-      isGlass: true,
-      showShadow: true,
+      
+      
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -105,10 +105,13 @@ class PlatformErrorCard extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: isPrimary ? AppTheme.primary : AppTheme.primary.withOpacity(0.1),
         foregroundColor: isPrimary ? Colors.white : AppTheme.primary,
-        elevation: 0,
+        
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
 }
+
+
+
