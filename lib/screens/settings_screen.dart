@@ -216,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '1.0.4-α Production',
+                              '1.4.1-α Production',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 color: theme.colorScheme.onSurface.withOpacity(0.6),

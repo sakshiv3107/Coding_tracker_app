@@ -6,11 +6,11 @@ class AppTheme {
   AppTheme._();
 
   // Dark Theme Colors
-  static const darkPrimaryBg = Color(0xFF0A0E14);
-  static const darkSecondaryBg = Color(0xFF151B26);
+  static const darkPrimaryBg = Color(0xFF0D0F1A);
+  static const darkSecondaryBg = Color(0xFF13162A);
   static const darkTertiaryBg = Color(0xFF1C2433);
-  static const darkAccent = Color(0xFF00D9FF);
-  static const darkAccentSecondary = Color(0xFF7C3AED);
+  static const darkAccent = Color(0xFF7C3AED);
+  static const darkAccentSecondary = Color(0xFF00D9FF);
   static const darkTextPrimary = Color(0xFFE5E7EB);
   static const darkTextSecondary = Color(0xFF9CA3AF);
   static const darkBorder = Color(0xFF1F2937);
@@ -29,20 +29,20 @@ class AppTheme {
   static const success = Color(0xFF10B981);
   static const warning = Color(0xFFF59E0B);
   static const error = Color(0xFFEF4444);
-  static const primary = Color(0xFF00D9FF);
+  static const primary = Color(0xFF7C3AED);
 
   // Platform Colors
-  static const leetCodeYellow = Color(0xFFFFA116);
+  static const leetCodeYellow = Color(0xFFEF9F27);
   static const githubColor = Color(0xFF4078c0);
-  static const codeforcesColor = Color(0xFF1F8DCE);
-  static const codechefColor = Color(0xFF5B4638);
+  static const codeforcesColor = Color(0xFFE24B4A);
+  static const codechefColor = Color(0xFF7B68EE);
   static const hackerRankColor = Color(0xFF2EC866);
 
   // Additional Compatibility Tokens
   static const githubGrey = Color(0xFF24292E);
   static const githubBlack = Color(0xFF0D1117);
-  static const primaryLight = Color(0xFF0EA5E9); // Maps to lightAccent
-  static const secondary = Color(0xFF7C3AED); // Maps to darkAccentSecondary
+  static const primaryLight = Color(0xFF0EA5E9); 
+  static const secondary = Color(0xFF00D9FF); 
 
   // Glass Effect Decoration
   static BoxDecoration glassCardDark({

@@ -40,74 +40,113 @@ class PlatformStatCard extends StatelessWidget {
 
     final isNotConnected = username == null || username!.isEmpty || username!.trim().isEmpty;
 
-    return InkWell(
-      onTap: isNotConnected ? onConnect : onTap, // If not connected, tap to connect, otherwise tap to view screen
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
-            width: 0.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            _buildIcon(),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    platformName,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Stack(
+        children: [
+          // Background Glow based on platform color
+          Positioned(
+            left: -20,
+            top: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: platformColor.withOpacity(isNotConnected ? 0.05 : 0.08),
+                boxShadow: [
+                  BoxShadow(
+                    color: platformColor.withOpacity(isNotConnected ? 0.05 : 0.1),
+                    blurRadius: 40,
+                    spreadRadius: 20,
                   ),
-                  if (isNotConnected)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        "Connect account →",
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF7B68EE),
-                        ),
-                      ),
-                    )
-                  else ...[
-                    Text(
-                      primaryStat,
-                      style: GoogleFonts.inter(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).textTheme.displayLarge?.color,
-                      ),
-                    ),
-                    Text(
-                      secondaryStat,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
-            if (!isNotConnected)
-              error != null
-                  ? _buildRetryButton()
-                  : const SizedBox.shrink(),
-          ],
-        ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: isNotConnected ? onConnect : onTap,
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor.withOpacity(
+                    Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.6
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildIcon(),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            platformName,
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
+                            ),
+                          ),
+                          if (isNotConnected)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                "Connect account →",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: platformColor,
+                                ),
+                              ),
+                            )
+                          else ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              primaryStat,
+                              style: GoogleFonts.outfit(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Theme.of(context).textTheme.titleLarge?.color,
+                              ),
+                            ),
+                            Text(
+                              secondaryStat.toUpperCase(),
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (!isNotConnected)
+                      error != null
+                          ? _buildRetryButton()
+                          : Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.2),
+                            ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
