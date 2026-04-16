@@ -502,8 +502,9 @@ class LeetcodeService {
   Map<String, int> _calculateStreaks(Map<DateTime, int> calendar) {
     if (calendar.isEmpty) return {'streak': 0, 'longestStreak': 0};
 
-    final sorted = calendar.keys
-        .map((d) => DateTime(d.year, d.month, d.day))
+    final sorted = calendar.entries
+        .where((e) => e.value > 0)
+        .map((e) => DateTime(e.key.year, e.key.month, e.key.day))
         .toList()
       ..sort();
 
@@ -528,12 +529,13 @@ class LeetcodeService {
     final yest = todayDate.subtract(const Duration(days: 1));
 
     int current = 0;
-    if (calendar.containsKey(todayDate) || calendar.containsKey(yest)) {
+    if ((calendar[todayDate] ?? 0) > 0 || (calendar[yest] ?? 0) > 0) {
       current = 1;
-      var check = calendar.containsKey(todayDate) ? todayDate : yest;
+      var check = (calendar[todayDate] ?? 0) > 0 ? todayDate : yest;
       while (true) {
         check = check.subtract(const Duration(days: 1));
-        if (calendar.containsKey(DateTime(check.year, check.month, check.day))) {
+        final checkNormalized = DateTime(check.year, check.month, check.day);
+        if ((calendar[checkNormalized] ?? 0) > 0) {
           current++;
         } else {
           break;

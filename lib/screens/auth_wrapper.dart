@@ -102,7 +102,7 @@ class _SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // ── Logo Container with Pulse ──
-            Container(
+            SizedBox(
               height: 120, width: 120,
               child: Image.asset(
                 'assets/images/icon.png',

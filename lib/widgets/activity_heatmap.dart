@@ -122,12 +122,21 @@ class ActivityHeatmap extends StatelessWidget {
     int currentStreak = 0;
     final sortedDates = data.keys.toList()..sort();
     
+    DateTime? lastDate;
     for (var date in sortedDates) {
-      if (data[date]! > 0) {
-        currentStreak++;
+      if ((data[date] ?? 0) > 0) {
+        if (lastDate != null) {
+          final diff = date.difference(lastDate).inDays;
+          if (diff == 1) {
+            currentStreak++;
+          } else {
+            currentStreak = 1;
+          }
+        } else {
+          currentStreak = 1;
+        }
+        lastDate = date;
         if (currentStreak > maxStreak) maxStreak = currentStreak;
-      } else {
-        currentStreak = 0;
       }
     }
 

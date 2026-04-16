@@ -74,7 +74,9 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
     final tags = (challenge != null && challenge['question']['topicTags'] != null)
         ? (challenge['question']['topicTags'] as List).map((t) => t['name'].toString()).toList()
         : [_fallbackTopic, 'Practice'];
-    final url = challenge != null ? "https://leetcode.com${challenge['link']}" : "https://leetcode.com/problemset/all/?topicSlugs=${_fallbackTopic.toLowerCase()}";
+    final url = challenge != null 
+        ? "https://leetcode.com${challenge['link']}description/?envType=daily-question&envId=${challenge['date']}"
+        : "https://leetcode.com/problemset/all/?topicSlugs=${_fallbackTopic.toLowerCase()}";
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
@@ -173,10 +175,24 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
         ),
         onPressed: () async {
           final uri = Uri.parse(url);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri);
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('opened_challenge_${DateFormat('yyyyMMdd').format(DateTime.now())}', true);
+          try {
+            final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+            if (launched) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('opened_challenge_${DateFormat('yyyyMMdd').format(DateTime.now())}', true);
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not open LeetCode. Please check your browser.')),
+                );
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e')),
+              );
+            }
           }
         },
         child: Text(

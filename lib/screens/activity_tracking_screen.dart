@@ -77,8 +77,12 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   Map<String, int> _calculateStreaks(Map<DateTime, int> calendar) {
     if (calendar.isEmpty) return {'streak': 0, 'longestStreak': 0};
 
+    // Filter to only include days with actual activity
     final sorted =
-        calendar.keys.map((d) => DateTime(d.year, d.month, d.day)).toList()
+        calendar.entries
+          .where((e) => e.value > 0)
+          .map((e) => DateTime(e.key.year, e.key.month, e.key.day))
+          .toList()
           ..sort();
 
     int maxStreak = 0;
@@ -102,14 +106,14 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     final yest = todayDate.subtract(const Duration(days: 1));
 
     int current = 0;
-    if (calendar.containsKey(todayDate) || calendar.containsKey(yest)) {
+    // Check if the streak is still active (today or yesterday has activity)
+    if ((calendar[todayDate] ?? 0) > 0 || (calendar[yest] ?? 0) > 0) {
       current = 1;
-      var check = calendar.containsKey(todayDate) ? todayDate : yest;
+      var check = (calendar[todayDate] ?? 0) > 0 ? todayDate : yest;
       while (true) {
         check = check.subtract(const Duration(days: 1));
-        if (calendar.containsKey(
-          DateTime(check.year, check.month, check.day),
-        )) {
+        final checkNormalized = DateTime(check.year, check.month, check.day);
+        if ((calendar[checkNormalized] ?? 0) > 0) {
           current++;
         } else {
           break;
@@ -145,8 +149,8 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
                         else if (_error != null)
                           _buildErrorState()
                         else ...[
-                          _buildStatsOverview(),
-                          const SizedBox(height: 32),
+                          //_buildStatsOverview(),
+                          //const SizedBox(height: 32),
                           if (_leetcodeData != null) ...[
                             _buildPlatformSection(
                               'LeetCode Analytics',
@@ -303,82 +307,82 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     );
   }
 
-  Widget _buildStatsOverview() {
-    return Row(
-      children: [
-        _buildStatCard(
-          'Total Active',
-          (_ghContribs + _lcSubmissions).toString(),
-          Icons.analytics_rounded,
-          AppTheme.primary,
-        ),
-        const SizedBox(width: 12),
-        _buildStatCard(
-          'Streak',
-          '${_currentStreak > _ghCurrentStreak ? _currentStreak : _ghCurrentStreak} d',
-          Icons.local_fire_department_rounded,
-          Colors.orange,
-        ),
-        const SizedBox(width: 12),
-        _buildStatCard(
-          'Max Streak',
-          '${_maxStreak > _ghMaxStreak ? _maxStreak : _ghMaxStreak} d',
-          Icons.workspace_premium_rounded,
-          Colors.amber,
-        ),
-      ],
-    );
-  }
+  // Widget _buildStatsOverview() {
+  //   return Row(
+  //     children: [
+  //       _buildStatCard(
+  //         'Total Active',
+  //         (_ghContribs + _lcSubmissions).toString(),
+  //         Icons.analytics_rounded,
+  //         AppTheme.primary,
+  //       ),
+  //       const SizedBox(width: 12),
+  //       _buildStatCard(
+  //         'Streak',
+  //         '${_currentStreak > _ghCurrentStreak ? _currentStreak : _ghCurrentStreak} d',
+  //         Icons.local_fire_department_rounded,
+  //         Colors.orange,
+  //       ),
+  //       const SizedBox(width: 12),
+  //       _buildStatCard(
+  //         'Max Streak',
+  //         '${_maxStreak > _ghMaxStreak ? _maxStreak : _ghMaxStreak} d',
+  //         Icons.workspace_premium_rounded,
+  //         Colors.amber,
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-        decoration: BoxDecoration(
-          color: theme.cardColor.withOpacity(isDark ? 0.04 : 0.6),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: GoogleFonts.outfit(
-                color: theme.textTheme.titleLarge?.color,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildStatCard(
+  //   String label,
+  //   String value,
+  //   IconData icon,
+  //   Color color,
+  // ) {
+  //   final theme = Theme.of(context);
+  //   final isDark = theme.brightness == Brightness.dark;
+  //   return Expanded(
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+  //       decoration: BoxDecoration(
+  //         color: theme.cardColor.withOpacity(isDark ? 0.04 : 0.6),
+  //         borderRadius: BorderRadius.circular(24),
+  //         border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+  //       ),
+  //       child: Column(
+  //         children: [
+  //           Container(
+  //             padding: const EdgeInsets.all(8),
+  //             decoration: BoxDecoration(
+  //               color: color.withOpacity(0.1),
+  //               shape: BoxShape.circle,
+  //             ),
+  //             child: Icon(icon, size: 20, color: color),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             value,
+  //             style: GoogleFonts.outfit(
+  //               color: theme.textTheme.titleLarge?.color,
+  //               fontSize: 24,
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 4),
+  //           Text(
+  //             label,
+  //             style: TextStyle(
+  //               color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+  //               fontSize: 11,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
@@ -504,29 +508,12 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   Widget _buildAppBar() {
     final theme = Theme.of(context);
     return SliverAppBar(
-      expandedHeight: 120,
-      backgroundColor: Colors.transparent,
-      
-      floating: true,
+      expandedHeight: 140,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      elevation: 0,
+      floating: false,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        title: Text(
-          'Activity Insights',
-          style: GoogleFonts.outfit(
-            color: theme.textTheme.titleLarge?.color,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        background: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-      ),
+      centerTitle: false,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.iconTheme.color, size: 20),
         onPressed: () => Navigator.pop(context),
@@ -538,6 +525,21 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
         ),
         const SizedBox(width: 8),
       ],
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: false,
+        titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
+        title: Text(
+          'Activity Insights',
+          style: GoogleFonts.outfit(
+            color: theme.textTheme.titleLarge?.color,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        background: Container(
+          color: theme.scaffoldBackgroundColor,
+        ),
+      ),
     );
   }
 }
