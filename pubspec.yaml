@@ -1,7 +1,7 @@
 name: coding_tracker_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.4.0+4
+version: 1.4.1+5
 
 environment:
   sdk: ^3.8.1
