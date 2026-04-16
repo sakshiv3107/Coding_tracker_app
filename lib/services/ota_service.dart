@@ -4,12 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
 class OTAService {
+  // Points to version.json, not the APK
   static const String versionUrl =
-      "https://raw.githubusercontent.com/sakshiv3107/CodeSphere-Coding-Analytics-App/refs/heads/main/version.json";
+      "https://github.com/sakshiv3107/CodeSphere-Coding-Analytics-App/releases/latest/download/version.json";
+
+  // README link shown in the update dialog
+  static const String readmeUrl =
+      "https://github.com/sakshiv3107/CodeSphere-Coding-Analytics-App#readme";
 
   static Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
-      final response = await http.get(Uri.parse("$versionUrl?t=${DateTime.now().millisecondsSinceEpoch}"));
+      final response = await http.get(
+        Uri.parse("$versionUrl?t=${DateTime.now().millisecondsSinceEpoch}"),
+      );
       if (response.statusCode != 200) return null;
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -30,7 +37,6 @@ class OTAService {
   /// Returns true if [remote] is strictly newer than [current].
   static bool _isNewer(String remote, String current) {
     try {
-      // Remove possible version suffixes like +3
       final cleanRemote = remote.split('+')[0];
       final cleanCurrent = current.split('+')[0];
 
@@ -49,5 +55,3 @@ class OTAService {
     return false;
   }
 }
-
-
