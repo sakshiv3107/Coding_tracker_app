@@ -16,7 +16,7 @@ import '../widgets/problem_solving_trend_chart.dart';
 import '../widgets/contest_table.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/recent_submission_section.dart';
-import '../widgets/developer_score_card.dart';
+// import '../widgets/developer_score_card.dart';
 import '../widgets/difficulty_bar_chart.dart';
 import '../widgets/contest_analytics_section.dart';
 import '../widgets/badges_section.dart';
@@ -233,16 +233,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
           icon: FontAwesomeIcons.chartLine,
         ),
       ),
-      const SizedBox(height: 12),
-      FadeSlideTransition(
-        delay: const Duration(milliseconds: 80),
-        child: DeveloperScoreCard(
-          totalSolved: lc.totalSolved,
-          leetcodeRating: lc.contestRating ?? 0,
-          githubStars: github.githubStats?.totalStars ?? 0,
-          githubContributions: github.githubStats?.totalContributions ?? 0,
-        ),
-      ),
+      // const SizedBox(height: 12),
+      
       const SizedBox(height: 24),
       FadeSlideTransition(
         delay: const Duration(milliseconds: 120),

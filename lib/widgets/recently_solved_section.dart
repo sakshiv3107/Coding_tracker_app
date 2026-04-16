@@ -20,14 +20,6 @@ class RecentlySolvedSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.check_circle_outline_rounded, size: 20, color: Colors.green),
-            const SizedBox(width: 8),
-            Text('Recently solved', style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-        const SizedBox(height: 16),
         ...solved.map((sub) => _buildProblemCard(context, sub)),
       ],
     );
@@ -38,12 +30,12 @@ class RecentlySolvedSection extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: GlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        onTap: () async {
-          final url = Uri.parse('https://leetcode.com/problems/${sub.titleSlug}/');
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          }
-        },
+        // onTap: () async {
+        //   final url = Uri.parse('https://leetcode.com/problems/${sub.titleSlug}/');
+        //   if (await canLaunchUrl(url)) {
+        //     await launchUrl(url, mode: LaunchMode.externalApplication);
+        //   }
+        // },
         child: Row(
           children: [
             Expanded(
@@ -67,14 +59,14 @@ class RecentlySolvedSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
-            ),
+            // Container(
+            //   padding: const EdgeInsets.all(8),
+            //   decoration: BoxDecoration(
+            //     color: Colors.grey.withOpacity(0.08),
+            //     borderRadius: BorderRadius.circular(10),
+            //   ),
+            //   // child: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+            // ),
           ],
         ),
       ),
