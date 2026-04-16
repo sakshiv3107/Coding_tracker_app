@@ -120,6 +120,7 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
 
               return GlassCard(
                 width: 240,
+                height: 120,
                 margin: const EdgeInsets.only(right: 16, bottom: 8),
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -139,7 +140,7 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(platformIcon, size: 12, color: platformColor),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 2),
                               Text(
                                 contest.platform,
                                 style: TextStyle(
@@ -169,7 +170,8 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
                           ),
                       ],
                     ),
-                    const Spacer(),
+                    //const Spacer(),
+                    const SizedBox(height: 15),
                     Text(
                       contest.title,
                       style: GoogleFonts.outfit(
@@ -181,7 +183,7 @@ class _ContestCountdownCardState extends State<ContestCountdownCard> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 15),
                     Row(
                       children: [
                         Icon(

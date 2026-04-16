@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
@@ -26,49 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _githubController;
   late TextEditingController _hackerrankController;
 
-  void _showImageSourceActionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Photo Gallery'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickAndUpload(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Camera'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickAndUpload(ImageSource.camera);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Future<void> _pickAndUpload(ImageSource source) async {
-    try {
-      final url = await context.read<ProfileProvider>().pickAndUploadImage(source);
-      if (url != null) {
-        setState(() {
-          _picController.text = url;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showFeedback(context, 'Upload failed: $e', isError: true);
-      }
-    }
-  }
 
 
   @override
@@ -215,55 +171,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       Center(
                         child: Column(
                           children: [
-                            GestureDetector(
-                              onTap: () => _showImageSourceActionSheet(context),
-                              child: Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 60,
-                                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                                    backgroundImage: _picController.text.isNotEmpty
-                                        ? CachedNetworkImageProvider(_picController.text)
-                                        : null,
-                                    child: _picController.text.isEmpty && !isLoading
-                                        ? Opacity(
-                                            opacity: 0.5,
-                                            child: Icon(Icons.person_rounded, size: 60, color: theme.colorScheme.primary),
-                                          )
-                                        : isLoading && _picController.text.isEmpty
-                                            ? const CircularProgressIndicator()
-                                            : null,
-                                  ),
-                                  if (isLoading)
-                                    Positioned.fill(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.3),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Center(
-                                          child: SizedBox(
-                                            height: 30,
-                                            width: 30,
-                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 4,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: theme.scaffoldBackgroundColor, width: 3),
-                                      ),
-                                      child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
-                                    ),
-                                  ),
-                                ],
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                              child: Icon(
+                                Icons.person_rounded, 
+                                size: 60, 
+                                color: theme.colorScheme.primary.withOpacity(0.5)
                               ),
                             ),
                             const SizedBox(height: 24),

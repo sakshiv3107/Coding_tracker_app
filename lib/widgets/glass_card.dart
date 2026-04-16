@@ -12,6 +12,7 @@ class GlassCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Gradient? gradient;
   final double? borderOpacity;
+  final bool showBlur;
   final bool showBorder;
 
   const GlassCard({
@@ -25,6 +26,7 @@ class GlassCard extends StatelessWidget {
     this.onTap,
     this.gradient,
     this.borderOpacity,
+    this.showBlur = true,
     this.showBorder = true,
   });
 
@@ -60,13 +62,20 @@ class GlassCard extends StatelessWidget {
       decoration: decoration,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
-          ),
-        ),
+        child: showBlur 
+          ? RepaintBoundary(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+                child: Container(
+                  padding: padding ?? const EdgeInsets.all(16),
+                  child: child,
+                ),
+              ),
+            )
+          : Container(
+              padding: padding ?? const EdgeInsets.all(16),
+              child: child,
+            ),
       ),
     );
 

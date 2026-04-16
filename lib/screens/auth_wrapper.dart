@@ -104,19 +104,6 @@ class _SplashScreen extends StatelessWidget {
             // ── Logo Container with Pulse ──
             Container(
               height: 120, width: 120,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.15),
-                    blurRadius: 50,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
               child: Image.asset(
                 'assets/images/icon.png',
                 fit: BoxFit.contain,

@@ -72,6 +72,7 @@ class _GitHubStatsScreenState extends State<GitHubStatsScreen> {
                   child: Row(
                     children: [
                       _buildBackButton(context),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

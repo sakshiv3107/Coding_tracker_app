@@ -179,16 +179,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildActionTile(
                           context,
                           title: 'Refine Identity',
-                          subtitle: 'Update names, avatars and bios',
+                          subtitle: 'Update names, usernames and handles',
                           icon: Icons.edit_note_rounded,
                           onTap: () => Navigator.pushNamed(context, '/edit_profile'),
-                        ),
-                        _buildActionTile(
-                          context,
-                          title: 'Safety & Privacy',
-                          subtitle: 'Data handling and security tokens',
-                          icon: Icons.security_rounded,
-                          onTap: () {},
                         ),
                       ],
                     ),

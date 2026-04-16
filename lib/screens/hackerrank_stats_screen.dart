@@ -7,9 +7,8 @@ import '../providers/profile_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/animations/fade_slide_transition.dart';
 import '../widgets/not_connected_widget.dart';
-import '../widgets/coding_heatmap.dart';
+import '../widgets/activity_heatmap.dart';
 import '../widgets/responsive_card.dart';
-// import '../theme/app_theme.dart';
 import '../widgets/platform_error_card.dart';
 
 class HackerRankStatsScreen extends StatefulWidget {
@@ -92,19 +91,17 @@ class _HackerRankStatsScreenState extends State<HackerRankStatsScreen> {
                 ),
               ),
 
-              // 3. Activity Heatmap
+              // 3. Activity Heatmap (HackerRank Only)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                 sliver: SliverToBoxAdapter(
                   child: FadeSlideTransition(
                     delay: const Duration(milliseconds: 200),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader(theme, 'Activity Heatmap'),
-                        const SizedBox(height: 12),
-                        CodingHeatmap(datasets: stats.submissionHistory),
-                      ],
+                    child: ActivityHeatmap(
+                      data: stats.submissionHistory,
+                      baseColor: const Color(0xFF2EC866),
+                      label: 'HackerRank Activity',
+                      tooltipLabel: 'submissions',
                     ),
                   ),
                 ),

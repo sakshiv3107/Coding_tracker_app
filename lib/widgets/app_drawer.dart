@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/stats_provider.dart';
-import 'glass_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 
@@ -30,7 +28,7 @@ class AppDrawer extends StatelessWidget {
 
     final userName = auth.user?['name'] ?? 'Developer';
     final leetcodeUser = profile.profile?['leetcode'] ?? '';
-    final profilePic = profile.profile?['profilePic'];
+
 
     return Drawer(
       backgroundColor: isDark ? AppTheme.darkPrimaryBg : Colors.white,
@@ -43,7 +41,7 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         children: [
           // ── Header ──────────────────────────────────────────────────────
-          _buildHeader(context, userName, leetcodeUser, profilePic, isDark)
+          _buildHeader(context, userName, leetcodeUser, isDark)
               .animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
           // ── Scrollable Menu ──────────────────────────────────────────────
@@ -53,7 +51,7 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               children: [
                 // ── ANALYTICS HUB ──────────────────────────────────────────
-                _sectionLabel('ANALYTICS HUB').animate().fadeIn(delay: 100.ms),
+                _sectionLabel('ANALYTICS HUB').animate().fadeIn(delay: 0.ms),
                 const SizedBox(height: 8),
                 _pageItem(
                   context,
@@ -87,18 +85,18 @@ class AppDrawer extends StatelessWidget {
                   isDark: isDark,
                   index: 4,
                 ),
-                _pageItem(
+                _pushItem(
                   context,
                   title: 'Goals & Targets',
                   icon: Icons.flag_rounded,
-                  pageIndex: 3,
+                  route: '/goals',
                   isDark: isDark,
                   index: 5,
                 ),
 
                 const SizedBox(height: 24),
                 // ── CONNECTED PLATFORMS ─────────────────────────────────────
-                _sectionLabel('CONNECTED PLATFORMS').animate().fadeIn(delay: 300.ms),
+                _sectionLabel('CONNECTED PLATFORMS').animate().fadeIn(delay: 150.ms),
                 const SizedBox(height: 8),
                 _pushItem(
                   context,
@@ -146,7 +144,7 @@ class AppDrawer extends StatelessWidget {
 
                 const SizedBox(height: 24),
                 // ── ACCOUNT ─────────────────────────────────────────────────
-                _sectionLabel('ACCOUNT').animate().fadeIn(delay: 500.ms),
+                _sectionLabel('ACCOUNT').animate().fadeIn(delay: 300.ms),
                 const SizedBox(height: 8),
 
                 _pushItem(
@@ -160,7 +158,7 @@ class AppDrawer extends StatelessWidget {
 
                 const SizedBox(height: 24),
                 // ── FEEDBACK ────────────────────────────────────────────────
-                _sectionLabel('FEEDBACK & SUPPORT').animate().fadeIn(delay: 700.ms),
+                _sectionLabel('FEEDBACK & SUPPORT').animate().fadeIn(delay: 350.ms),
                 const SizedBox(height: 8),
                 _pushItem(
                   context,
@@ -267,7 +265,6 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     BuildContext context,
     String name,
     String username,
-    String? pic,
     bool isDark,
   ) {
     final theme = Theme.of(context);
@@ -306,19 +303,14 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
                   backgroundColor: isDark
                       ? AppTheme.darkTertiaryBg
                       : Colors.grey[200],
-                  backgroundImage: (pic != null && pic.isNotEmpty)
-                      ? CachedNetworkImageProvider(pic)
-                      : null,
-                  child: (pic == null || pic.isEmpty)
-                      ? Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : 'D',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.primary,
-                          ),
-                        )
-                      : null,
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'C',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -473,7 +465,7 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
           ),
         ),
       ),
-    ).animate().fadeIn(delay: (index * 40).ms).slideX(begin: -0.1);
+    ).animate().fadeIn(delay: (index * 25).ms).slideX(begin: -0.05, duration: 400.ms);
   }
 
   Widget _tile(
@@ -487,59 +479,71 @@ color: theme.colorScheme.onSurface.withOpacity(0.15),
     required int index,
     required VoidCallback onTap,
   }) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      margin: const EdgeInsets.only(bottom: 8),
-      borderRadius: 16,
-      borderOpacity: isActive ? 0.3 : 0,
-      child: ListTile(
-        onTap: onTap,
-        visualDensity: VisualDensity.compact,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: icon is IconData 
-            ? Icon(
-                icon,
-                size: iconSize,
-                color: isActive
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withOpacity(0.45),
-              )
-            : FaIcon(
-                icon,
-                size: iconSize,
-                color: isActive
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withOpacity(0.45),
-              ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isActive
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface.withOpacity(0.85),
-            fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
-            fontSize: 14,
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isActive 
+              ? theme.colorScheme.primary.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive 
+                ? theme.colorScheme.primary.withOpacity(0.3)
+                : Colors.white.withOpacity(0.05),
+            width: 1,
           ),
         ),
-        trailing: isActive
-            ? Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
+        child: ListTile(
+          onTap: onTap,
+          visualDensity: VisualDensity.compact,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading: icon is IconData 
+              ? Icon(
+                  icon,
+                  size: iconSize,
+                  color: isActive
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.45),
+                )
+              : FaIcon(
+                  icon,
+                  size: iconSize,
+                  color: isActive
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.45),
                 ),
-              )
-            : null,
+          title: Text(
+            title,
+            style: TextStyle(
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withOpacity(0.85),
+              fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          trailing: isActive
+              ? Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                )
+              : null,
+        ),
       ),
-    ).animate().fadeIn(delay: (index * 40).ms).slideX(begin: -0.1);
+    ).animate().fadeIn(delay: (index * 25).ms).slideX(begin: -0.05, duration: 400.ms);
   }
 }
 

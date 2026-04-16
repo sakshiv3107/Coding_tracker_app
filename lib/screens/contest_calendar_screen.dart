@@ -108,6 +108,13 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
                                 vertical: 8,
                               ),
                               children: [
+                                if (stats.upcomingContests.isNotEmpty) ...[
+                                  _SectionHeader(title: 'Upcoming Contests'),
+                                  const SizedBox(height: 16),
+                                  ...stats.upcomingContests.map(
+                                    (c) => _ContestListItem(contest: c),
+                                  ),
+                                ],
                                 if (stats.attendedContests.isNotEmpty) ...[
                                   _SectionHeader(title: 'Previously Attended'),
                                   const SizedBox(height: 16),
@@ -118,14 +125,7 @@ class _ContestCalendarScreenState extends State<ContestCalendarScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 32),
-                                ],
-                                if (stats.upcomingContests.isNotEmpty) ...[
-                                  _SectionHeader(title: 'Upcoming Contests'),
-                                  const SizedBox(height: 16),
-                                  ...stats.upcomingContests.map(
-                                    (c) => _ContestListItem(contest: c),
-                                  ),
-                                ],
+                                ],                            
                               ],
                             ),
                     ),

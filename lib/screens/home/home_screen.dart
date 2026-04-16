@@ -56,10 +56,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateTo(int index) {
+    Navigator.pop(context); // close drawer first to ensure smooth animation
     if (index != _selectedIndex) {
       setState(() => _selectedIndex = index);
     }
-    Navigator.pop(context); // close drawer
   }
 
   @override

@@ -213,16 +213,13 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLogo() {
-    return Container(
-      height: 110, width: 110,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
-        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.15), blurRadius: 40, spreadRadius: 10)],
+    return SizedBox(
+      height: 100, width: 100,
+      child: Image.asset(
+        'assets/images/icon.png',
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => const Icon(Icons.code_rounded, color: Colors.white, size: 50),
       ),
-      child: Image.asset('assets/images/icon.png', fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.code_rounded, color: Colors.white, size: 50)),
     );
   }
 
@@ -409,11 +406,9 @@ class _GoogleButton extends StatelessWidget {
         children: [
           AuthGoogleIcon(),
           SizedBox(width: 14),
-          Text('Sync with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+          Text('Continue with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
         ],
       ),
     );
   }
 }
-
-

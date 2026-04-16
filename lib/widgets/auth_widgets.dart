@@ -195,22 +195,9 @@ class AuthHeroLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: SizedBox(
         height: 100,
         width: 100,
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withOpacity(0.2),
-              blurRadius: 30,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
         child: Image.asset(
           'assets/images/icon.png',
           fit: BoxFit.contain,

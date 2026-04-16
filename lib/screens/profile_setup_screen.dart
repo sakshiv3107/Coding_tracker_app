@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/profile_provider.dart';
 import 'home/home_screen.dart';
 
@@ -20,7 +18,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final githubCtrl = TextEditingController();
   final hackerrankCtrl = TextEditingController();
 
-  String? _profilePicUrl;
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -34,47 +32,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  void _showImageSourceActionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Photo Gallery'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickAndUpload(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Camera'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickAndUpload(ImageSource.camera);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Future<void> _pickAndUpload(ImageSource source) async {
-    try {
-      final url = await context.read<ProfileProvider>().pickAndUploadImage(source);
-      if (url != null) {
-        setState(() => _profilePicUrl = url);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,34 +57,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 ),
                 child: Column(
                   children: [
-                    GestureDetector(
-                      onTap: () => _showImageSourceActionSheet(context),
-                      child: Stack(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: _profilePicUrl != null ? CachedNetworkImageProvider(_profilePicUrl!) : null,
-                              child: _profilePicUrl == null && !profileProvider.isLoading
-                                  ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                                  : (profileProvider.isLoading && _profilePicUrl == null)
-                                      ? const CircularProgressIndicator()
-                                      : null,
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: theme.colorScheme.secondary,
-                              child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                            ),
-                          ),
-                        ],
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[200],
+                        child: const Icon(Icons.person, size: 50, color: Colors.grey),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -234,7 +171,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                                       await profileProvider.saveProfile(
                                         name: nameCtrl.text.trim(),
-                                        profilePic: _profilePicUrl,
+                                        profilePic: null,
                                         leetcode: leetcodeCtrl.text.trim(),
                                         codechef: codechefCtrl.text.trim(),
                                         codeforces: codeforcesCtrl.text.trim(),

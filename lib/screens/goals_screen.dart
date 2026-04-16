@@ -27,9 +27,24 @@ class GoalsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               sliver: SliverToBoxAdapter(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Your Goals', style: theme.textTheme.headlineMedium),
+                    IconButton(
+                      alignment: Alignment.centerLeft,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        'Your Goals',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
                     IconButton.filledTonal(
                       onPressed: () => _showAddGoalDialog(context),
                       icon: const Icon(Icons.add_rounded),
@@ -209,6 +224,7 @@ class _GoalCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         
         showBorder: false,
+        showBlur: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -235,10 +251,7 @@ class _GoalCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text(
-                  '${(progressRatio * 100).toInt()}%',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: actualColor, fontSize: 18),
-                ),
+
                 const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(Icons.close_rounded, size: 20, color: theme.colorScheme.onSurface.withOpacity(0.3)),

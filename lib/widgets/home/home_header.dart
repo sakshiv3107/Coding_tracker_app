@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/stats_provider.dart';
-import '../../providers/gamification_provider.dart';
+// import '../../providers/gamification_provider.dart';
 import '../../providers/auth_provider.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -10,9 +10,9 @@ class HomeHeader extends StatelessWidget {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 0 && hour < 12) return "Good morning";
+    if (hour >= 4 && hour < 12) return "Good morning";
     if (hour >= 12 && hour < 17) return "Good afternoon";
-    if (hour >= 17 && hour < 21) return "Good evening";
+    if (hour >= 17 && hour < 23) return "Good evening";
     return "Good night";
   }
 
@@ -20,16 +20,16 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final statsProvider = Provider.of<StatsProvider>(context);
-    final gamificationProvider = Provider.of<GamificationProvider>(context);
+  //  final gamificationProvider = Provider.of<GamificationProvider>(context);
 
     final username = authProvider.user?['name'] ?? 'Coder';
     final greeting = _getGreeting();
     final streak = statsProvider.streakCount;
-    final level = gamificationProvider.level;
-    final xpProgress = gamificationProvider.progress;
-    final currentXP = gamificationProvider.currentXP;
+    // final level = gamificationProvider.level;
+    // final xpProgress = gamificationProvider.progress;
+    // final currentXP = gamificationProvider.currentXP;
 
-    final primaryPurple = const Color(0xFF7B68EE);
+    // final primaryPurple = const Color(0xFF7B68EE);
     final accentAmber = const Color(0xFFEF9F27);
 
     return Column(
@@ -66,8 +66,8 @@ class HomeHeader extends StatelessWidget {
             _buildStreakBadge(context, streak, accentAmber),
           ],
         ),
-        const SizedBox(height: 20),
-        _buildXPProgressBar(context, level, xpProgress, currentXP, primaryPurple),
+        const SizedBox(height: 12),
+        // _buildXPProgressBar(context, level, xpProgress, currentXP, primaryPurple),
       ],
     );
   }
@@ -113,37 +113,37 @@ class HomeHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildXPProgressBar(
-    BuildContext context,
-    int level,
-    double progress,
-    int totalXP,
-    Color primaryColor,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 3,
-            backgroundColor: primaryColor.withOpacity(0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Level $level  ·  ${totalXP % 100}/100 XP",
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey.shade500,
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildXPProgressBar(
+  //   BuildContext context,
+  //   int level,
+  //   double progress,
+  //   int totalXP,
+  //   Color primaryColor,
+  // ) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       ClipRRect(
+  //         borderRadius: BorderRadius.circular(99),
+  //         child: LinearProgressIndicator(
+  //           value: progress,
+  //           minHeight: 3,
+  //           backgroundColor: primaryColor.withOpacity(0.12),
+  //           valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Text(
+  //         "Level $level  ·  ${totalXP % 100}/100 XP",
+  //         style: GoogleFonts.inter(
+  //           fontSize: 12,
+  //           fontWeight: FontWeight.w400,
+  //           color: Colors.grey.shade500,
+  //         ),
+  //       ),
+//       ],
+//     );
+//   }
 }
 
 

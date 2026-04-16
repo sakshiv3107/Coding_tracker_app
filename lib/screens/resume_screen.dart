@@ -72,133 +72,149 @@ class ResumeScreen extends StatelessWidget {
           ),
 
           // ── Main Content ─────────────────────────────────────────────
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header Section ───────────────────────────────────────────
-                _buildHeader(theme),
-                const SizedBox(height: 24),
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Header Section ───────────────────────────────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconButton(
+                        alignment: Alignment.topLeft,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildHeader(theme)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-                // ── Upload Section ─────────────────────────────────────────────
-                UploadCard(
-                  filePath: resume.resumePath,
-                  url: resume.resumeUrl,
-                  isPdf: resume.isPdf,
-                  onPickPdf: () => _pickPdf(context, resume),
-                  onAddLink: () => _showLinkDialog(context, resume),
-                  onRemove: () => resume.clearResume(),
-                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+                  // ── Upload Section ─────────────────────────────────────────────
+                  UploadCard(
+                    filePath: resume.resumePath,
+                    url: resume.resumeUrl,
+                    isPdf: resume.isPdf,
+                    onPickPdf: () => _pickPdf(context, resume),
+                    onAddLink: () => _showLinkDialog(context, resume),
+                    onRemove: () => resume.clearResume(),
+                  ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
 
-                const SizedBox(height: 20),
-
-                // ── Analyze Button ─────────────────────────────────────────────
-                if (resume.resumePath != null || resume.resumeUrl != null)
-                  AnalyzeButton(
-                    isLoading: resume.isAnalyzing,
-                    text: resume.resumeSummary == null
-                        ? 'Analyze Resume'
-                        : 'Re-analyze Resume',
-                    onPressed: () => resume.analyzeResume(
-                      candidateName: candidateName,
-                      stats: {
-                        'leetcode': leetcodeSolved,
-                        'github': githubCommits,
-                        'hackerrank': stats.hackerrankStats?.totalSolved ?? 0,
-                      },
-                    ),
-                  ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-
-                const SizedBox(height: 32),
-
-                // ── Results UI ────────────────────────────────────────────────
-                if (resume.analysisError != null)
-                  ErrorCard(
-                    message: resume.analysisError!,
-                    onRetry: () =>
-                        resume.analyzeResume(candidateName: candidateName),
-                  )
-                else if (resume.resumeSummary != null && !resume.isAnalyzing) ...[
-                  _buildResultsHeader(context, theme, resume)
-                      .animate()
-                      .fadeIn(duration: 300.ms),
                   const SizedBox(height: 20),
 
-                  // Score Overall
-                  if (resume.atsScore != null)
-                    ScoreCard(
-                      score: int.tryParse(resume.atsScore!) ?? 75,
-                    ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
+                  // ── Analyze Button ─────────────────────────────────────────────
+                  if (resume.resumePath != null || resume.resumeUrl != null)
+                    AnalyzeButton(
+                      isLoading: resume.isAnalyzing,
+                      text: resume.resumeSummary == null
+                          ? 'Analyze Resume'
+                          : 'Re-analyze Resume',
+                      onPressed: () => resume.analyzeResume(
+                        candidateName: candidateName,
+                        stats: {
+                          'leetcode': leetcodeSolved,
+                          'github': githubCommits,
+                          'hackerrank': stats.hackerrankStats?.totalSolved ?? 0,
+                        },
+                      ),
+                    ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.9, 0.9)),
 
                   const SizedBox(height: 32),
 
-                  // AI Insights
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 16),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          color: theme.colorScheme.primary,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          "AI Insights",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  // ── Results UI ────────────────────────────────────────────────
+                  if (resume.analysisError != null)
+                    ErrorCard(
+                      message: resume.analysisError!,
+                      onRetry: () =>
+                          resume.analyzeResume(candidateName: candidateName),
+                    )
+                  else if (resume.resumeSummary != null && !resume.isAnalyzing) ...[
+                    _buildResultsHeader(context, theme, resume)
+                        .animate()
+                        .fadeIn(duration: 300.ms),
+                    const SizedBox(height: 20),
+
+                    // Score Overall
+                    if (resume.atsScore != null)
+                      ScoreCard(
+                        score: int.tryParse(resume.atsScore!) ?? 75,
+                      ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
+
+                    const SizedBox(height: 32),
+
+                    // AI Insights
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 18,
                           ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 100.ms),
-                  _buildInsightSections(
-                    theme,
-                    resume.resumeSummary!,
-                    Icons.flare_rounded,
-                    hideTitle: true,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Improvement Suggestions
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 16),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline_rounded,
-                          color: theme.colorScheme.primary,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          "Recommendations",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(width: 8),
+                          const Text(
+                            "AI Insights",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: 100.ms),
+                    _buildInsightSections(
+                      theme,
+                      resume.resumeSummary!,
+                      Icons.flare_rounded,
+                      hideTitle: true,
                     ),
-                  ).animate().fadeIn(delay: 300.ms),
-                  _buildInsightSections(
-                    theme,
-                    resume.recommendations ?? "",
-                    Icons.tips_and_updates_rounded,
-                    isRecommendation: true,
-                  ),
 
-                  const SizedBox(height: 48),
-                ] else if (!resume.isAnalyzing &&
-                    resume.resumePath == null &&
-                    resume.resumeUrl == null)
-                  _buildEmptyState(theme)
-                else if (resume.isAnalyzing)
-                  _buildAnalyzingState(theme),
-              ],
+                    const SizedBox(height: 16),
+
+                    // Improvement Suggestions
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lightbulb_outline_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Recommendations",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: 300.ms),
+                    _buildInsightSections(
+                      theme,
+                      resume.recommendations ?? "",
+                      Icons.tips_and_updates_rounded,
+                      isRecommendation: true,
+                    ),
+
+                    const SizedBox(height: 48),
+                  ] else if (!resume.isAnalyzing &&
+                      resume.resumePath == null &&
+                      resume.resumeUrl == null)
+                    _buildEmptyState(theme)
+                  else if (resume.isAnalyzing)
+                    _buildAnalyzingState(theme),
+                ],
+              ),
             ),
           ),
         ],
@@ -210,6 +226,7 @@ class ResumeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        
         Text(
           "AI Resume Analyzer",
           style: theme.textTheme.headlineMedium?.copyWith(

@@ -370,7 +370,7 @@ class _GoogleSignupButton extends StatelessWidget {
         children: [
           AuthGoogleIcon(),
           SizedBox(width: 14),
-          Text('Sync with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+          Text('Continue with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
         ],
       ),
     );

@@ -117,70 +117,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
             top: -100,
             right: -50,
             child:
-                Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: theme.brightness == Brightness.dark
-                              ? 0.1
-                              : 0.04,
+                RepaintBoundary(
+                  child: Container(
+                        width: 300,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: theme.brightness == Brightness.dark
+                                ? 0.1
+                                : 0.04,
+                          ),
                         ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .move(
+                        begin: const Offset(0, 0),
+                        end: const Offset(-20, 20),
+                        duration: 10.seconds,
                       ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .move(
-                      begin: const Offset(0, 0),
-                      end: const Offset(-20, 20),
-                      duration: 10.seconds,
-                    ),
+                ),
           ),
           Positioned(
             top: 200,
             left: -100,
             child:
-                Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.tertiary.withValues(
-                          alpha: theme.brightness == Brightness.dark
-                              ? 0.08
-                              : 0.03,
+                RepaintBoundary(
+                  child: Container(
+                        width: 400,
+                        height: 400,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.tertiary.withValues(
+                            alpha: theme.brightness == Brightness.dark
+                                ? 0.08
+                                : 0.03,
+                          ),
                         ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .move(
+                        begin: const Offset(0, 0),
+                        end: const Offset(30, -30),
+                        duration: 15.seconds,
                       ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .move(
-                      begin: const Offset(0, 0),
-                      end: const Offset(30, -30),
-                      duration: 15.seconds,
-                    ),
+                ),
           ),
           Positioned(
             bottom: 100,
             right: -80,
             child:
-                Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: theme.brightness == Brightness.dark
-                              ? 0.06
-                              : 0.02,
+                RepaintBoundary(
+                  child: Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.secondary.withValues(
+                            alpha: theme.brightness == Brightness.dark
+                                ? 0.06
+                                : 0.02,
+                          ),
                         ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .move(
+                        begin: const Offset(0, 0),
+                        end: const Offset(-40, -20),
+                        duration: 12.seconds,
                       ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .move(
-                      begin: const Offset(0, 0),
-                      end: const Offset(-40, -20),
-                      duration: 12.seconds,
-                    ),
+                ),
           ),
 
           SafeArea(
@@ -254,12 +260,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                     sliver: SliverToBoxAdapter(
                       child:
-                          ProfileSummaryCard(
-                            name: userName,
-                            leetcodeUser: leetcodeUser,
-                            githubUser: githubUser,
-                            totalPlatforms: connectedPlatforms,
-                            profilePicUrl: avatarUrl,
+                          RepaintBoundary(
+                            child: ProfileSummaryCard(
+                              name: userName,
+                              leetcodeUser: leetcodeUser,
+                              githubUser: githubUser,
+                              totalPlatforms: connectedPlatforms,
+                              profilePicUrl: avatarUrl,
+                            ),
                           ).animate().scale(
                             delay: 100.ms,
                             duration: 400.ms,
@@ -293,43 +301,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     sliver: SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _sectionTitle(
-                                context,
-                                'Active Goals',
-                                Icons.flag_rounded,
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.pushNamed(context, '/goals'),
-                                child: Text('Explore >', style: TextStyle(color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent),),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          if (goals.isEmpty)
-                            const Text('No active goals tracking')
-                          else
-                            Column(
-                              children: goals.take(2).map((goal) {
-                                final progress =
-                                    ProgressService.calculateProgress(
-                                      goal: goal,
-                                      statsProvider: stats,
-                                      githubProvider: github,
-                                    ).toDouble();
-                                return _buildGoalProgressCard(
+                      child: RepaintBoundary(
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _sectionTitle(
                                   context,
-                                  goal,
-                                  progress,
-                                );
-                              }).toList(),
+                                  'Active Goals',
+                                  Icons.flag_rounded,
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pushNamed(context, '/goals'),
+                                  child: Text('Explore >', style: TextStyle(color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent),),
+                                ),
+                              ],
                             ),
-                        ],
+                            const SizedBox(height: 8),
+                            if (goals.isEmpty)
+                              const Text('No active goals tracking')
+                            else
+                              Column(
+                                children: goals.take(2).map((goal) {
+                                  final currentValue =
+                                      ProgressService.calculateProgress(
+                                        goal: goal,
+                                        statsProvider: stats,
+                                        githubProvider: github,
+                                      );
+                                  return _buildGoalProgressCard(
+                                    context,
+                                    goal,
+                                    currentValue,
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
                       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
                     ),
                   ),
@@ -346,19 +356,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Icons.analytics_rounded,
                           ),
                           const SizedBox(height: 12),
-                          GlassCard(
-                            padding: const EdgeInsets.all(16),
-                            child: PlatformDonutChart(
-                              platformSolvedCounts: {
-                                'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
-                                'CodeForces':
-                                    stats.codeforcesStats?.totalSolved ?? 0,
-                                'CodeChef': stats.codechefStats?.totalSolved ?? 0,
-                                'HackerRank':
-                                    stats.hackerrankStats?.totalSolved ?? 0,
-                              },
-                            ),
-                          ).animate().fadeIn(delay: 300.ms),
+                          RepaintBoundary(
+                            child: GlassCard(
+                              padding: const EdgeInsets.all(16),
+                              child: PlatformDonutChart(
+                                platformSolvedCounts: {
+                                  'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
+                                  'CodeForces':
+                                      stats.codeforcesStats?.totalSolved ?? 0,
+                                  'CodeChef': stats.codechefStats?.totalSolved ?? 0,
+                                  'HackerRank':
+                                      stats.hackerrankStats?.totalSolved ?? 0,
+                                },
+                              ),
+                            ).animate().fadeIn(delay: 300.ms),
+                          ),
                         ],
                       ),
                     ),
@@ -371,58 +383,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         horizontal: 16,
                         vertical: 12,
                       ),
-                      child: PlatformQuickStatsGrid(
-                        leetcode: {
-                          'solved': stats.leetcodeStats?.totalSolved,
-                          'easy': stats.leetcodeStats?.easy,
-                          'medium': stats.leetcodeStats?.medium,
-                          'hard': stats.leetcodeStats?.hard,
-                        },
-                        github: {
-                          'repos': github.githubStats?.publicRepos,
-                          'commits': github.githubStats?.totalContributions,
-                        },
-                        codeforces: {
-                          'rating': stats.codeforcesStats?.rating,
-                          'rank': stats.codeforcesStats?.ranking,
-                        },
-                        codechef: {
-                          'rating': stats.codechefStats?.rating,
-                          'rank': stats.codechefStats?.ranking,
-                        },
-                        hackerrank: {
-                          'solved': stats.hackerrankStats?.totalSolved,
-                          'rank': stats.hackerrankStats?.ranking,
-                        },
-                        leetcodeLoading:
-                            stats.leetcodeLoading &&
-                            stats.leetcodeStats == null,
-                        codeforcesLoading:
-                            stats.codeforcesLoading &&
-                            stats.codeforcesStats == null,
-                        codechefLoading:
-                            stats.codechefLoading &&
-                            stats.codechefStats == null,
-                        hackerrankLoading:
-                            stats.hackerrankLoading &&
-                            stats.hackerrankStats == null,
-                        githubLoading:
-                            github.isLoading && github.githubStats == null,
-                        leetcodeUsername: leetcodeUser,
-                        githubUsername: githubUser,
-                        codeforcesUsername: cfUser,
-                        codechefUsername: ccUser,
-                        hackerrankUsername: hrUser,
-                        onLeetCodeTap: () =>
-                            Navigator.pushNamed(context, '/leetcode_stats'),
-                        onGitHubTap: () =>
-                            Navigator.pushNamed(context, '/github_stats'),
-                        onCodeforcesTap: () =>
-                            Navigator.pushNamed(context, '/codeforces_stats'),
-                        onCodeChefTap: () =>
-                            Navigator.pushNamed(context, '/codechef_stats'),
-                        onHackerRankTap: () =>
-                            Navigator.pushNamed(context, '/hackerrank_stats'),
+                      child: RepaintBoundary(
+                        child: PlatformQuickStatsGrid(
+                          leetcode: {
+                            'solved': stats.leetcodeStats?.totalSolved,
+                            'easy': stats.leetcodeStats?.easy,
+                            'medium': stats.leetcodeStats?.medium,
+                            'hard': stats.leetcodeStats?.hard,
+                          },
+                          github: {
+                            'repos': github.githubStats?.publicRepos,
+                            'commits': github.githubStats?.totalContributions,
+                          },
+                          codeforces: {
+                            'rating': stats.codeforcesStats?.rating,
+                            'rank': stats.codeforcesStats?.ranking,
+                          },
+                          codechef: {
+                            'rating': stats.codechefStats?.rating,
+                            'rank': stats.codechefStats?.ranking,
+                          },
+                          hackerrank: {
+                            'solved': stats.hackerrankStats?.totalSolved,
+                            'rank': stats.hackerrankStats?.ranking,
+                          },
+                          leetcodeLoading:
+                              stats.leetcodeLoading &&
+                              stats.leetcodeStats == null,
+                          codeforcesLoading:
+                              stats.codeforcesLoading &&
+                              stats.codeforcesStats == null,
+                          codechefLoading:
+                              stats.codechefLoading &&
+                              stats.codechefStats == null,
+                          hackerrankLoading:
+                              stats.hackerrankLoading &&
+                              stats.hackerrankStats == null,
+                          githubLoading:
+                              github.isLoading && github.githubStats == null,
+                          leetcodeUsername: leetcodeUser,
+                          githubUsername: githubUser,
+                          codeforcesUsername: cfUser,
+                          codechefUsername: ccUser,
+                          hackerrankUsername: hrUser,
+                          onLeetCodeTap: () =>
+                              Navigator.pushNamed(context, '/leetcode_stats'),
+                          onGitHubTap: () =>
+                              Navigator.pushNamed(context, '/github_stats'),
+                          onCodeforcesTap: () =>
+                              Navigator.pushNamed(context, '/codeforces_stats'),
+                          onCodeChefTap: () =>
+                              Navigator.pushNamed(context, '/codechef_stats'),
+                          onHackerRankTap: () =>
+                              Navigator.pushNamed(context, '/hackerrank_stats'),
+                        ),
                       ),
                     ),
                   ),
@@ -446,19 +460,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 16),
-                                CodingHeatmap(
-                                  datasets: heatmapData,
-                                  colorsets: {
-                                    1: Theme.of(context).brightness == Brightness.dark
-                                        ? AppTheme.darkAccent.withOpacity(0.3)
-                                        : AppTheme.lightAccent.withOpacity(0.3),
-                                    3: Theme.of(context).brightness == Brightness.dark
-                                        ? AppTheme.darkAccent.withOpacity(0.6)
-                                        : AppTheme.lightAccent.withOpacity(0.6),
-                                    5: Theme.of(context).brightness == Brightness.dark
-                                        ? AppTheme.darkAccent
-                                        : AppTheme.lightAccent,
-                                  },
+                                RepaintBoundary(
+                                  child: CodingHeatmap(
+                                    datasets: heatmapData,
+                                    colorsets: {
+                                      1: Theme.of(context).brightness == Brightness.dark
+                                          ? AppTheme.darkAccent.withOpacity(0.3)
+                                          : AppTheme.lightAccent.withOpacity(0.3),
+                                      3: Theme.of(context).brightness == Brightness.dark
+                                          ? AppTheme.darkAccent.withOpacity(0.6)
+                                          : AppTheme.lightAccent.withOpacity(0.6),
+                                      5: Theme.of(context).brightness == Brightness.dark
+                                          ? AppTheme.darkAccent
+                                          : AppTheme.lightAccent,
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
@@ -466,22 +482,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 16),
                           GlassCard(
                             padding: const EdgeInsets.all(16),
-                            child: old_chart.WeeklyActivityChart(
-                              leetcodeCalendar:
-                                  stats.leetcodeStats?.submissionCalendar ?? {},
-                              githubCalendar:
-                                  github.githubStats?.contributionCalendar ?? {},
-                              hackerrankCalendar:
-                                  stats.hackerrankStats?.submissionHistory ?? {},
-                              codechefCalendar:
-                                  stats.codechefStats?.submissionCalendar ?? {},
+                            child: RepaintBoundary(
+                              child: old_chart.WeeklyActivityChart(
+                                leetcodeCalendar:
+                                    stats.leetcodeStats?.submissionCalendar ?? {},
+                                githubCalendar:
+                                    github.githubStats?.contributionCalendar ?? {},
+                                hackerrankCalendar:
+                                    stats.hackerrankStats?.submissionHistory ?? {},
+                                codechefCalendar:
+                                    stats.codechefStats?.submissionCalendar ?? {},
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
                           if (tagStats != null && tagStats.isNotEmpty)
                             GlassCard(
                               padding: const EdgeInsets.all(16),
-                              child: SkillRadarChart(tagStats: tagStats),
+                              child: RepaintBoundary(child: SkillRadarChart(tagStats: tagStats)),
                             ),
                         ],
                       ),
@@ -526,9 +544,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildGoalProgressCard(
     BuildContext context,
     dynamic goal,
-    double progress,
+    int current,
   ) {
     final theme = Theme.of(context);
+    final double progress = (current / goal.targetValue).clamp(0.0, 1.0);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -557,11 +576,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               Text(
-                '${(progress * 100).toInt()}%',
+                '$current / ${goal.targetValue}',
                 style: TextStyle(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w900,
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
               ),
             ],

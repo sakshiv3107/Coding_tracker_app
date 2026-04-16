@@ -154,17 +154,14 @@ class AIService {
         : 'JOB DESCRIPTION: Not provided. Evaluate as a general technical resume.';
 
     // -----------------------------------------------------------------------
-    // Prompt — strict rubric forces balanced, realistic scoring (avg 70-85)
+    // Prompt — strict rubric forces balanced, realistic scoring
     // -----------------------------------------------------------------------
     final prompt = '''
 You are an expert ATS (Applicant Tracking System) evaluator with 10+ years of experience in technical recruiting.
 
-Evaluate the following resume using the STRICT ATS rubric below. Be BALANCED — not too lenient, not too harsh.
-Scoring guidelines:
-  - A score of 90+ is RARE and reserved for near-perfect resumes.
-  - A score of 60-70 indicates clear, fixable issues.
-  - Most decent resumes should land between 70-85.
-  - Never give 100. Never give below 40 unless the text is clearly not a resume.
+Evaluate the following resume using the STRICT ATS rubric below. You must be high-variance in your scoring: if a resume is excellent, score it high (up to 98); if it has major issues, score it low (down to 30). 
+
+DO NOT pick a "safe" middle score like 82 if the content doesn't justify it. Every point in the total score must be the exact sum of the 6 criteria scores.
 
 === ATS RUBRIC (6 criteria, total 100 points) ===
 
@@ -172,36 +169,33 @@ Scoring guidelines:
    - Uses clean, single-column or simple two-column layout (no tables, text boxes, or graphics)
    - Standard section headings: Summary, Experience, Education, Skills, Projects
    - Consistent font usage, clear section separation
-   - File should be ATS-parsable (no images replacing text)
-   Deduct: heavy tables (-8), missing standard sections (-4 each), graphics/logos in header (-5)
+   - Deduct: heavy tables (-8), missing standard sections (-4 each), graphics/logos in header (-5)
 
 2. ACTION VERBS & LANGUAGE STRENGTH (20 pts)
    - Bullet points begin with strong action verbs (e.g., "Developed", "Architected", "Reduced", "Led", "Implemented")
    - Avoid weak openers: "Responsible for", "Helped with", "Worked on", "Assisted in"
    - Avoid first-person pronouns (I, me, my)
-   - Active voice throughout
-   Deduct: each weak opener (-1.5), first-person use (-2), passive voice (-1 per instance, max -5)
+   - Deduct: each weak opener (-2), first-person use (-2), passive voice (-1 per instance)
 
 3. QUANTIFIABLE ACHIEVEMENTS (20 pts)
    - Bullets include measurable outcomes: percentages, numbers, time saved, scale, team size
    - At least 40% of experience bullets should contain a metric
-   Deduct: fewer than 2 metrics (-8), fewer than 5 metrics (-4), vague impact language (-2 per instance)
+   - Deduct: fewer than 2 metrics (-10), fewer than 5 metrics (-5), vague impact language (-2 per instance)
 
 4. KEYWORD & SKILLS RELEVANCE (20 pts)
    - Technical skills explicitly listed in a Skills section
    - Tools, frameworks, languages are named (not just implied)
    - If JD provided: penalize missing critical keywords
-   Deduct: no dedicated Skills section (-6), skills only mentioned in prose (-3), missing keyword density (-4)
+   - Deduct: no dedicated Skills section (-10), skills only mentioned in prose (-5), missing keyword density (-4)
 
 5. CONTACT & PROFESSIONAL LINKS (10 pts)
    - Full name, professional email, phone, LinkedIn URL, GitHub/portfolio (for tech roles)
-   Deduct: missing LinkedIn (-3), missing GitHub/portfolio for tech role (-3), non-professional email (-2)
+   - Deduct: missing LinkedIn (-4), missing GitHub/portfolio for tech role (-5), non-professional email (-3)
 
 6. COMPLETENESS & CONSISTENCY (10 pts)
    - Dates are consistent (MM/YYYY or YYYY format, no gaps without explanation)
-   - Job titles and company names are present
    - Education section has degree, institution, graduation year
-   Deduct: unexplained date gaps (-3), missing graduation year (-2), inconsistent date format (-2)
+   - Deduct: unexplained date gaps (-5), missing graduation year (-3), inconsistent date format (-2)
 
 === END RUBRIC ===
 
@@ -212,16 +206,17 @@ $jdSection
 
 === OUTPUT INSTRUCTIONS ===
 Return ONLY a raw JSON object — no markdown, no explanation, no preamble.
+The "ats_score" MUST be the sum of the scores in "score_breakdown".
 
 {
-  "ats_score": <int between 40 and 95>,
+  "ats_score": <int between 30 and 90>,
   "score_breakdown": {
-    "format_template": { "score": <int 0-20>, "note": "<one sentence>" },
-    "action_verbs": { "score": <int 0-20>, "note": "<one sentence>" },
-    "quantifiable_achievements": { "score": <int 0-20>, "note": "<one sentence>" },
-    "keyword_relevance": { "score": <int 0-20>, "note": "<one sentence>" },
-    "contact_links": { "score": <int 0-10>, "note": "<one sentence>" },
-    "completeness": { "score": <int 0-10>, "note": "<one sentence>" }
+    "format_template": { "score": <int 0-20>, "note": "<one sentence justification>" },
+    "action_verbs": { "score": <int 0-20>, "note": "<one sentence justification>" },
+    "quantifiable_achievements": { "score": <int 0-20>, "note": "<one sentence justification>" },
+    "keyword_relevance": { "score": <int 0-20>, "note": "<one sentence justification>" },
+    "contact_links": { "score": <int 0-10>, "note": "<one sentence justification>" },
+    "completeness": { "score": <int 0-10>, "note": "<one sentence justification>" }
   },
   "resume_summary": [
     "<Key point 1 about candidate background>",
@@ -243,15 +238,13 @@ IMPORTANT RULES for recommendations:
 - Provide 5 to 7 recommendations total.
 - "high" priority = must fix before applying; "medium" = important improvement; "low" = polish.
 - The "fix" field must be SPECIFIC and PRACTICAL. 
-  BAD: "Add more metrics."
-  GOOD: "In your internship at XYZ bullet 2, replace 'improved performance' with 'improved API response time by 40% using Redis caching'."
 - Do NOT repeat the same category more than twice.
 - Order recommendations by priority: high first, then medium, then low.
 ''';
 
     try {
       _emit('Running ATS evaluation...');
-      final raw = await _callGroq(prompt, maxTokens: 2000, temperature: 0.15);
+      final raw = await _callGroq(prompt, maxTokens: 2000, temperature: 0.4);
       final cleaned = _extractJson(raw);
       final json = jsonDecode(cleaned) as Map<String, dynamic>;
 
@@ -285,7 +278,7 @@ class ResumeAnalysisResult {
   factory ResumeAnalysisResult.fromJson(Map<String, dynamic> json) {
     // --- ATS Score ---
     final rawScore = (json['ats_score'] as num?)?.toInt() ?? 72;
-    final clampedScore = rawScore.clamp(40, 95);
+    final clampedScore = rawScore.clamp(30, 99);
 
     // --- Score Breakdown ---
     final breakdownRaw =
