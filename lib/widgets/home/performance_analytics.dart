@@ -24,7 +24,7 @@ class PlatformDonutChart extends StatefulWidget {
 class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  int _touchedIndex = -1;
+  // int _touchedIndex = -1;
 
   @override
   void initState() {
