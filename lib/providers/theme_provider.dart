@@ -11,8 +11,8 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   
   static const List<Color> availableColors = [
-    Color(0xFF7C3AED), // Vibrant Violet (Default)
-    Color(0xFF06B6D4), // Cyan
+    Color(0xFF0EA5E9), // Cyan (Default)
+    Color(0xFF7C3AED), // Vibrant Violet
     Color(0xFFF43F5E), // Rose
     Color(0xFF10B981), // Emerald
     Color(0xFFF59E0B), // Amber

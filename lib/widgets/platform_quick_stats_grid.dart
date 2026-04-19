@@ -114,105 +114,146 @@ class PlatformQuickStatsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(String name, String stat, Color color, dynamic icon, VoidCallback? onTap, bool loading) {
-    if (loading) {
-      return Container(
-        margin: const EdgeInsets.only(right: 12),
-        width: 140,
-        height: 110,
-        decoration: BoxDecoration(
-          color: const Color(0xFF13162A),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.03), width: 1),
-        ),
-        child: Shimmer.fromColors(
-          baseColor: Colors.white.withOpacity(0.05),
-          highlightColor: Colors.white.withOpacity(0.1),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(width: 24, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                const Spacer(),
-                Container(width: 40, height: 8, color: Colors.white),
-                const SizedBox(height: 4),
-                Container(width: 60, height: 16, color: Colors.white),
-                const SizedBox(height: 8),
-                Container(width: double.infinity, height: 2, color: Colors.white),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+  Widget _buildChip(
+    String name,
+    String stat,
+    Color color,
+    dynamic icon,
+    VoidCallback? onTap,
+    bool loading,
+  ) {
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF13162A) : theme.cardColor;
 
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
+        if (loading) {
+          return Container(
+            margin: const EdgeInsets.only(right: 12),
             width: 140,
-            padding: const EdgeInsets.all(12),
+            height: 110,
             decoration: BoxDecoration(
-              color: const Color(0xFF13162A),
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.15), width: 1),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.03) : theme.dividerColor.withOpacity(0.05),
+                width: 1,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Shimmer.fromColors(
+              baseColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+              highlightColor: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      width: 24,
+                      height: 24,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: FaIcon(icon, size: 14, color: color),
                     ),
-                    Icon(Icons.chevron_right_rounded, size: 14, color: Colors.white.withOpacity(0.2)),
+                    const Spacer(),
+                    Container(width: 40, height: 8, color: Colors.white),
+                    const SizedBox(height: 4),
+                    Container(width: 60, height: 16, color: Colors.white),
+                    const SizedBox(height: 8),
+                    Container(width: double.infinity, height: 2, color: Colors.white),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  name.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.8,
-                    color: Colors.white.withOpacity(0.35),
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(right: 12),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 140,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.1),
+                    width: 1,
                   ),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                        BoxShadow(
+                          color: color.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  stat,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: FaIcon(icon, size: 14, color: color),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 14,
+                          color: isDark ? Colors.white.withOpacity(0.2) : Colors.black26,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      name.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                        color: isDark ? Colors.white.withOpacity(0.35) : theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      stat,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : theme.textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: 0.6,
+                        minHeight: 2,
+                        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : color.withOpacity(0.05),
+                        valueColor: AlwaysStoppedAnimation<Color>(color.withOpacity(0.4)),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: 0.6,
-                    minHeight: 2,
-                    backgroundColor: Colors.white.withOpacity(0.05),
-                    valueColor: AlwaysStoppedAnimation<Color>(color.withOpacity(0.4)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

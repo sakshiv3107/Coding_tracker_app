@@ -173,16 +173,27 @@
     }
 
     Future<void> _checkUpdateAndHandle() async {
-    final data = await OTAService.checkForUpdate();
-    if (data == null || !mounted) return;
+  //       final data = {
+  //   'version': '99.99.99',
+  //   'changelog': 'Testing update dialog URL launch.',
+  // };
+  // if (mounted) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (ctx) => _UpdateDialog(data: data),
+  //   );
+  // }
+      final data = await OTAService.checkForUpdate();
+      if (data == null || !mounted) return;
 
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => _UpdateDialog(data: data),
-      );
-    }
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => _UpdateDialog(data: data),
+        );
+      }
   }
 
     @override
@@ -248,13 +259,20 @@
 
           ElevatedButton(
             onPressed: () async {
-              final url = Uri.parse(OTAService.readmeUrl); // ← changed
+              final url = Uri.parse(OTAService.readmeUrl);
               try {
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                }
+                await launchUrl(
+                  url,
+                  mode: LaunchMode.externalApplication,
+                );
               } catch (e) {
                 debugPrint('Could not launch update URL: $e');
+                // Fallback: try platform default
+                try {
+                  await launchUrl(url);
+                } catch (e2) {
+                  debugPrint('Fallback launch also failed: $e2');
+                }
               }
               if (context.mounted) Navigator.pop(context);
             },

@@ -46,15 +46,21 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
     if (filteredData.isEmpty) return const SizedBox.shrink();
     final total = filteredData.fold<int>(0, (sum, e) => sum + e.value);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF13162A).withOpacity(0.8),
+        color: isDark ? const Color(0xFF13162A).withOpacity(0.8) : Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.05) : theme.colorScheme.primary.withOpacity(0.1),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withOpacity(0.08),
+            color: theme.colorScheme.primary.withOpacity(isDark ? 0.08 : 0.05),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
@@ -80,7 +86,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.8,
-                              color: Colors.white.withOpacity(0.4),
+                              color: isDark ? Colors.white.withOpacity(0.4) : Colors.black54,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -89,7 +95,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
                             style: GoogleFonts.poppins(
                               fontSize: 42,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                              color: isDark ? Colors.white : Colors.black87,
                               letterSpacing: -1,
                             ),
                           ),
@@ -150,7 +156,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF7C3AED).withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                   blurRadius: 25,
                   spreadRadius: 2,
                 ),
@@ -178,10 +184,12 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
   }
 
   Widget _buildPercentileRibbon() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: isDark ? Colors.white.withValues(alpha: 0.03) : theme.colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -194,7 +202,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
                 style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.4),
+                  color: isDark ? Colors.white.withOpacity(0.4) : theme.textTheme.bodySmall?.color?.withOpacity(0.6),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -203,7 +211,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFFF59E0B),
+                  color: isDark ? const Color(0xFFF59E0B) : theme.colorScheme.primary,
                 ),
               ),
             ],
@@ -214,7 +222,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
             child: Container(
               height: 4,
               width: double.infinity,
-              color: Colors.white.withOpacity(0.05),
+              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
               child: Stack(
                 children: [
                   LayoutBuilder(
@@ -222,9 +230,12 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
                       return AnimatedContainer(
                         duration: const Duration(seconds: 1),
                         width: constraints.maxWidth * widget.percentile,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF7C3AED), Color(0xFFF59E0B)],
+                            colors: [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.secondary,
+                            ],
                           ),
                         ),
                       );
@@ -246,7 +257,7 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
       case 'github': return const Color(0xFF4078c0);
       case 'codeforces': return const Color(0xFFE24B4A);
       case 'hackerrank': return const Color(0xFF2EC866);
-      default: return const Color(0xFF7C3AED);
+      default: return Theme.of(context).colorScheme.primary;
     }
   }
 }

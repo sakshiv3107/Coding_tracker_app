@@ -1,4 +1,4 @@
-//import 'dart:ui';
+//  import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -9,7 +9,7 @@ class AppTheme {
   static const darkPrimaryBg = Color(0xFF0D0F1A);
   static const darkSecondaryBg = Color(0xFF13162A);
   static const darkTertiaryBg = Color(0xFF1C2433);
-  static const darkAccent = Color(0xFF7C3AED);
+  static const darkAccent = Color(0xFF0EA5E9);
   static const darkAccentSecondary = Color(0xFF00D9FF);
   static const darkTextPrimary = Color(0xFFE5E7EB);
   static const darkTextSecondary = Color(0xFF9CA3AF);
@@ -29,7 +29,7 @@ class AppTheme {
   static const success = Color(0xFF10B981);
   static const warning = Color(0xFFF59E0B);
   static const error = Color(0xFFEF4444);
-  static const primary = Color(0xFF7C3AED);
+  static const primary = Color(0xFF0EA5E9);
 
   // Platform Colors
   static const leetCodeYellow = Color(0xFFEF9F27);

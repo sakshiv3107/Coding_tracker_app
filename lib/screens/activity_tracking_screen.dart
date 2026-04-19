@@ -133,57 +133,53 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
       body: Stack(
         children: [
           _buildBackground(),
-          SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                _buildAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_isLoading)
-                          _buildLoadingState()
-                        else if (_error != null)
-                          _buildErrorState()
-                        else ...[
-                          //_buildStatsOverview(),
-                          //const SizedBox(height: 32),
-                          if (_leetcodeData != null) ...[
-                            _buildPlatformSection(
-                              'LeetCode Analytics',
-                              _leetcodeData!,
-                              Colors.orange,
-                              'Solved',
-                              _lcSubmissions.toString(),
-                              _currentStreak,
-                              _maxStreak,
-                            ),
-                            const SizedBox(height: 32),
-                          ],
-                          if (_githubData != null) ...[
-                            _buildPlatformSection(
-                              'GitHub Analytics',
-                              _githubData!,
-                              Colors.green,
-                              'Commits',
-                              _ghContribs.toString(),
-                              _ghCurrentStreak,
-                              _ghMaxStreak,
-                            ),
-                            const SizedBox(height: 32),
-                          ],
-                          if (_leetcodeData == null && _githubData == null)
-                            _buildEmptyState(),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildAppBar(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_isLoading)
+                        _buildLoadingState()
+                      else if (_error != null)
+                        _buildErrorState()
+                      else ...[
+                        if (_leetcodeData != null) ...[
+                          _buildPlatformSection(
+                            'LeetCode Analytics',
+                            _leetcodeData!,
+                            Colors.orange,
+                            'Solved',
+                            _lcSubmissions.toString(),
+                            _currentStreak,
+                            _maxStreak,
+                          ),
+                          const SizedBox(height: 32),
                         ],
+                        if (_githubData != null) ...[
+                          _buildPlatformSection(
+                            'GitHub Analytics',
+                            _githubData!,
+                            Colors.green,
+                            'Commits',
+                            _ghContribs.toString(),
+                            _ghCurrentStreak,
+                            _ghMaxStreak,
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                        if (_leetcodeData == null && _githubData == null)
+                          _buildEmptyState(),
                       ],
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -508,7 +504,8 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
   Widget _buildAppBar() {
     final theme = Theme.of(context);
     return SliverAppBar(
-      expandedHeight: 140,
+      expandedHeight: 60,
+      toolbarHeight: kToolbarHeight,
       backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
       floating: false,
@@ -523,17 +520,19 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           icon: Icon(Icons.refresh_rounded, color: theme.iconTheme.color),
           onPressed: _loadAllData,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
       ],
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
+        expandedTitleScale: 1.3,
+        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
         title: Text(
           'Activity Insights',
           style: GoogleFonts.outfit(
             color: theme.textTheme.titleLarge?.color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
           ),
         ),
         background: Container(

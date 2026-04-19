@@ -101,8 +101,8 @@ class _StreakAlertBannerState extends State<StreakAlertBanner> with SingleTicker
                       ? AppTheme.darkAccent
                       : AppTheme.lightAccent,
                   Theme.of(context).brightness == Brightness.dark
-                      ? Color(0xFF7C3AED) // darkAccentSecondary
-                      : Color(0xFF8B5CF6), // lightAccentSecondary
+                      ? Theme.of(context).colorScheme.secondary
+                      : AppTheme.lightAccentSecondary,
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
