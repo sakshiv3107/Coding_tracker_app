@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'notification_service.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Contest {
   final String? id;
@@ -112,14 +112,24 @@ class ContestService {
     finalContests.sort((a, b) => a.startTime.compareTo(b.startTime));
     
     // Schedule notifications
-    unawaited(scheduleAllContestNotifications(finalContests));
+    await scheduleAllContestNotifications(finalContests);
     
     return finalContests;
   }
 
   Future<void> scheduleAllContestNotifications(List<Contest> contests) async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('contest_reminders_enabled') ?? true;
+    if (!enabled) return;
+
+    final platforms = prefs.getStringList('contest_platforms') ?? ['leetcode', 'codeforces', 'codechef'];
+
     for (var contest in contests) {
       if (contest.startTime.isAfter(DateTime.now())) {
+        // Platform match check (case insensitive)
+        final pMatch = platforms.any((p) => p.toLowerCase() == contest.platform.toLowerCase());
+        if (!pMatch) continue;
+
         await NotificationService.instance.scheduleContestReminders(
           contestId: contest.id ?? contest.startTime.millisecondsSinceEpoch.toString(),
           platform: contest.platform,

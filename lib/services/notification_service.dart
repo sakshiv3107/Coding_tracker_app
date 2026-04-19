@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   // Singleton pattern
@@ -20,8 +21,13 @@ class NotificationService {
 
   Future<void> initialize() async {
     tz.initializeTimeZones();
-    final timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
+    try {
+      final dynamic timeZoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
+    } catch (e) {
+      debugPrint("Timezone initialization failed: $e");
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -96,6 +102,14 @@ class NotificationService {
       30: "Starting soon! Get ready 🚀",
     };
 
+    // Load quiet hours
+    final prefs = await SharedPreferences.getInstance();
+    final startStr = prefs.getString('quiet_hours_start') ?? "22:00";
+    final endStr = prefs.getString('quiet_hours_end') ?? "08:00";
+    
+    final quietStart = int.parse(startStr.split(':')[0]) * 60 + int.parse(startStr.split(':')[1]);
+    final quietEnd = int.parse(endStr.split(':')[0]) * 60 + int.parse(endStr.split(':')[1]);
+
     for (var entry in offsets.entries) {
       final minutesBefore = entry.key;
       final label = entry.value;
@@ -103,26 +117,73 @@ class NotificationService {
       final scheduledTime = startTime.subtract(Duration(minutes: minutesBefore));
       
       if (scheduledTime.isAfter(now)) {
-        int notificationId = (minutesBefore ~/ 30 * 1000) + (contestId.hashCode.abs() % 1000);
+        // Respect Quiet Hours roughly (if scheduled time falls in quiet hours, maybe skip or adjust?)
+        // For now, let's just skip if it's strictly within quiet hours and not the "immediate" one.
+        final scheduledMinutes = scheduledTime.hour * 60 + scheduledTime.minute;
+        bool isQuiet = false;
+        if (quietStart < quietEnd) {
+          isQuiet = scheduledMinutes >= quietStart && scheduledMinutes <= quietEnd;
+        } else {
+          // Crosses midnight
+          isQuiet = scheduledMinutes >= quietStart || scheduledMinutes <= quietEnd;
+        }
+
+        if (isQuiet && minutesBefore > 30) {
+           debugPrint("[Notification] Skipping $label due to quiet hours ($startStr - $endStr)");
+           continue;
+        }
+
+        // Robust ID: combine hash of contest and the offset
+        // Using enough spacing to avoid overlaps with other notification types
+        int baseId = contestId.hashCode.abs() % 10000;
+        int notificationId = 100000 + (minutesBefore * 10000) + baseId;
         
-        await _notificationsPlugin.zonedSchedule(
-          notificationId,
-          'Contest Alert: $platform',
-          minutesBefore == 1440 ? '$contestName starts tomorrow!' : label,
-          tz.TZDateTime.from(scheduledTime, tz.local),
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channelContests,
-              'Contest Reminders',
-              importance: Importance.high,
-              priority: Priority.high,
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            notificationId,
+            'Contest Alert: $platform',
+            minutesBefore == 1440 ? '$contestName starts tomorrow!' : label,
+            tz.TZDateTime.from(scheduledTime, tz.local),
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channelContests,
+                'Contest Reminders',
+                importance: Importance.high,
+                priority: Priority.high,
+              ),
+              iOS: const DarwinNotificationDetails(),
             ),
-            iOS: const DarwinNotificationDetails(),
-          ),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          payload: payload,
-        );
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          );
+          debugPrint("[Notification] Scheduled: $label for $contestName at $scheduledTime (ID: $notificationId)");
+        } catch (e) {
+          debugPrint("[Notification] Failed to schedule exact alarm: $e");
+          // Fallback to inexact if exact fails
+          try {
+            await _notificationsPlugin.zonedSchedule(
+              notificationId,
+              'Contest Alert: $platform',
+              minutesBefore == 1440 ? '$contestName starts tomorrow!' : label,
+              tz.TZDateTime.from(scheduledTime, tz.local),
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  channelContests,
+                  'Contest Reminders',
+                  importance: Importance.high,
+                  priority: Priority.high,
+                ),
+                iOS: const DarwinNotificationDetails(),
+              ),
+              androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+              uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+              payload: payload,
+            );
+          } catch (e2) {
+             debugPrint("[Notification] Inexact fallback also failed: $e2");
+          }
+        }
       }
     }
   }
@@ -193,10 +254,11 @@ class NotificationService {
 
   // Cancel specific notifications
   Future<void> cancelContestNotifications(String contestId) async {
-    int baseId = contestId.hashCode.abs() % 1000;
-    await _notificationsPlugin.cancel(1000 + baseId);
-    await _notificationsPlugin.cancel(2000 + baseId);
-    await _notificationsPlugin.cancel(3000 + baseId);
+    int baseId = contestId.hashCode.abs() % 10000;
+    final offsets = [1440, 60, 30];
+    for (var offset in offsets) {
+      await _notificationsPlugin.cancel(100000 + (offset * 10000) + baseId);
+    }
   }
 
   Future<void> cancelAllNotifications() async {

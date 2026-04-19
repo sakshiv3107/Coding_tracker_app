@@ -66,6 +66,11 @@ class NotificationPermissionService {
     if (Platform.isAndroid) {
       // Android 13+ (API 33+) requires runtime permission
       await Permission.notification.request();
+      
+      // Android 12+ (API 31+) requires exact alarm permission for precise scheduling
+      if (await Permission.scheduleExactAlarm.isDenied) {
+        await Permission.scheduleExactAlarm.request();
+      }
     } else if (Platform.isIOS) {
       await Permission.notification.request();
     }
