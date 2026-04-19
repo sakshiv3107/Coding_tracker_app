@@ -207,7 +207,7 @@ class _GoalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isGithub = goal.type == GoalType.commits;
-    final color = isGithub ? AppTheme.githubBlack : AppTheme.leetCodeYellow;
+    final color = isGithub ? AppTheme.githubColor : AppTheme.leetCodeYellow;
     final icon = isGithub ? Icons.commit_rounded : Icons.code_rounded;
     final isDark = theme.brightness == Brightness.dark;
 
@@ -215,86 +215,224 @@ class _GoalCard extends StatelessWidget {
     final isCompleted = progressRatio >= 1.0;
     
     // Choose status color
-    final statusColor = isCompleted ? Colors.green : Colors.orangeAccent;
-    final actualColor = isDark && isGithub && !isCompleted ? (isCompleted ? Colors.green : Colors.blueAccent) : (isCompleted ? Colors.green : color);
+    final statusColor = isCompleted ? AppTheme.success : AppTheme.warning;
+    final accentColor = isDark && isGithub && !isCompleted ? AppTheme.darkAccent : (isCompleted ? AppTheme.success : color);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: GlassCard(
-        padding: const EdgeInsets.all(24),
-        
-        showBorder: false,
-        showBlur: false,
+        padding: const EdgeInsets.all(20),
+        showBorder: true,
+        showBlur: true,
+        borderOpacity: 0.1,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: actualColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        accentColor.withOpacity(0.2),
+                        accentColor.withOpacity(0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: accentColor.withOpacity(0.2),
+                      width: 1,
+                    ),
                   ),
-                  child: Icon(icon, color: actualColor, size: 20),
+                  child: Icon(icon, color: accentColor, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(goal.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       Text(
-                        goal.timeframe == GoalTimeframe.daily ? 'Daily Goal' : 'Weekly Goal',
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.bold),
+                        goal.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.onSurface.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          goal.timeframe == GoalTimeframe.daily ? 'DAILY GOAL' : 'WEEKLY GOAL',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.close_rounded, size: 20, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    size: 20,
+                    color: theme.colorScheme.onSurface.withOpacity(0.35),
+                  ),
                   onPressed: () => _confirmDelete(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(isCompleted ? Icons.check_circle_rounded : Icons.pending_actions_rounded, size: 14, color: statusColor),
-                    const SizedBox(width: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          isCompleted ? Icons.check_circle_rounded : Icons.auto_graph_rounded,
+                          size: 16,
+                          color: statusColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isCompleted ? 'Target Achieved' : 'Active Progress',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      isCompleted ? 'Completed' : 'In Progress',
-                      style: TextStyle(fontSize: 12, color: statusColor, fontWeight: FontWeight.bold),
+                      isCompleted 
+                        ? 'Excellent job! You reached your goal.' 
+                        : 'Keep pushes to reach your target.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.4),
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
-                Text(
-                  '$currentValue / ${goal.targetValue}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '$currentValue',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: accentColor,
+                          ),
+                        ),
+                        Text(
+                          ' / ${goal.targetValue}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'COMPLETED',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface.withOpacity(0.3),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: progressRatio),
-                duration: const Duration(seconds: 1),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, _) => LinearProgressIndicator(
-                  value: value,
-                  backgroundColor: actualColor.withOpacity(0.1),
-                  valueColor: AlwaysStoppedAnimation<Color>(actualColor),
-                  minHeight: 8,
+            const SizedBox(height: 16),
+            Stack(
+              children: [
+                Container(
+                  height: 10,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progressRatio),
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => Container(
+                    height: 10,
+                    width: MediaQuery.of(context).size.width * 0.75 * value, // Approximate width, refined by LayoutBuilder usually but good enough here
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accentColor,
+                          accentColor.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        if (value > 0)
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Using LayoutBuilder for exact progress bar width
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: progressRatio),
+                      duration: const Duration(seconds: 1),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) => Container(
+                        height: 10,
+                        width: constraints.maxWidth * value,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              accentColor,
+                              accentColor.withOpacity(0.7),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            if (value > 0.1)
+                              BoxShadow(
+                                color: accentColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                spreadRadius: -2,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                ),
+              ],
             ),
           ],
         ),

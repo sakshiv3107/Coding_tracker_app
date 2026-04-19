@@ -233,8 +233,8 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
           icon: FontAwesomeIcons.chartLine,
         ),
       ),
+
       // const SizedBox(height: 12),
-      
       const SizedBox(height: 24),
       FadeSlideTransition(
         delay: const Duration(milliseconds: 120),
@@ -419,55 +419,142 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
 
   Widget _buildMainStats(StatsProvider stats) {
     final lc = stats.leetcodeStats!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Row(
       children: [
-        GlassCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedStatCounter(
-                value: lc.totalSolved,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.success,
+        Expanded(
+          child: GlassCard(
+            padding: const EdgeInsets.all(24),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -10,
+                  bottom: -10,
+                  child: FaIcon(
+                    FontAwesomeIcons.fireFlameCurved,
+                    size: 60,
+                    color: AppTheme.success.withOpacity(0.08),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Problems Solved',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.checkDouble,
+                        size: 14,
+                        color: AppTheme.success,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AnimatedStatCounter(
+                      value: lc.totalSolved,
+                      style: theme.textTheme.headlineLarge!.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.success,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    Text(
+                      'SOLVED',
+                      style: theme.textTheme.labelMedium!.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface.withOpacity(0.4),
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Across all levels',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.3),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        GlassCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                NumberFormat.compact().format(lc.ranking),
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+        const SizedBox(width: 16),
+        Expanded(
+          child: GlassCard(
+            padding: const EdgeInsets.all(24),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -10,
+                  bottom: -10,
+                  child: FaIcon(
+                    FontAwesomeIcons.trophy,
+                    size: 60,
+                    color: (isDark ? AppTheme.darkAccent : AppTheme.lightAccent)
+                        .withOpacity(0.08),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Global Ranking',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark
+                                    ? AppTheme.darkAccent
+                                    : AppTheme.lightAccent)
+                                .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: FaIcon(
+                        FontAwesomeIcons.globe,
+                        size: 14,
+                        color: isDark
+                            ? AppTheme.darkAccent
+                            : AppTheme.lightAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        NumberFormat.compact().format(lc.ranking),
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: isDark
+                              ? AppTheme.darkAccent
+                              : AppTheme.lightAccent,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'RANKING',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface.withOpacity(0.4),
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Global position',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.3),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -722,5 +809,3 @@ class _CodingStatsScreenState extends State<CodingStatsScreen> {
     );
   }
 }
-
-

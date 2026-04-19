@@ -33,16 +33,7 @@ class SkillRadarChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Skill Proficiency',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 10),
           SizedBox(
             height: 280,
             child: RadarChart(

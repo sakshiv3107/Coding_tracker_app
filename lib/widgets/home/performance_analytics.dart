@@ -143,12 +143,14 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
   }
 
   Widget _buildGlowingRing(List<MapEntry<String, int>> data, int total) {
+    final theme = Theme.of(context);
     return SizedBox(
       width: 110,
       height: 110,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Outer Soft Glow
           Container(
             width: 70,
             height: 70,
@@ -156,26 +158,50 @@ class _PlatformDonutChartState extends State<PlatformDonutChart> with SingleTick
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  blurRadius: 25,
+                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  blurRadius: 30,
                   spreadRadius: 2,
                 ),
               ],
             ),
           ),
+          
+          // Outer Ring Chart
           PieChart(
             PieChartData(
               sectionsSpace: 4,
-              centerSpaceRadius: 35,
+              centerSpaceRadius: 38,
               startDegreeOffset: 270,
               sections: data.map((e) {
                 return PieChartSectionData(
                   color: _getPlatformColor(e.key),
                   value: e.value.toDouble(),
-                  radius: 8,
+                  radius: 10,
                   showTitle: false,
+                  badgeWidget: null,
                 );
               }).toList(),
+            ),
+          ),
+
+          // Center Filler
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.primary.withOpacity(0.03),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.05),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.code_rounded,
+                size: 22,
+                color: theme.colorScheme.primary.withOpacity(0.4),
+              ),
             ),
           ),
         ],

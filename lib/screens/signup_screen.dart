@@ -232,7 +232,7 @@ class _SignupScreenState extends State<SignupScreen>
                                           label: auth.isLoading ? 'Processing...' : 'Create Account',
                                           icon: auth.isLoading ? null : Icons.shield_rounded,
                                           isLoading: auth.isLoading,
-                                          onTap: null,
+                                          onTap: auth.isLoading ? null : _handleSignup,
                                         ),
                                       ),
                                     ],
@@ -247,7 +247,12 @@ class _SignupScreenState extends State<SignupScreen>
 
                             _PressEffect(
                               onTap: auth.isLoading ? null : _handleGoogleSignUp,
-                              child: _GoogleSignupButton(isLoading: auth.isLoading),
+                              child: AuthSocialButton(
+                                label: 'Continue with Google',
+                                icon: const AuthGoogleIcon(),
+                                isLoading: auth.isLoading,
+                                onTap: auth.isLoading ? null : _handleGoogleSignUp,
+                              ),
                             ).animate().fadeIn(delay: 600.ms),
 
                             const SizedBox(height: 48),
@@ -357,25 +362,7 @@ class _PressEffectState extends State<_PressEffect> {
   }
 }
 
-class _GoogleSignupButton extends StatelessWidget {
-  final bool isLoading;
-  const _GoogleSignupButton({required this.isLoading});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity, height: 60,
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(22), border: Border.all(color: Colors.white.withOpacity(0.1))),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AuthGoogleIcon(),
-          SizedBox(width: 14),
-          Text('Continue with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-        ],
-      ),
-    );
-  }
-}
+
 
 class _HomeRedirect extends StatefulWidget {
   const _HomeRedirect();

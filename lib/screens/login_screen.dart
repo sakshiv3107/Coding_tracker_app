@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       label: auth.isLoading ? 'Verifying...' : 'Sign In',
                                       icon: auth.isLoading ? null : Icons.bolt_rounded,
                                       isLoading: auth.isLoading,
-                                      onTap: null, 
+                                      onTap: auth.isLoading ? null : _handleLogin, 
                                     ),
                                   ),
                                 ],
@@ -183,7 +183,12 @@ class _LoginScreenState extends State<LoginScreen>
 
                         _PressEffect(
                           onTap: auth.isLoading ? null : _handleGoogleSignIn,
-                          child: _GoogleButton(isLoading: auth.isLoading),
+                          child: AuthSocialButton(
+                            label: 'Continue with Google',
+                            icon: const AuthGoogleIcon(),
+                            isLoading: auth.isLoading,
+                            onTap: auth.isLoading ? null : _handleGoogleSignIn,
+                          ),
                         ).animate().fadeIn(delay: 700.ms),
 
                         const SizedBox(height: 48),
@@ -393,22 +398,4 @@ class _PressEffectState extends State<_PressEffect> {
   }
 }
 
-class _GoogleButton extends StatelessWidget {
-  final bool isLoading;
-  const _GoogleButton({required this.isLoading});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity, height: 60,
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(22), border: Border.all(color: Colors.white.withOpacity(0.1))),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AuthGoogleIcon(),
-          SizedBox(width: 14),
-          Text('Continue with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-        ],
-      ),
-    );
-  }
-}
+

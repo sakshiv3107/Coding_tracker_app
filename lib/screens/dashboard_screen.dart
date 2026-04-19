@@ -9,7 +9,6 @@ import '../providers/stats_provider.dart';
 import '../providers/github_provider.dart';
 import '../providers/goal_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/glass_card.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/profile_summary_card.dart';
@@ -126,8 +125,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           shape: BoxShape.circle,
                           color: theme.colorScheme.primary.withValues(
                             alpha: theme.brightness == Brightness.dark
-                                ? 0.1
-                                : 0.04,
+                                ? 0.06
+                                : 0.02,
                           ),
                         ),
                       )
@@ -151,8 +150,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           shape: BoxShape.circle,
                           color: theme.colorScheme.tertiary.withValues(
                             alpha: theme.brightness == Brightness.dark
-                                ? 0.08
-                                : 0.03,
+                                ? 0.04
+                                : 0.015,
                           ),
                         ),
                       )
@@ -176,8 +175,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           shape: BoxShape.circle,
                           color: theme.colorScheme.secondary.withValues(
                             alpha: theme.brightness == Brightness.dark
-                                ? 0.06
-                                : 0.02,
+                                ? 0.03
+                                : 0.01,
                           ),
                         ),
                       )
@@ -281,9 +280,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                     sliver: SliverToBoxAdapter(
-                      child: ContestCountdownCard(
-                        contests: upcomingContests,
-                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle(context, 'Contest Schedule', Icons.calendar_month_rounded),
+                          const SizedBox(height: 12),
+                          ContestCountdownCard(
+                            contests: upcomingContests,
+                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -291,10 +297,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     sliver: SliverToBoxAdapter(
-                      child: const DailyChallengeCard()
-                          .animate()
-                          .fadeIn(delay: 300.ms)
-                          .slideY(begin: 0.1),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle(context, 'Quick Challenge', Icons.bolt_rounded),
+                          const SizedBox(height: 12),
+                          const DailyChallengeCard()
+                              .animate()
+                              .fadeIn(delay: 300.ms)
+                              .slideY(begin: 0.1),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -358,18 +371,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 12),
                           RepaintBoundary(
-                            child: GlassCard(
-                              padding: const EdgeInsets.all(16),
-                              child: PlatformDonutChart(
-                                platformSolvedCounts: {
-                                  'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
-                                  'CodeForces':
-                                      stats.codeforcesStats?.totalSolved ?? 0,
-                                  'CodeChef': stats.codechefStats?.totalSolved ?? 0,
-                                  'HackerRank':
-                                      stats.hackerrankStats?.totalSolved ?? 0,
-                                },
-                              ),
+                            child: PlatformDonutChart(
+                              platformSolvedCounts: {
+                                'LeetCode': stats.leetcodeStats?.totalSolved ?? 0,
+                                'CodeForces':
+                                    stats.codeforcesStats?.totalSolved ?? 0,
+                                'CodeChef': stats.codechefStats?.totalSolved ?? 0,
+                                'HackerRank':
+                                    stats.hackerrankStats?.totalSolved ?? 0,
+                              },
                             ).animate().fadeIn(delay: 300.ms),
                           ),
                         ],
@@ -384,60 +394,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         horizontal: 16,
                         vertical: 12,
                       ),
-                      child: RepaintBoundary(
-                        child: PlatformQuickStatsGrid(
-                          leetcode: {
-                            'solved': stats.leetcodeStats?.totalSolved,
-                            'easy': stats.leetcodeStats?.easy,
-                            'medium': stats.leetcodeStats?.medium,
-                            'hard': stats.leetcodeStats?.hard,
-                          },
-                          github: {
-                            'repos': github.githubStats?.publicRepos,
-                            'commits': github.githubStats?.totalContributions,
-                          },
-                          codeforces: {
-                            'rating': stats.codeforcesStats?.rating,
-                            'rank': stats.codeforcesStats?.ranking,
-                          },
-                          codechef: {
-                            'rating': stats.codechefStats?.rating,
-                            'rank': stats.codechefStats?.ranking,
-                          },
-                          hackerrank: {
-                            'solved': stats.hackerrankStats?.totalSolved,
-                            'rank': stats.hackerrankStats?.ranking,
-                          },
-                          leetcodeLoading:
-                              stats.leetcodeLoading &&
-                              stats.leetcodeStats == null,
-                          codeforcesLoading:
-                              stats.codeforcesLoading &&
-                              stats.codeforcesStats == null,
-                          codechefLoading:
-                              stats.codechefLoading &&
-                              stats.codechefStats == null,
-                          hackerrankLoading:
-                              stats.hackerrankLoading &&
-                              stats.hackerrankStats == null,
-                          githubLoading:
-                              github.isLoading && github.githubStats == null,
-                          leetcodeUsername: leetcodeUser,
-                          githubUsername: githubUser,
-                          codeforcesUsername: cfUser,
-                          codechefUsername: ccUser,
-                          hackerrankUsername: hrUser,
-                          onLeetCodeTap: () =>
-                              Navigator.pushNamed(context, '/leetcode_stats'),
-                          onGitHubTap: () =>
-                              Navigator.pushNamed(context, '/github_stats'),
-                          onCodeforcesTap: () =>
-                              Navigator.pushNamed(context, '/codeforces_stats'),
-                          onCodeChefTap: () =>
-                              Navigator.pushNamed(context, '/codechef_stats'),
-                          onHackerRankTap: () =>
-                              Navigator.pushNamed(context, '/hackerrank_stats'),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle(context, 'Platform Sync', Icons.sync_rounded),
+                          const SizedBox(height: 12),
+                          RepaintBoundary(
+                            child: PlatformQuickStatsGrid(
+                              leetcode: {
+                                'solved': stats.leetcodeStats?.totalSolved,
+                                'easy': stats.leetcodeStats?.easy,
+                                'medium': stats.leetcodeStats?.medium,
+                                'hard': stats.leetcodeStats?.hard,
+                              },
+                              github: {
+                                'repos': github.githubStats?.publicRepos,
+                                'commits': github.githubStats?.totalContributions,
+                              },
+                              codeforces: {
+                                'rating': stats.codeforcesStats?.rating,
+                                'rank': stats.codeforcesStats?.ranking,
+                              },
+                              codechef: {
+                                'rating': stats.codechefStats?.rating,
+                                'rank': stats.codechefStats?.ranking,
+                              },
+                              hackerrank: {
+                                'solved': stats.hackerrankStats?.totalSolved,
+                                'rank': stats.hackerrankStats?.ranking,
+                              },
+                              leetcodeLoading:
+                                  stats.leetcodeLoading &&
+                                  stats.leetcodeStats == null,
+                              codeforcesLoading:
+                                  stats.codeforcesLoading &&
+                                  stats.codeforcesStats == null,
+                              codechefLoading:
+                                  stats.codechefLoading &&
+                                  stats.codechefStats == null,
+                              hackerrankLoading:
+                                  stats.hackerrankLoading &&
+                                  stats.hackerrankStats == null,
+                              githubLoading:
+                                  github.isLoading && github.githubStats == null,
+                              leetcodeUsername: leetcodeUser,
+                              githubUsername: githubUser,
+                              codeforcesUsername: cfUser,
+                              codechefUsername: ccUser,
+                              hackerrankUsername: hrUser,
+                              onLeetCodeTap: () =>
+                                  Navigator.pushNamed(context, '/leetcode_stats'),
+                              onGitHubTap: () =>
+                                  Navigator.pushNamed(context, '/github_stats'),
+                              onCodeforcesTap: () =>
+                                  Navigator.pushNamed(context, '/codeforces_stats'),
+                              onCodeChefTap: () =>
+                                  Navigator.pushNamed(context, '/codechef_stats'),
+                              onHackerRankTap: () =>
+                                  Navigator.pushNamed(context, '/hackerrank_stats'),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -449,59 +466,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                         // _buildSectionLabel(context, 'Activity Spectrum'),
+                          _sectionTitle(context, 'Activity Heatmap', Icons.timeline_rounded),
                           const SizedBox(height: 12),
-                          GlassCard(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Activity Heatmap',
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                const SizedBox(height: 16),
-                                RepaintBoundary(
-                                  child: CodingHeatmap(
-                                    datasets: heatmapData,
-                                    colorsets: {
-                                      1: Theme.of(context).brightness == Brightness.dark
-                                          ? AppTheme.darkAccent.withOpacity(0.3)
-                                          : AppTheme.lightAccent.withOpacity(0.3),
-                                      3: Theme.of(context).brightness == Brightness.dark
-                                          ? AppTheme.darkAccent.withOpacity(0.6)
-                                          : AppTheme.lightAccent.withOpacity(0.6),
-                                      5: Theme.of(context).brightness == Brightness.dark
-                                          ? AppTheme.darkAccent
-                                          : AppTheme.lightAccent,
-                                    },
-                                  ),
-                                ),
-                              ],
+                          RepaintBoundary(
+                            child: CodingHeatmap(
+                              datasets: heatmapData,
+                              colorsets: {
+                                1: isDark
+                                    ? AppTheme.darkAccent.withOpacity(0.3)
+                                    : AppTheme.lightAccent.withOpacity(0.3),
+                                3: isDark
+                                    ? AppTheme.darkAccent.withOpacity(0.6)
+                                    : AppTheme.lightAccent.withOpacity(0.6),
+                                5: isDark
+                                    ? AppTheme.darkAccent
+                                    : AppTheme.lightAccent,
+                              },
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          GlassCard(
-                            padding: const EdgeInsets.all(16),
-                            child: RepaintBoundary(
-                              child: old_chart.WeeklyActivityChart(
-                                leetcodeCalendar:
-                                    stats.leetcodeStats?.submissionCalendar ?? {},
-                                githubCalendar:
-                                    github.githubStats?.contributionCalendar ?? {},
-                                hackerrankCalendar:
-                                    stats.hackerrankStats?.submissionHistory ?? {},
-                                codechefCalendar:
-                                    stats.codechefStats?.submissionCalendar ?? {},
-                              ),
+                          const SizedBox(height: 24),
+                          _sectionTitle(context, 'Evolution Stream', Icons.bubble_chart_rounded),
+                          const SizedBox(height: 12),
+                          RepaintBoundary(
+                            child: old_chart.WeeklyActivityChart(
+                              leetcodeCalendar:
+                                  stats.leetcodeStats?.submissionCalendar ?? {},
+                              githubCalendar:
+                                  github.githubStats?.contributionCalendar ?? {},
+                              hackerrankCalendar:
+                                  stats.hackerrankStats?.submissionHistory ?? {},
+                              codechefCalendar:
+                                  stats.codechefStats?.submissionCalendar ?? {},
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          if (tagStats != null && tagStats.isNotEmpty)
-                            GlassCard(
-                              padding: const EdgeInsets.all(16),
-                              child: RepaintBoundary(child: SkillRadarChart(tagStats: tagStats)),
-                            ),
+                          const SizedBox(height: 24),
+                          if (tagStats != null && tagStats.isNotEmpty) ...[
+                            _sectionTitle(context, 'Skill Radar', Icons.radar_rounded),
+                            const SizedBox(height: 12),
+                            RepaintBoundary(child: SkillRadarChart(tagStats: tagStats)),
+                          ],
                         ],
                       ),
                     ),

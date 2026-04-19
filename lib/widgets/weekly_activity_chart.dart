@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weekly_activity.dart';
 import 'glass_card.dart';
-import 'responsive_row.dart';
 
 class WeeklyActivityChart extends StatefulWidget {
   final Map<DateTime, int> leetcodeCalendar;
@@ -29,9 +28,9 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
   late WeeklyActivity _weeklyActivity;
 
   static const _leetcodeColor = Color(0xFFFFA116); // LeetCode yellow
-  static const _githubColor = Color(0xFF6C63FF);
-  static const _hackerrankColor = Color(0xFF2EC866);
-  static const _codechefColor = Color.fromARGB(255, 45, 188, 224);
+  static const _githubColor = Color.fromARGB(255, 77, 132, 67);
+  static const _hackerrankColor = Color.fromARGB(255, 52, 232, 118);
+  static const _codechefColor = Color.fromARGB(255, 45, 126, 224);
 
   @override
   void initState() {
@@ -91,53 +90,16 @@ class _WeeklyActivityChartState extends State<WeeklyActivityChart>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ResponsiveRow(
-            alignment: WrapAlignment.spaceBetween,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Evolution Stream',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.3,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  if (_weeklyActivity.isDummyData) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'DEMO',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildLegendDot('LC', _leetcodeColor),
-                  const SizedBox(width: 12),
-                  _buildLegendDot('GH', _githubColor),
-                  const SizedBox(width: 12),
-                  _buildLegendDot('HR', _hackerrankColor),
-                  const SizedBox(width: 12),
-                  _buildLegendDot('CC', _codechefColor),
-                ],
-              ),
+              _buildLegendDot('LC', _leetcodeColor),
+              const SizedBox(width: 12),
+              _buildLegendDot('GH', _githubColor),
+              const SizedBox(width: 12),
+              _buildLegendDot('HR', _hackerrankColor),
+              const SizedBox(width: 12),
+              _buildLegendDot('CC', _codechefColor),
             ],
           ),
           const SizedBox(height: 24),
