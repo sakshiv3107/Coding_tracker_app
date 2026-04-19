@@ -283,8 +283,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionTitle(context, 'Contest Schedule', Icons.calendar_month_rounded),
-                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _sectionTitle(context, 'Upcoming Contests', Icons.calendar_month_rounded),
+                              TextButton(
+                                      onPressed: () =>
+                                          Navigator.pushNamed(context, '/contests'),
+                                      child: Text('View All >', style: TextStyle(color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent),),
+                                    ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           ContestCountdownCard(
                             contests: upcomingContests,
                           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
